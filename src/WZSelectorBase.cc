@@ -111,9 +111,9 @@ void WZSelectorBase::Init(TTree *tree)
 
     if (channelName_ == "eee") {
         channel_ = eee;
-        fChain->SetBranchAddress("e1IsCBVIDTight", &l1IsTight, &b_l1IsTight);
-        fChain->SetBranchAddress("e2IsCBVIDTight", &l2IsTight, &b_l2IsTight);
-        fChain->SetBranchAddress("e3IsCBVIDTight", &l3IsTight, &b_l3IsTight);
+        fChain->SetBranchAddress("e1IsCBVIDTightNoIP", &l1IsTight, &b_l1IsTight);
+        fChain->SetBranchAddress("e2IsCBVIDTightNoIP", &l2IsTight, &b_l2IsTight);
+        fChain->SetBranchAddress("e3IsCBVIDTightNoIP", &l3IsTight, &b_l3IsTight);
         fChain->SetBranchAddress("e1_e2_Mass", &ZMass, &b_ZMass);
         fChain->SetBranchAddress("e1Pt", &l1Pt, &b_l1Pt);
         fChain->SetBranchAddress("e2Pt", &l2Pt, &b_l2Pt);
@@ -130,8 +130,8 @@ void WZSelectorBase::Init(TTree *tree)
     }
     else if (channelName_ == "eem") { 
         channel_ = eem;
-        fChain->SetBranchAddress("e1IsCBVIDTight", &l1IsTight, &b_l1IsTight);
-        fChain->SetBranchAddress("e2IsCBVIDTight", &l2IsTight, &b_l2IsTight);
+        fChain->SetBranchAddress("e1IsCBVIDTightNoIP", &l1IsTight, &b_l1IsTight);
+        fChain->SetBranchAddress("e2IsCBVIDTightNoIP", &l2IsTight, &b_l2IsTight);
         fChain->SetBranchAddress("mIsWZTight", &l3IsTight, &b_l3IsTight);
         fChain->SetBranchAddress("e1_e2_Mass", &ZMass, &b_ZMass);
         fChain->SetBranchAddress("e1Pt", &l1Pt, &b_l1Pt);
@@ -149,7 +149,7 @@ void WZSelectorBase::Init(TTree *tree)
     }
     else if (channelName_ == "emm") { 
         channel_ = emm;
-        fChain->SetBranchAddress("eIsCBVIDTight", &l3IsTight, &b_l3IsTight);
+        fChain->SetBranchAddress("eIsCBVIDTightNoIP", &l3IsTight, &b_l3IsTight);
         fChain->SetBranchAddress("m1IsWZTight", &l1IsTight, &b_l1IsTight);
         fChain->SetBranchAddress("m2IsWZTight", &l2IsTight, &b_l2IsTight);
         fChain->SetBranchAddress("m1_m2_Mass", &ZMass, &b_ZMass);
@@ -227,7 +227,7 @@ void WZSelectorBase::Init(TTree *tree)
     fChain->SetBranchAddress("type1_pfMETEt", &MET, &b_MET);
     fChain->SetBranchAddress("type1_pfMETPhi", &type1_pfMETPhi, &b_type1_pfMETPhi);
     fChain->SetBranchAddress("nCBVIDTightElec", &nCBVIDTightElec, &b_nCBVIDTightElec);
-    fChain->SetBranchAddress("nCBVIDHLTSafeElec", &nCBVIDHLTSafeElec, &b_nCBVIDHLTSafeElec);
+    fChain->SetBranchAddress("nCBVIDHLTSafeElecNoIP", &nCBVIDHLTSafeElec, &b_nCBVIDHLTSafeElec);
     fChain->SetBranchAddress("nWZTightMuon", &nWZTightMuon, &b_nWZTightMuon);
     fChain->SetBranchAddress("nWZMediumMuon", &nWZMediumMuon, &b_nWZMediumMuon);
     fChain->SetBranchAddress("Flag_BadChargedCandidateFilterPass", &Flag_BadChargedCandidateFilterPass, &b_Flag_BadChargedCandidateFilterPass);
