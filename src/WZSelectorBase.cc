@@ -92,6 +92,8 @@ void WZSelectorBase::Init(TTree *tree)
         selection_ = VBSselection_Tight_Full;
     else if (selectionName_ == "VBSBackgroundControl")
         selection_ = VBSBackgroundControl;
+    else if (selectionName_ == "VBSBackgroundControlATLAS")
+        selection_ = VBSBackgroundControlATLAS;
     else if (selectionName_ == "VBSBackgroundControl_Full")
         selection_ = VBSBackgroundControl_Full;
     else if (selectionName_ == "VBSBackgroundControlLoose")
@@ -114,6 +116,7 @@ void WZSelectorBase::Init(TTree *tree)
         selection_ == VBSselection_Tight_Full || 
         selection_ == VBSBackgroundControl || 
         selection_ == VBSBackgroundControl_Full || 
+        selection_ == VBSBackgroundControlATLAS || 
         selection_ == VBSBackgroundControlLoose ||
         selection_ == VBSBackgroundControlLoose_Full
         );

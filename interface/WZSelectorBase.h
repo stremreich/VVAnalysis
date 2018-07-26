@@ -43,6 +43,7 @@ public :
         VBSselection_NoZeppenfeld_Full,
         VBSselection_Tight_Full,
         VBSBackgroundControl,
+        VBSBackgroundControlATLAS,
         VBSBackgroundControl_Full,
         VBSBackgroundControlLoose,
         VBSBackgroundControlLoose_Full,

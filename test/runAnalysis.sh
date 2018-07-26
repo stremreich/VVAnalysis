@@ -46,19 +46,21 @@ else
     echo "INFO: Using default selection 'Wselection'"
 fi
 
-frfile=/eos/user/k/kelong/WZAnalysisData/FakeRates/fakeRate${DATE_MONTHONLY}-${lepid}LepsFrom${looselepsfile}.root
-histfile=/eos/user/k/kelong/WZAnalysisData/HistFiles/${output}-${DATE}.root
-#histfile=${output}-${DATE}.root
+frpath=$(./Utilities/scripts/getConfigValue.py fakeRate_output)
+histpath=$(./Utilities/scripts/getConfigValue.py hist_output)
+frfile=${frpath}/fakeRateFinal-${lepid}LepsFrom${looselepsfile}.root
+histfile=${histpath}/${output}-${DATE}.root
 
 if [[ "$3" != "" ]]; then 
     histfile=${histfile/.root/_${3}.root}
 fi
 
-cd $CMSSW_BASE/src/Analysis/WZAnalysis
+cd $CMSSW_BASE/src/Analysis/VVAnalysis
 if [ -f $frfile ] && [ "$2" != "RedoFakeRates" ]; then
     echo "INFO: Fake rate file $frfile exists! Using exisiting file."
 else
     echo "INFO: Fake rate file $frfile not found. It will be created."
+    frfile=${frpath}/fakeRate${DATE_MONTHONLY}-${lepid}LepsFrom${looselepsfile}.root
     ./Utilities/scripts/makeFakeRates.py -s ${looselepsfile} -l $lumi -o $frfile 
     python ScaleFactors/setupScaleFactors.py -t $frfile 
 fi
@@ -88,6 +90,8 @@ if [ "$2" != "noCombine" ]; then
         python ./Utilities/scripts/addUnrolledHistsToFile.py -i $histfile
     fi
     if [ "$1" != "FakeRate"* ]; then
+        combine_path=$(./Utilities/scripts/getConfigValue.py combine_output)
+        combine_file=${combine_output}/$(basename $histfile) 
         ./Utilities/scripts/prepareCombine.py \
             --input_file $histfile \
             -s $combine_selection \
@@ -95,7 +99,7 @@ if [ "$2" != "noCombine" ]; then
             -l 35.9 \
             --combineChannels \
             --addControlRegion \
-            --output_file /eos/user/k/kelong/WZAnalysisData/CombineData/$(basename $histfile) 
-        echo "Info: File /eos/user/k/kelong/WZAnalysisData/CombineData/$(basename  $histfile) created"
+            --output_file $combine_file 
+        echo "Info: File $combine_file created"
     fi
 fi

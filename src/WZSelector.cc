@@ -451,6 +451,9 @@ bool WZSelector::PassesVBSSelection(bool noBlind) {
         return ((mjj > 500 && dEtajj < 2.5) ||
                 (mjj < 500 && dEtajj > 2.5));
     }
+    else if (selection_ == VBSBackgroundControlATLAS) { 
+        return jetPt->at(0) > 40 && jetPt->at(1) > 40 && mjj > 150 && mjj < 500;
+    }
     else if (selection_ == VBSBackgroundControlLoose ||
              selection_ == VBSBackgroundControlLoose_Full) { 
         return PassesVBSBackgroundControlSelection();

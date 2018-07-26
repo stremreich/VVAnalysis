@@ -7,6 +7,7 @@ import os
 import json
 import array
 import string
+import configparser
 
 def get2DBinning(xvar="mjj", yvar="etajj", analysis='WZ'):
     #return (array.array('d', [500, 1000,1500, 2000, 2500]),
@@ -30,9 +31,12 @@ def getChannels(analysis='WZ'):
     if analysis == 'WZ':
         return ["eee", "eem", "emm", "mmm"]
 def getManagerPath():
-    path = "/cms/{user}" if "hep.wisc.edu" in os.environ['HOSTNAME'] else \
-            "/afs/cern.ch/user/k/{user}/work"
-    return path.format(user=os.environ["USER"])
+    config = configparser.ConfigParser()
+    config.read_file(open("Templates/config"))
+    if "dataset_manager_path" not in config['Setup']:
+        raise ValueError("variable %s does not exist in config file Template/config" % args.variable)
+
+    return config['Setup']['dataset_manager_path'] + "/"
 def getListOfEWKFilenames():
     return [
     #    "wz3lnu-powheg",
@@ -118,7 +122,7 @@ def getListOfFiles(filelist, selection, manager_path=""):
     names = []
     for name in filelist:
         if "WZxsec2016" in name:
-            dataset_file = "/afs/cern.ch/user/k/kelong/work/" + \
+            dataset_file = manager_path + \
                 "AnalysisDatasetManager/FileInfo/WZxsec2016/%s.json" % selection
             allnames = json.load(open(dataset_file)).keys()
             if "nodata" in name:
