@@ -22,13 +22,12 @@ username="kdlong" # or your username
 ```
 
 To checkout and compile:
-
 ```console
 cmsrel CMSSW_version
 cd CMSSW_X_Y_Z/src
 mkdir Analysis
 cd Analysis
-git clone git@github.com:<username>/VVAnalysis.git
+git clone https://github.com/stremreich/VVAnalysis.git 
 scram b -j 8
 ```
 
