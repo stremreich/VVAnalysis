@@ -100,6 +100,7 @@ if args['proof']:
 today = datetime.date.today().strftime("%d%b%Y")
 fileName = "data/fakeRate%s-%s.root" % (today, args['selection']) if args['output_file'] == "" \
         else args['output_file']
+print "makeFakeRates output filename: ", fileName
 fOut = ROOT.TFile(fileName, "recreate")
 
 fScales = ROOT.TFile('data/scaleFactors.root')
