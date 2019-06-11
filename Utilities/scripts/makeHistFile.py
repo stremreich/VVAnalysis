@@ -20,11 +20,10 @@ def getComLineArgs():
         help="Use UWVV format ntuples in stead of NanoAOD")
     parser.add_argument("--noHistConfig", action='store_true',
         help="Don't rely on config file to specify hist info")
-    parser.add_argument("--parallel", action='store_true',
-        help="Parallelize by dataset")
-    parser.add_argument("--output_selection", type=str,
-        default="", help="Selection stage of output file "
-        "(Same as input if not give)")
+    parser.add_argument("-j", "--numCores", type=int, default=1,
+        help="Number of cores to use (parallelize by dataset)")
+    parser.add_argument("--input_tier", type=str,
+        default="", help="Selection stage of input files")
     parser.add_argument("-c", "--channels", 
                         type=lambda x : [i.strip() for i in x.split(',')],
                         default=["eee","eem","emm"], help="List of channels"
@@ -47,40 +46,46 @@ if manager_path not in sys.path:
 tmpFileName = args['output_file']
 fOut = ROOT.TFile(tmpFileName, "recreate")
 
-fScales = ROOT.TFile('data/scaleFactors.root')
-mCBTightFakeRate = fScales.Get("mCBTightFakeRate")
-eCBTightFakeRate = fScales.Get("eCBTightFakeRate")
-useSvenjasFRs = False
-useJakobsFRs = False
-if useSvenjasFRs:
-    mCBTightFakeRate = fScales.Get("mCBTightFakeRate_Svenja")
-    eCBTightFakeRate = fScales.Get("eCBTightFakeRate_Svenja")
-elif useJakobsFRs:
-    mCBTightFakeRate = fScales.Get("mCBTightFakeRate_Jakob")
-    eCBTightFakeRate = fScales.Get("eCBTightFakeRate_Jakob")
-# For medium muons
-#mCBMedFakeRate.SetName("fakeRate_allMu")
-if mCBTightFakeRate:
-    mCBTightFakeRate.SetName("fakeRate_allMu")
-if eCBTightFakeRate:
-    eCBTightFakeRate.SetName("fakeRate_allE")
+addScaleFacs = False
+if args['analysis'] == "WZxsec2016":
+    addScaleFacs = True
+sf_inputs = []
 
-muonIsoSF = fScales.Get('muonIsoSF')
-muonIdSF = fScales.Get('muonTightIdSF')
-electronTightIdSF = fScales.Get('electronTightIdSF')
-electronGsfSF = fScales.Get('electronGsfSF')
-pileupSF = fScales.Get('pileupSF')
+if addScaleFacs:
+    fScales = ROOT.TFile('data/scaleFactors.root')
+    mCBTightFakeRate = fScales.Get("mCBTightFakeRate")
+    eCBTightFakeRate = fScales.Get("eCBTightFakeRate")
+    useSvenjasFRs = False
+    useJakobsFRs = False
+    if useSvenjasFRs:
+        mCBTightFakeRate = fScales.Get("mCBTightFakeRate_Svenja")
+        eCBTightFakeRate = fScales.Get("eCBTightFakeRate_Svenja")
+    elif useJakobsFRs:
+        mCBTightFakeRate = fScales.Get("mCBTightFakeRate_Jakob")
+        eCBTightFakeRate = fScales.Get("eCBTightFakeRate_Jakob")
+    # For medium muons
+    #mCBMedFakeRate.SetName("fakeRate_allMu")
+    if mCBTightFakeRate:
+        mCBTightFakeRate.SetName("fakeRate_allMu")
+    if eCBTightFakeRate:
+        eCBTightFakeRate.SetName("fakeRate_allE")
 
-#fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_JetHT_Run2016B-H.root')
-fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_SingleMuon_Run2016B-H.root')
-prefireEff = fPrefireEfficiency.Get('prefireEfficiencyMap')
+    muonIsoSF = fScales.Get('muonIsoSF')
+    muonIdSF = fScales.Get('muonTightIdSF')
+    electronTightIdSF = fScales.Get('electronTightIdSF')
+    electronGsfSF = fScales.Get('electronGsfSF')
+    pileupSF = fScales.Get('pileupSF')
 
-fr_inputs = [eCBTightFakeRate, mCBTightFakeRate,]
-sf_inputs = [electronTightIdSF, electronGsfSF, muonIsoSF, muonIdSF, pileupSF, prefireEff]
+    #fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_JetHT_Run2016B-H.root')
+    fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_SingleMuon_Run2016B-H.root')
+    prefireEff = fPrefireEfficiency.Get('prefireEfficiencyMap')
 
-if args['output_selection'] == '':
-    args['output_selection'] = args['selection']
-selection = args['output_selection'].split("_")[0]
+    fr_inputs = [eCBTightFakeRate, mCBTightFakeRate,]
+    sf_inputs = [electronTightIdSF, electronGsfSF, muonIsoSF, muonIdSF, pileupSF, prefireEff]
+
+if args['input_tier'] == '':
+    args['input_tier'] = args['selection']
+selection = args['selection'].split("_")[0]
 
 if selection == "Inclusive2Jet":
     selection = "Wselection"
@@ -88,6 +93,7 @@ if selection == "Inclusive2Jet":
 analysis = "/".join([args['analysis'], selection])
 hists, hist_inputs = UserInput.getHistInfo(analysis, args['hist_names'], args['noHistConfig'])
 
+<<<<<<< HEAD
 tselection = [ROOT.TNamed("selection", args['output_selection'])]
 nanoAOD = not args['uwvv']
 channels = ["Inclusive"] if nanoAOD else args['channels']
@@ -121,6 +127,30 @@ mc = SelectorTools.applySelector(args['filenames'], selector_map[args['analysis'
         addSumweights=True,
                                  parallel=args['parallel'],
         )
+=======
+#if "WZxsec2016" in analysis and "FakeRate" not in args['output_selection'] and not args['test']:
+#    background = SelectorTools.applySelector(["WZxsec2016data"] +
+#        ConfigureJobs.getListOfEWKFilenames() + ["wz3lnu-powheg"] +
+#        ConfigureJobs.getListOfNonpromptFilenames(), 
+#            "WZBackgroundSelector", args['selection'], fOut, 
+#            extra_inputs=sf_inputs+fr_inputs+hist_inputs+tselection, 
+#            channels=channels,
+#            addSumweights=False,
+#            nanoAOD=nanoAOD,
+#            parallel=args['parallel'],
+#            )
+
+selector = SelectorTools.SelectorDriver(args['analysis'], args['selection'], args['input_tier'])
+selector.setOutputfile(fOut.GetName())
+selector.setInputs(sf_inputs+hist_inputs)
+selector.setNtupeType("UWVV" if args['uwvv'] else "NanoAOD")
+if args['uwvv']:
+    selector.setChannels(args['channels'])
+selector.setNumCores(args['numCores'])
+
+mc = selector.applySelector(args['filenames'])
+
+>>>>>>> 9f68ed38e0a16a2ccc18741737e99b2f9272f3c3
 if args['test']:
     fOut.Close()
     sys.exit(0)

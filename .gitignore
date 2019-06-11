@@ -5,3 +5,5 @@ Utilities/Selectors/disambiguateFinalStates_*
 *.cs
 *_C*
 *_cc*
+*~
+*#*#

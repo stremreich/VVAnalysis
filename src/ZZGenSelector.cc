@@ -17,6 +17,7 @@ void ZZGenSelector::Init(TTree *tree)
         "GenZ1Mass",
         "GenZ2Mass",
         "GenZZPt",
+        "GenZZEta",
         "GenZ1Pt",
         "GenZ2Pt",
         "GenZPt",

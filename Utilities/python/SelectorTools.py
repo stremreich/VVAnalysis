@@ -8,116 +8,162 @@ import os
 import multiprocessing
 import subprocess
 
-def applySelector(filelist, selector_name, selection, 
-        rootfile,
-        analysis, channels=["eee", "eem", "emm", "mmm"], 
-        extra_inputs = [],
-        nanoAOD=False,
-        addSumweights=True,
-        parallel=False):
-    ntuple = ROOT.TNamed("ntupleType", "NanoAOD" if nanoAOD else "UWVV")
-    print "Ntuple", ntuple.GetTitle()
-    extra_inputs.append(ntuple)
-    outfile_name = rootfile.GetName()
-    for i, chan in enumerate(channels):
-        print "INFO: Processing channel %s" % chan
-        inputs = ROOT.TList()
-        for inp in extra_inputs:
-            inputs.Add(inp)
-        tchannel = ROOT.TNamed("channel", chan)
-        inputs.Add(tchannel)
-        tname = ROOT.TNamed("name", "")
-        inputs.Add(tname)
-        tree_name = getTreeName(nanoAOD, chan)
-        datasets = ConfigureJobs.getListOfFiles(filelist, selection)
-        # TODO: Stop passing a bazillion arguments around. Make a class
-        if parallel:
-            processParallelByDataset(datasets, analysis, selection, tree_name, selector_name, inputs, addSumweights, rootfile, i)
-        else: 
-            for dataset in datasets:
-                print "Processing dataset %s" % (chan, dataset)
-                processDataset(dataset, analysis, selection, tree_name, selector_name, inputs, addSumweights, i)
-    # Store arrays in temp files, since it can get way too big to keep around in memory
-    rval = subprocess.call(["hadd", "-f", outfile_name] + ["%s_temp.root" % d for d in datasets])
-    if rval == 0:
-        for d in datasets:
-            os.remove("%s_temp.root" % d)
-    else:
-        raise RuntimeError("Valided to collect data from parallel run")
+class SelectorDriver(object):
+    def __init__(self, analysis, selection, input_tier):
+        selector_map = {
+            "WZxsec2016" : "WZSelector",
+            "Zstudy" : "ZSelector",
+            "Zstudy_2016" : "ZSelector",
+            "Zstudy_2017" : "ZSelector",
+            "ZZGen" : "ZZGenSelector",
+        }
 
+        self.analysis = analysis
+        self.selection = selection
+        self.input_tier = input_tier
+        if analysis not in selector_map.keys():
+            raise ValueError("Analysis does not point to " \
+                "a defined selector. Please edit "
+                "Utilities/python/SelectorTools.py to add it.")
+        self.selector_name = selector_map[analysis]
+        self.addSumweights = True
+        self.ntupleType = "NanoAOD"
+        self.numCores = 1
+        self.channels = ["Inclusive"]
+        self.produced_files = []
 
-def processDataset(dataset, analysis, selection, tree_name, selector_name, inputs, addSumweights, outfile, chanNum=0):
-    print "Processing dataset %s" % dataset
-    select = getattr(ROOT, selector_name)()
-    select.SetInputList(inputs)
-    name = select.GetInputList().FindObject("name")
-    if name:
-        name.SetTitle(dataset)
-    try:
-        file_path = ConfigureJobs.getInputFilesPath(dataset, 
-            selection, analysis)
-        # Only add for one channel
-        addSumweights = addSumweights and chanNum == 0 and "data" not in dataset
-        if addSumweights:
-            ROOT.gROOT.cd()
-            sumweights_hist = ROOT.TH1D("sumweights", "sumweights", 100, 0, 100)
-        processLocalFiles(select, file_path, tree_name, addSumweights)
-    except ValueError as e:
-        print e
-        return
-    output_list = select.GetOutputList()
-    dataset_list = output_list.FindObject(dataset)
-    if not dataset_list or dataset_list.ClassName() != "TList":
-        print "WARNING: No output found for dataset %s" % dataset
-        dataset_list = output_list.FindObject("Unknown")
-        if dataset_list and dataset_list.ClassName() == "TList":
-            print 'WARNING: Falling back to dataset "Unknown"'
+    # Needed to parallelize class member function, see
+    # https://stackoverflow.com/questions/1816958/cant-pickle-type-instancemethod-when-using-multiprocessing-pool-map
+    def __call__(self, args):
+        self.processDatasetHelper(args)
+
+    def setChannels(self, channels):
+        self.channels = channels
+
+    def setOutputfile(self, outfile_name):
+        self.outfile_name = outfile_name
+        self.outfile = ROOT.gROOT.FindObject(outfile_name)
+        if not self.outfile:
+            self.outfile = ROOT.TFile.Open(outfile_name)
+        self.current_file = self.outfile
+
+    def addTNamed(self, name, title):
+        if not self.inputs:
+            raise ValueError("Input list is not defined!")
+        named = self.inputs.FindObject(name)
+        if named:
+            named.SetTitle(title)
         else:
-            print 'WARNING: Skipping dataset %s' % dataset
+            named = ROOT.TNamed(name, title)
+            self.inputs.Add(named)
+
+    def setInputs(self, inputs):
+        self.inputs = ROOT.TList()
+        for inp in inputs:
+            self.inputs.Add(inp)
+        self.addTNamed("ntupleType", self.ntupleType)
+        self.addTNamed("selection", self.selection)
+        
+    def setNtupeType(self, ntupleType):
+        self.ntupleType = ntupleType
+        self.addTNamed("ntupleType", self.ntupleType)
+
+    def setNumCores(self, numCores):
+        self.numCores = numCores
+
+    def applySelector(self, datalist):
+        for chan in self.channels:
+            self.addTNamed("channel", chan)
+            print "INFO: Processing channel %s" % chan
+            datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier)
+            if self.numCores > 1:
+                self.processParallelByDataset(datasets, chan)
+            else: 
+                for dataset in datasets:
+                    self.processDataset(dataset, chan)
+
+    def processDataset(self, dataset, chan):
+        print "Processing dataset %s" % dataset
+        select = getattr(ROOT, self.selector_name)()
+        select.SetInputList(self.inputs)
+        self.addTNamed("name", dataset)
+        try:
+            file_path = ConfigureJobs.getInputFilesPath(dataset, 
+                self.input_tier, self.analysis)
+            # Only add for one channel
+            addSumweights = self.addSumweights and self.channels.index(chan) == 0 and "data" not in dataset
+            if addSumweights:
+                ROOT.gROOT.cd()
+                sumweights_hist = ROOT.TH1D("sumweights", "sumweights", 100, 0, 100)
+            self.processLocalFiles(select, file_path, addSumweights, chan)
+        except ValueError as e:
+            print e
             return
-    if addSumweights:
-        dataset_list.Add(ROOT.gROOT.FindObject("sumweights"))
-    #if len(multiprocessing.active_children()) > 0:
-    if True:
-        outfile.Close()
-        outfile = ROOT.TFile.Open("%s_temp.root" % dataset, "recreate" if chanNum == 0 else "update")
-    OutputTools.writeOutputListItem(dataset_list, outfile)
-    if True:
-        outfile.Close()
-    output_list.Delete()
+        output_list = select.GetOutputList()
+        dataset_list = output_list.FindObject(dataset)
+        if not dataset_list or dataset_list.ClassName() != "TList":
+            print "WARNING: No output found for dataset %s" % dataset
+            dataset_list = output_list.FindObject("Unknown")
+            if dataset_list and dataset_list.ClassName() == "TList":
+                print 'WARNING: Falling back to dataset "Unknown"'
+            else:
+                print 'WARNING: Skipping dataset %s' % dataset
+                return
+        if addSumweights:
+            dataset_list.Add(ROOT.gROOT.FindObject("sumweights"))
+        if self.numCores > 1:
+            tempname = "temp_%s_%s" % (dataset, self.outfile_name)
+            self.outfile.Close()
+            chanNum = self.channels.index(chan)
+            self.current_file = ROOT.TFile.Open(tempname, "recreate" if chanNum == 0 else "update")
+            self.produced_files.append(self.current_file)
+        OutputTools.writeOutputListItem(dataset_list, self.current_file)
+        output_list.Delete()
+        if self.current_file != self.outfile:
+            self.current_file.Close()
 
-def getFileNames(file_path):
-    xrootd = "/store/user" in file_path
-    if not (xrootd or os.path.isfile(file_path) or os.path.isdir(file_path.rsplit("/", 1)[0])):
-        raise ValueError("Invalid path! Skipping dataset. Path was %s" 
-            % file_path)
+    def getFileNames(self, file_path):
+        xrootd = "/store/user" in file_path
+        if not (xrootd or os.path.isfile(file_path) or os.path.isdir(file_path.rsplit("/", 1)[0])):
+            raise ValueError("Invalid path! Skipping dataset. Path was %s" 
+                % file_path)
 
-    # Assuming these are user files on HDFS, otherwise it won't work
-    filenames =  glob.glob(file_path) if not xrootd else \
-            ConfigureJobs.getListOfHDFSFiles(file_path)
-    filenames = ['root://cmsxrootd.hep.wisc.edu/' + f if "/store/user" in f[0:12] else f for f in filenames]
-    return filenames
+        # Assuming these are user files on HDFS, otherwise it won't work
+        filenames =  glob.glob(file_path) if not xrootd else \
+                ConfigureJobs.getListOfHDFSFiles(file_path)
+        filenames = ['root://cmsxrootd.hep.wisc.edu/' + f if "/store/user" in f[0:12] else f for f in filenames]
+        return filenames
 
-def getTreeName(nanoAOD, chan):
-    return "Events" if nanoAOD else "%s/ntuple" % chan
+    def getTreeName(self, chan):
+        # TODO: Fix this! This is an extremely ineffient way to separate the eemm and mmee
+        # since it involves reading the file an extra time
+        channel = chan if chan != "mmee" else "eemm"
+        return "Events" if self.ntupleType == "NanoAOD" else ("%s/ntuple" % channel)
 
-def processParallelByDataset(datasets, analysis, selection, tree_name, selector_name, inputs, addSumweights, outfile, i):
-    numCores = min(10, len(datasets))
-    p = multiprocessing.Pool(processes=numCores)
-    p.map(processDatasetHelper, [
-        [d, analysis, selection, tree_name, selector_name, inputs, addSumweights, outfile, i] for d in datasets])
+    def processParallelByDataset(self, datasets, chan):
+        numCores = min(self.numCores, len(datasets))
+        p = multiprocessing.Pool(processes=self.numCores)
+        p.map(self, [[dataset, chan] for dataset in datasets])
+        # Store arrays in temp files, since it can get way too big to keep around in memory
+        rval = subprocess.call(["hadd", "-f", self.outfile_name] + self.produced_files)
+        if rval == 0:
+            for f in self.produced_files:
+                os.remove(f)
+        else:
+            raise RuntimeError("Failed to collect data from parallel run")
 
-# Pool.map can only take in one argument, so expand the array
-def processDatasetHelper(args):
-    processDataset(*args)
+    # Pool.map can only take in one argument, so expand the array
+    def processDatasetHelper(self, args):
+        self.processDataset(*args)
 
-def processLocalFiles(selector, file_path, tree_name, addSumweights):
-    filenames = getFileNames(file_path)
-    for i, filename in enumerate(filenames):
-        processFile(selector, filename, tree_name, addSumweights, i+1)
+    def processLocalFiles(self, selector, file_path, addSumweights, chan,):
+        filenames = self.getFileNames(file_path)
+        for i, filename in enumerate(filenames):
+            self.processFile(selector, filename, addSumweights, chan, i+1)
 
-def processFile(selector, filename, tree_name, addSumweights, filenum=1):
+    def processFile(self, selector, filename, addSumweights, chan, filenum=1):
         rtfile = ROOT.TFile.Open(filename)
+        tree_name = self.getTreeName(chan)
         tree = rtfile.Get(tree_name)
         if not tree:
             raise ValueError(("tree %s not found for file %s. " \
@@ -126,22 +172,21 @@ def processFile(selector, filename, tree_name, addSumweights, filenum=1):
 
         tree.Process(selector, "")
         if addSumweights:
-            fillSumweightsHist(rtfile, filenum, tree_name)
+            self.fillSumweightsHist(rtfile, filenum)
         rtfile.Close()
 
-# You can use filenum to index the files and sum separately, but it's not necessary
-def fillSumweightsHist(rtfile, filenum, tree_name):
-    # NanoAOD
-    if tree_name == "Events":
-        sumweights_branch = "genEventSumw"
-        meta_tree_name = "Runs"
-    else:
-        sumweights_branch = "summedWeights"
-        meta_tree_name = "metaInfo/metaInfo"
-    meta_tree = rtfile.Get(meta_tree_name)
-    ROOT.gROOT.cd()
-    sumweights_hist = ROOT.gROOT.FindObject("sumweights")
-    tmplabel = sumweights_hist.GetName()+"_i"
-    tmpweights_hist = sumweights_hist.Clone(tmplabel)
-    meta_tree.Draw("%i>>%s" % (filenum, tmplabel), sumweights_branch)
-    sumweights_hist.Add(tmpweights_hist)
+    # You can use filenum to index the files and sum separately, but it's not necessary
+    def fillSumweightsHist(self, rtfile, filenum=1):
+        if self.ntupleType == "NanoAOD":
+            sumweights_branch = "genEventSumw"
+            meta_tree_name = "Runs"
+        else:
+            sumweights_branch = "summedWeights"
+            meta_tree_name = "metaInfo/metaInfo"
+        meta_tree = rtfile.Get(meta_tree_name)
+        ROOT.gROOT.cd()
+        sumweights_hist = ROOT.gROOT.FindObject("sumweights")
+        tmplabel = sumweights_hist.GetName()+"_i"
+        tmpweights_hist = sumweights_hist.Clone(tmplabel)
+        meta_tree.Draw("%i>>%s" % (filenum, tmplabel), sumweights_branch)
+        sumweights_hist.Add(tmpweights_hist)
