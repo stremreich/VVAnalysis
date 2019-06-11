@@ -119,7 +119,7 @@ mc = SelectorTools.applySelector(args['filenames'], selector_map[args['analysis'
         channels=channels,
         nanoAOD=nanoAOD,
         addSumweights=True,
-        parallel=args.parallel,
+                                 parallel=args['parallel'],
         )
 if args['test']:
     fOut.Close()

@@ -204,15 +204,15 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
     }
 
 
-    passesTrigger = isMC_ ? Dimuon_Trigger : true;;
-    //if (!singleLepton_)
-    //    //passesTrigger = (Dimuon_Trigger || SingleMuon_Trigger ||
-    //    //        Dielectron_Trigger || SingleElectron_Trigger);
-    //    passesTrigger = (Dimuon_Trigger || SingleMuon_Trigger);
-    //else
-    //    passesTrigger = (!Dimuon_Trigger && SingleMuon_Trigger);
-    //    //passesTrigger = ((!Dimuon_Trigger && SingleMuon_Trigger) ||
-    //    //        (!Dielectron_Trigger && SingleElectron_Trigger));
+    //    passesTrigger = isMC_ ? Dimuon_Trigger : true;;
+    if (!singleLepton_)
+       passesTrigger = (Dimuon_Trigger || SingleMuon_Trigger ||
+              Dielectron_Trigger || SingleElectron_Trigger);
+    //       passesTrigger = (Dimuon_Trigger || SingleMuon_Trigger);
+    else
+      // passesTrigger = (!Dimuon_Trigger && SingleMuon_Trigger);
+       passesTrigger = ((!Dimuon_Trigger && SingleMuon_Trigger) ||
+              (!Dielectron_Trigger && SingleElectron_Trigger));
 
     passesLeptonVeto = (std::min(nMediumIdMuon, nLooseIsoMuon) + nCBVIDVetoElec) == 2;
 }
@@ -239,6 +239,7 @@ void ZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::stri
 void ZSelector::ApplyScaleFactors() {
     if (isMC_)
         weight = genWeight;
+    weight = 1;
     return;
     // This will come later
     if (channel_ == ee) {
@@ -289,7 +290,7 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
     //    cutflow_ee_->Fill(1.,weight);
     //else if (channel_ == mm)
     //    cutflow_mm_->Fill(1.,weight);
-
+  SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), l2Pt, weight);
     if (!passesTrigger)
         return;
     //for (auto& hist : histMap1D_)
@@ -338,7 +339,7 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
 
     SafeHistFill(histMap1D_, getHistName("ZMass", variation.second), ZMass, weight);
     SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), l1Pt, weight);
-    SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), l2Pt, weight);
+
 }
 
 void ZSelector::SetupNewDirectory() {
