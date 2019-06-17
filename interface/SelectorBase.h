@@ -139,7 +139,7 @@ public :
     // Readers to access the data (delete the ones you do not need).
     SelectorBase(TTree * /*tree*/ =0) { }
     virtual ~SelectorBase() { }
-    //virtual void    SetScaleFactors() { };
+    virtual void    SetScaleFactors();
     virtual Int_t   Version() const { return 2; }
     virtual void    Begin(TTree *tree);
     virtual void    SlaveBegin(TTree *tree);

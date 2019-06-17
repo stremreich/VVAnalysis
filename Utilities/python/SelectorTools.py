@@ -30,12 +30,15 @@ class SelectorDriver(object):
         self.ntupleType = "NanoAOD"
         self.numCores = 1
         self.channels = ["Inclusive"]
-        self.produced_files = []
+        self.outfile_name = "temp.root"
 
     # Needed to parallelize class member function, see
     # https://stackoverflow.com/questions/1816958/cant-pickle-type-instancemethod-when-using-multiprocessing-pool-map
     def __call__(self, args):
         self.processDatasetHelper(args)
+
+    def tempfileName(self, dataset):
+        return "temp_%s_%s" % (dataset, self.outfile_name)
 
     def setChannels(self, channels):
         self.channels = channels
@@ -86,7 +89,13 @@ class SelectorDriver(object):
         print "Processing dataset %s" % dataset
         select = getattr(ROOT, self.selector_name)()
         select.SetInputList(self.inputs)
-        self.addTNamed("name", dataset)
+        # Intended for running over single file, use the format name:file
+        specified_name = dataset.split("@")
+        if len(specified_name) == 2:
+            self.addTNamed("name", specified_name[0])
+            dataset = specified_name[1]
+        else:
+            self.addTNamed("name", dataset)
         try:
             file_path = ConfigureJobs.getInputFilesPath(dataset, 
                 self.input_tier, self.analysis)
@@ -100,7 +109,8 @@ class SelectorDriver(object):
             print e
             return
         output_list = select.GetOutputList()
-        dataset_list = output_list.FindObject(dataset)
+        name = self.inputs.FindObject("name").GetTitle()
+        dataset_list = output_list.FindObject(name)
         if not dataset_list or dataset_list.ClassName() != "TList":
             print "WARNING: No output found for dataset %s" % dataset
             dataset_list = output_list.FindObject("Unknown")
@@ -108,23 +118,22 @@ class SelectorDriver(object):
                 print 'WARNING: Falling back to dataset "Unknown"'
             else:
                 print 'WARNING: Skipping dataset %s' % dataset
-                return
+                return False
         if addSumweights:
             dataset_list.Add(ROOT.gROOT.FindObject("sumweights"))
         if self.numCores > 1:
-            tempname = "temp_%s_%s" % (dataset, self.outfile_name)
             self.outfile.Close()
             chanNum = self.channels.index(chan)
-            self.current_file = ROOT.TFile.Open(tempname, "recreate" if chanNum == 0 else "update")
-            self.produced_files.append(self.current_file)
+            self.current_file = ROOT.TFile.Open(self.tempfileName(dataset), "recreate" if chanNum == 0 else "update")
         OutputTools.writeOutputListItem(dataset_list, self.current_file)
         output_list.Delete()
         if self.current_file != self.outfile:
             self.current_file.Close()
+        return True
 
     def getFileNames(self, file_path):
-        xrootd = "/store/user" in file_path
-        if not (xrootd or os.path.isfile(file_path) or os.path.isdir(file_path.rsplit("/", 1)[0])):
+        xrootd = "/store/user" in file_path.split("/hdfs/")[0][:12]
+        if not (xrootd or os.path.isfile(file_path) or os.path.isdir(file_path.rsplit("/", 1)[0].rstrip("/*"))):
             raise ValueError("Invalid path! Skipping dataset. Path was %s" 
                 % file_path)
 
@@ -145,10 +154,11 @@ class SelectorDriver(object):
         p = multiprocessing.Pool(processes=self.numCores)
         p.map(self, [[dataset, chan] for dataset in datasets])
         # Store arrays in temp files, since it can get way too big to keep around in memory
-        rval = subprocess.call(["hadd", "-f", self.outfile_name] + self.produced_files)
+        tempfiles = [self.tempfileName(d) for d in datasets] 
+        tempfiles = filter(os.path.isfile, tempfiles)
+        rval = subprocess.call(["hadd", "-f", self.outfile_name] + tempfiles)
         if rval == 0:
-            for f in self.produced_files:
-                os.remove(f)
+            map(os.remove, tempfiles)
         else:
             raise RuntimeError("Failed to collect data from parallel run")
 

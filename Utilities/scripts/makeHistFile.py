@@ -47,9 +47,10 @@ tmpFileName = args['output_file']
 fOut = ROOT.TFile(tmpFileName, "recreate")
 
 addScaleFacs = False
-if args['analysis'] == "WZxsec2016":
+if args['analysis'] == "WZxsec2016" or args['analysis'] == 'Zstudy_2016':
     addScaleFacs = True
-sf_inputs = []
+addScaleFacs=False
+sf_inputs = [ROOT.TParameter(bool)("applyScaleFacs", False)]
 
 if addScaleFacs:
     fScales = ROOT.TFile('data/scaleFactors.root')
@@ -82,6 +83,7 @@ if addScaleFacs:
 
     fr_inputs = [eCBTightFakeRate, mCBTightFakeRate,]
     sf_inputs = [electronTightIdSF, electronGsfSF, muonIsoSF, muonIdSF, pileupSF, prefireEff]
+    sf_inputs.append(ROOT.TParameter(bool)("applyScaleFacs", True))
 
 if args['input_tier'] == '':
     args['input_tier'] = args['selection']

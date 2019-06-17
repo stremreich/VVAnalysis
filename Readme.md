@@ -101,6 +101,8 @@ This will submit jobs for each file with a name matching the pattern "data*", de
 
 ### The Z selector example
 
+See [this commit](https://github.com/kdlong/VVAnalysis/commit/18a1d903e149653fff3985b43f1acc834632a7ac) for an example of how to add histograms to a selector using the configuration setup. [These corresponding changes](https://github.com/kdlong/AnalysisDatasetManager/commit/39909f6e76046b6ab39b293fa3ea209d1cd202a8) to the [AnalysisDatasetManager repository](https://github.com/kdlong/AnalysisDatasetManager) are necessary.
+
 ### Implementing your own selector
 
 ### The WZ selector

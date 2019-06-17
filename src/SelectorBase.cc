@@ -11,14 +11,12 @@ void SelectorBase::Begin(TTree * /*tree*/)
 
 void SelectorBase::SlaveBegin(TTree * /*tree*/)
 {
-    TParameter<bool>* addSum = (TParameter<bool>*) GetInputList()->FindObject("addSumweights");
-    if (addSum != nullptr) 
-        addSumweights_ = addSum->GetVal();
-    else
-        addSumweights_ = false;
-
-    //if (applyScaleFactors_)
-    //    SetScaleFactors();
+    if (GetInputList() != nullptr) {
+        TParameter<bool>* applyScaleFactors = (TParameter<bool>*) GetInputList()->FindObject("applyScaleFacs");
+        if (applyScaleFactors != nullptr && applyScaleFactors->GetVal()) {
+           SetScaleFactors();
+        }
+    }
 }
 
 void SelectorBase::Init(TTree *tree)
@@ -103,12 +101,16 @@ void SelectorBase::Init(TTree *tree)
         size_t existingObjectPtrsSize = allObjects_.size();
         SetupNewDirectory();
         if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
-            Abort(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
+            std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
         }
     }
     UpdateDirectory();
 
     SetBranches();
+}
+
+void SelectorBase::SetScaleFactors() {
+    std::invalid_argument("No scale factors defined for selector!");
 }
 
 void SelectorBase::SetBranches() {
@@ -161,9 +163,9 @@ void SelectorBase::SlaveTerminate()
 void SelectorBase::UpdateDirectory()
 {
   for(TNamed** objPtrPtr : allObjects_) {
-    if ( *objPtrPtr == nullptr ) Abort("SelectorBase: Call to UpdateObject but existing pointer is null");
+    if ( *objPtrPtr == nullptr ) std::invalid_argument("SelectorBase: Call to UpdateObject but existing pointer is null");
     *objPtrPtr = (TNamed *) currentHistDir_->FindObject((*objPtrPtr)->GetName());
-    if ( *objPtrPtr == nullptr ) Abort("SelectorBase: Call to UpdateObject but current directory has no instance");
+    if ( *objPtrPtr == nullptr ) std::invalid_argument("SelectorBase: Call to UpdateObject but current directory has no instance");
   }
 }
 
