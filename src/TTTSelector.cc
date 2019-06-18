@@ -43,8 +43,8 @@ void TTTSelector::Init(TTree *tree)
 {
   b.SetTree(tree);
   
-  allChannels_ = {"ee", "mm", "Unknown"};
-  hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2"};
+  allChannels_ = {"ee", "mm", "em"};
+  hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR"};
 
   SelectorBase::Init(tree);
   
@@ -55,23 +55,34 @@ void TTTSelector::SetBranchesNanoAOD() {
   b.CleanUp();
 
   b.SetBranch("nElectron", nElectron);
-  b.SetBranch("nMuon", nMuon);
   b.SetBranch("Electron_pt", Electron_pt);
   b.SetBranch("Electron_eta", Electron_eta);
   b.SetBranch("Electron_phi", Electron_phi);
+  b.SetBranch("Electron_cutBased", Electron_cutBased);
+  b.SetBranch("Electron_charge", Electron_charge);
+  b.SetBranch("Electron_mass", Electron_mass);
+
+  b.SetBranch("nMuon", nMuon);
   b.SetBranch("Muon_pt", Muon_pt);
   b.SetBranch("Muon_eta", Muon_eta);
   b.SetBranch("Muon_phi", Muon_phi);
-  b.SetBranch("Electron_cutBased", Electron_cutBased);
   b.SetBranch("Muon_tightId", Muon_tightId);
   b.SetBranch("Muon_tkIsoId", Muon_tkIsoId);
   b.SetBranch("Muon_pfRelIso04_all", Muon_pfRelIso04_all);
+  b.SetBranch("Muon_charge", Muon_charge);
+  b.SetBranch("Muon_mass", Muon_mass);
+
+  b.SetBranch("nJet", nJet);
+  b.SetBranch("Jet_btagCSVV2", Jet_btagCSVV2);
+  b.SetBranch("Jet_btagDeepB", Jet_btagDeepB);
+  b.SetBranch("Jet_eta", Jet_eta);
+  b.SetBranch("Jet_phi", Jet_phi);
+  b.SetBranch("Jet_pt", Jet_pt);
+  b.SetBranch("Jet_mass", Jet_mass);
+  
   b.SetBranch("MET_pt", MET);
   b.SetBranch("MET_phi", type1_pfMETPhi);
-  b.SetBranch("Electron_charge", Electron_charge);
-  b.SetBranch("Muon_charge", Muon_charge);
-  b.SetBranch("Electron_mass", Electron_mass);
-  b.SetBranch("Muon_mass", Muon_mass);
+  
   if (isMC_) {
     //b.SetBranch("e1GenPt", l1GenPt, );
     //b.SetBranch("e2GenPt", l2GenPt, );
@@ -92,7 +103,13 @@ void TTTSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::st
 
 void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) { 
   weight = 1;
+  HT = 0;
+  nTightJet = 0;
+  nBJets = 0;
+
+  
   b.SetEntry(entry);
+  goodParts.clear();
   if (nElectron > N_KEEP_MU_E_ || nMuon > N_KEEP_MU_E_) {
     std::string message = "Found more electrons or muons than max read number.\n    Found ";
     message += std::to_string(nElectron);
@@ -105,45 +122,83 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   }
 
   // cut-based ID Fall17 V2 (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
-  int nCBVIDTightElec = std::count(Electron_cutBased, Electron_cutBased+nElectron, 4);
+  int nCBVIDTightElec = 0;
   int nCBVIDVetoElec = std::count(Electron_cutBased, Electron_cutBased+nElectron, 1);
   int nTightIdMuon = 0;
   int nMediumIdMuon = 0;
-
-  for (size_t i = 0; i < nMuon; i++) {
-    //nMediumIdMuon += (Muon_mediumId[i] && Muon_pfRelIso04_all[i] < 0.15);
-    nMediumIdMuon += (Muon_mediumId[i] && Muon_pfRelIso04_all[i] < 0.15*Muon_pt[i]);
-    nTightIdMuon += (Muon_tightId[i] && Muon_pfRelIso04_all[i] < 0.15);
+  
+  
+  /////////////////////
+  // Setup Electrons //
+  /////////////////////
+    
+  for (size_t i = 0; i < nElectron; i++) {
+    if(IsTightElectron(i)) {
+      nCBVIDTightElec++;
+      goodParts.push_back(GoodPart());
+      goodParts.back().SetTVector(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
+      goodParts.back().SetpType(pType::Electron);
+      goodParts.back().SetCharge(Electron_charge[i]);
+    }
   }
 
-
+  /////////////////
+  // Setup Muons //
+  /////////////////
   
+  for (size_t i = 0; i < nMuon; i++) {
+    nMediumIdMuon += (Muon_mediumId[i] && Muon_pfRelIso04_all[i] < 0.15*Muon_pt[i]);
+    if(IsTightMuon(i)) {
+      nTightIdMuon++;
+      goodParts.push_back(GoodPart());
+      goodParts.back().SetTVector(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
+      goodParts.back().SetpType(pType::Muon);
+      goodParts.back().SetCharge(Muon_charge[i]);
+    }
+  }
 
+  ////////////////
+  // Setup Jets //
+  ////////////////
+  for(size_t i = 0; i < nJet; i++) {
+    if(goodParts.size() != 2) break;
+    // regular jets
+    if(IsTightJet(i)) {
+      nTightJet++;
+      HT += Jet_pt[i];
+    }
+    // bjet 
+    if(IsTightBJet(i)) {
+      nBJets++;
+    }
+  }
+  
+ 
   channel_ = channelMap_[channelName_];
-  if (nTightIdMuon >= 2) {
+  if (nTightIdMuon == 2) {
     channel_ = mm;
     channelName_ = "mm";
-  } else if (nCBVIDTightElec >= 2) {
+
+  } else if (nCBVIDTightElec == 2) {
     channel_ = ee;
     channelName_ = "ee";
+  } else if((nTightIdMuon + nCBVIDTightElec) == 2) {
+    channel_ = em;
+    channelName_ ="em";
+    /// fix order of leptons by pt
+    if(goodParts[0].v.Pt() < goodParts[1].v.Pt()) {
+      std::swap(goodParts[0], goodParts[1]);
+    }
   } else {
     channel_ = Unknown;
     channelName_ = "Unknown";
   }
 
-  // if (isMC_) {
-  //   b_genWeight->GetEntry(entry);
-  //   b_numPU->GetEntry(entry);
-  //   //b_l1GenPt->GetEntry(entry);
-  //   //b_l2GenPt->GetEntry(entry);
-  //   //b_l3GenPt->GetEntry(entry);
-  //   //ApplyScaleFactors();
-  // }
-  // else {
-  //   b_Flag_duplicateMuonsPass->GetEntry(entry);          
-  //   b_Flag_badMuonsPass->GetEntry(entry);          
-  // }
+  if (isMC_) {
+    ApplyScaleFactors();
+  }
 
+  //// need veto stuff
   //  passesLeptonVeto = (nMuon + nElectron) == 3;
 }
 
@@ -153,124 +208,100 @@ void TTTSelector::ApplyScaleFactors() {
   weight = 1;
   // skipping for now
   return;
-
-  
-  if (channel_ == eee) {
-    weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-    weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-    weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-    weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-    weight *= eIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-    weight *= eGsfSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-  }
-  else if (channel_ == eem) {
-    weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-    weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-    weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-    weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-    weight *= mIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-    weight *= mIsoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-  }
-  else if (channel_ == emm) {
-    weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-    weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-    weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-    weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-    weight *= mIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-    weight *= mIsoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-  }
-  else {
-    weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-    weight *= mIsoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-    weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-    weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-    weight *= mIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-    weight *= mIsoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-  }
-  weight *= pileupSF_->Evaluate1D(nTruePU);
-}
-
-void TTTSelector::SetShiftedMasses() {
-  TLorentzVector lepton1;
-  lepton1.SetPtEtaPhiM(l1Pt, l1Eta, l1Phi, l1Mass);
-  TLorentzVector lepton2;
-  lepton2.SetPtEtaPhiM(l2Pt, l2Eta, l2Phi, l2Mass);
-  TLorentzVector lepton3;
-  lepton3.SetPtEtaPhiM(l3Pt, l3Eta, l3Phi, l3Mass);
-  ZMass = (lepton1+lepton2).M();
-  Mass = (lepton1+lepton2+lepton3).M();
+  //// to add!!
 }
 
 // Meant to be a wrapper for the tight ID just in case it changes
 // To be a function of multiple variables
-bool TTTSelector::zlep1IsTight() {
-  return l1IsTight; 
+bool TTTSelector::IsTightMuon(size_t index) {
+  return ( (Muon_pt[index] > 20) &&
+	   (abs(Muon_eta[index]) < 2.4) &&
+	   Muon_tightId[index] &&
+	   (Muon_pfRelIso04_all[index] < 0.16) );
 }
 
-bool TTTSelector::zlep2IsTight() {
-  return l2IsTight; 
+bool TTTSelector::IsTightElectron(size_t index) {
+  return ((Electron_pt[index] > 20) &&
+	  (abs(Electron_eta[index]) < 2.5) &&
+	  (Electron_cutBased[index] == 4));
 }
 
-bool TTTSelector::tightZLeptons() {
-  return zlep1IsTight() && zlep2IsTight(); 
+bool TTTSelector::IsTightJet(size_t index) {
+  return ((Jet_pt[index] > 40) &&
+	  (abs(Jet_eta[index]) < 2.4) &&
+	  IsOverlap(index));
 }
 
-bool TTTSelector::lepton3IsTight() {
-  return l3IsTight;
+bool TTTSelector::IsTightBJet(size_t index) {
+  return ((Jet_pt[index] > 25) &&
+	  (abs(Jet_eta[index]) < 2.4) &&
+	  (Jet_btagCSVV2[index] > 0.8484) &&
+	  IsOverlap(index));
 }
 
-bool TTTSelector::IsGenMatched3l() {
-  //return true;
-  return (!isMC_ || isNonpromptMC_ || 
-	  (isZgamma_ && l1GenPt > 0 && l2GenPt > 0) ||
-	  (l1GenPt > 0 && l2GenPt > 0 && l3GenPt > 0));
+bool TTTSelector::IsOverlap(size_t index) {
+  TLorentzVector tmp;
+  double dR = 0.3;
+  tmp.SetPtEtaPhiM(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);
+  return ((tmp.DeltaR(goodParts[0].v) > dR) &&
+	  (tmp.DeltaR(goodParts[1].v) > dR));
 }
-
 
 void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
   int step = 0;
-  // SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
-  // if (channel_ != mm && channel_ != ee) 
-  //   return;
-  // SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  /// 2 good leptons
+  if(goodParts.size() != 2) return;
+  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
-  // if (!passesTrigger)
-  //   return;
-  // SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  // first lep requirement
+  if(goodParts[0].v.Pt() < 25) return;
+  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  
+  // same sign requirement
+  if(goodParts[0].charge * goodParts[1].charge != 1) return;
+  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
-  // if (channel_ == ee && (std::abs(l1Eta) > 2.4 || std::abs(l2Eta) > 2.4 ))
-  //   return;
-  // else if (channel_ == mm && (std::abs(l1Eta) > 2.5 || std::abs(l2Eta) > 2.5 ))
-  //   return;
-  // SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  // met cut
+  if (MET < 50) return;
+  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
-  // if (l1Pt < 25 || l2Pt < 25)
-  //   return;
-  // SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
-
-  // if (ZMass > 116.1876 || ZMass < 76.1876)
-  //   return;
-  // SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
-
-  // if (MET > 25)
-  //   return;
-  // SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
-
-  // if (!tightZLeptons())
-  //   return;
-  // SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
-
-  SafeHistFill(histMap1D_, getHistName("ZMass", variation.second), ZMass, weight);
-  SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), Muon_pt[0], weight);
-  SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), Muon_pt[1], weight);
-
-
+  // ht cut
+  if(HT < 300 ) return;
+  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  
+  // jet cut
+  if(nTightJet < 4) return;
+  
+  // bjet cut
+  if(nBJets < 2) return;
+  
+  // veto cut
+    
+  SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), goodParts[0].v.Pt(), weight);
+  SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), goodParts[1].v.Pt(), weight);
+  SafeHistFill(histMap1D_, getHistName("SR", variation.second), getSRBin(), weight);
 }
 
 void TTTSelector::SetupNewDirectory() {
   SelectorBase::SetupNewDirectory();
 
   InitializeHistogramsFromConfig();
+}
+
+int TTTSelector::getSRBin() {
+  if(nBJets == 2) {
+    //    if(nTightJet <= 5) return 1;
+    if(nTightJet == 6)      return 1;
+    else if(nTightJet == 7) return 2;
+    else if(nTightJet >= 8) return 3;
+  } else if(nBJets == 3) {
+    if(nTightJet == 5)      return 4;
+    else if(nTightJet == 6) return 5;
+    else if(nTightJet == 7) return 6;
+    else if(nTightJet >= 8) return 7;
+  } else{              return 8; }
+  return -1;
 }
 
