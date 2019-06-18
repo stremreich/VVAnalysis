@@ -323,6 +323,9 @@ void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::stri
   //   Fill1D("CutFlow", ++step);
   // in SR stuff
 
+  // met cut
+  if (MET < 50) return;
+  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
   Fill1D("ptl1", goodParts[0].Pt());
   Fill1D("ptl2", goodParts[1].Pt());
