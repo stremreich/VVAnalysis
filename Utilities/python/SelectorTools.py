@@ -22,6 +22,7 @@ class SelectorDriver(object):
             "TTT" : "TTTSelector",
             "WGen" : "WGenSelector",
             "ZGen" : "ZGenSelector",
+            "TTT" : "TTTSelector",
         }
 
         self.analysis = analysis
