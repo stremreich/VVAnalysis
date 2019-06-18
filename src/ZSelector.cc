@@ -256,19 +256,24 @@ void ZSelector::ApplyScaleFactors() {
             weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
         }
     }
-    else if (channel_ == mm) {
-        if (mIdSF_ != nullptr) {
-            weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
-        if (mIsoSF_ != nullptr) {
-            weight *= mIsoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
+    if (eGsfSF_ != nullptr) {
+      weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+      weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
     }
-    if (pileupSF_ != nullptr) {
-        weight *= pileupSF_->Evaluate1D(numPU);
+  }
+  else if (channel_ == mm) {
+    if (mIdSF_ != nullptr) {
+      weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+      weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
     }
+    if (mIsoSF_ != nullptr) {
+      weight *= mIsoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+      weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+    }
+  }
+  if (pileupSF_ != nullptr) {
+    weight *= pileupSF_->Evaluate1D(numPU);
+  }
 }
 
 void ZSelector::SetComposite() {
@@ -313,17 +318,17 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (channel_ == ee && (std::abs(l1Eta) > 2.4 || std::abs(l2Eta) > 2.4 ))
-        return;
+      return;
     else if (channel_ == mm && (std::abs(l1Eta) > 2.5 || std::abs(l2Eta) > 2.5 ))
-        return;
+      return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (l1Pt < 25 || l2Pt < 25)
-        return;
+      return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (ZMass > 106.1876 || ZMass < 76.1876)
-        return;
+      return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     //if (MET > 25)
@@ -331,7 +336,7 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
     //SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (!tightZLeptons())
-        return;
+      return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     SafeHistFill(histMap1D_, getHistName("ZMass", variation.second), ZMass, weight);
