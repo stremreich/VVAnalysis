@@ -6,6 +6,7 @@
 #include "Analysis/VVAnalysis/interface/ZGenSelector.h"
 #include "Analysis/VVAnalysis/interface/NanoGenSelectorBase.h"
 #include "Analysis/VVAnalysis/interface/WZSelector.h"
+#include "Analysis/VVAnalysis/interface/TTTSelector.h"
 #include "Analysis/VVAnalysis/interface/WZSelectorBase.h"
 #include "Analysis/VVAnalysis/interface/WZBackgroundSelector.h"
 #include "Analysis/VVAnalysis/interface/ScaleFactor.h"
@@ -23,6 +24,7 @@ namespace{
     ZZGenSelector pZZGenSelector;
     WGenSelector pWGenSelector;
     ZGenSelector pZGenSelector;
+    TTTSelector pTTTSelector;
     WZBackgroundSelector pWZBackgroundSelector;
     ScaleFactor pScaleFactor;
     disambiguateFinalStates pDisambiguator;
