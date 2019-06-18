@@ -234,17 +234,6 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
     }
 
 
-<<<<<<< HEAD
-    //    passesTrigger = isMC_ ? Dimuon_Trigger : true;;
-    if (!singleLepton_)
-       passesTrigger = (Dimuon_Trigger || SingleMuon_Trigger ||
-              Dielectron_Trigger || SingleElectron_Trigger);
-    //       passesTrigger = (Dimuon_Trigger || SingleMuon_Trigger);
-    else
-      // passesTrigger = (!Dimuon_Trigger && SingleMuon_Trigger);
-       passesTrigger = ((!Dimuon_Trigger && SingleMuon_Trigger) ||
-              (!Dielectron_Trigger && SingleElectron_Trigger));
-=======
     //if (!singleLepton_)
     //    //passesTrigger = (Dimuon_Trigger || SingleMuon_Trigger ||
     //    //        Dielectron_Trigger || SingleElectron_Trigger);
@@ -254,7 +243,7 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
     //    //passesTrigger = ((!Dimuon_Trigger && SingleMuon_Trigger) ||
     //    //        (!Dielectron_Trigger && SingleElectron_Trigger));
     passesTrigger = SingleMuon_Trigger || SingleElectron_Trigger;
->>>>>>> 47e911285df245c5be41ebe95d665052fab1c71a
+
 
     passesLeptonVeto = (std::min(nMediumIdMuon, nLooseIsoMuon) + nCBVIDVetoElec) == 2;
 }
@@ -279,37 +268,29 @@ void ZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::stri
 }
 
 void ZSelector::ApplyScaleFactors() {
-<<<<<<< HEAD
-    if (isMC_)
-        weight = genWeight;
-    weight = 1;
-    return;
-    // This will come later
-=======
->>>>>>> 47e911285df245c5be41ebe95d665052fab1c71a
-    if (channel_ == ee) {
-        if (eIdSF_ != nullptr) {
-            weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
-        if (eGsfSF_ != nullptr) {
-            weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
+  if (channel_ == ee) {
+    if (eIdSF_ != nullptr) {
+      weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+      weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
     }
-    else if (channel_ == mm) {
-        if (mIdSF_ != nullptr) {
-            weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
-        if (mIsoSF_ != nullptr) {
-            weight *= mIsoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
+    if (eGsfSF_ != nullptr) {
+      weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+      weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
     }
-    if (pileupSF_ != nullptr) {
-        weight *= pileupSF_->Evaluate1D(numPU);
+  }
+  else if (channel_ == mm) {
+    if (mIdSF_ != nullptr) {
+      weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+      weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
     }
+    if (mIsoSF_ != nullptr) {
+      weight *= mIsoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+      weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+    }
+  }
+  if (pileupSF_ != nullptr) {
+    weight *= pileupSF_->Evaluate1D(numPU);
+  }
 }
 
 void ZSelector::SetComposite() {
@@ -342,24 +323,11 @@ bool ZSelector::tightZLeptons() {
 }
 
 void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
-<<<<<<< HEAD
-    //cutflow_ee_->Fill(0.,weight);
-    //SafeHistFill(histMap1D_, getHistName("CutFlow_ee", variation.second), 0., weight);
-    //cutflow_mm_->Fill(0.,weight);
-    //if (channel_ == ee)
-    //    cutflow_ee_->Fill(1.,weight);
-    //else if (channel_ == mm)
-    //    cutflow_mm_->Fill(1.,weight);
-  SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), l2Pt, weight);
-    if (!passesTrigger)
-        return;
-    //for (auto& hist : histMap1D_)
-=======
-    int step = 0;
-    SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  int step = 0;
+  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
->>>>>>> 47e911285df245c5be41ebe95d665052fab1c71a
-    if (channel_ != mm && channel_ != ee) 
+
+  if (channel_ != mm && channel_ != ee) 
         return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
@@ -368,17 +336,17 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (channel_ == ee && (std::abs(l1Eta) > 2.4 || std::abs(l2Eta) > 2.4 ))
-        return;
+      return;
     else if (channel_ == mm && (std::abs(l1Eta) > 2.5 || std::abs(l2Eta) > 2.5 ))
-        return;
+      return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (l1Pt < 25 || l2Pt < 25)
-        return;
+      return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (ZMass > 106.1876 || ZMass < 76.1876)
-        return;
+      return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     //if (MET > 25)
@@ -386,21 +354,17 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
     //SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (!tightZLeptons())
-        return;
+      return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     SafeHistFill(histMap1D_, getHistName("ZMass", variation.second), ZMass, weight);
     SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), l1Pt, weight);
-<<<<<<< HEAD
-
-=======
     SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), l2Pt, weight);
     SafeHistFill(histMap1D_, getHistName("etal1", variation.second), l2Eta, weight);
     SafeHistFill(histMap1D_, getHistName("etal2", variation.second), l2Eta, weight);
     SafeHistFill(histMap1D_, getHistName("ZEta", variation.second), ZEta, weight);
     SafeHistFill(histMap1D_, getHistName("yZ", variation.second), Zy, weight);
     SafeHistFill(histMap1D_, getHistName("ZPt", variation.second), ZPt, weight);
->>>>>>> 47e911285df245c5be41ebe95d665052fab1c71a
 }
 
 void ZSelector::SetupNewDirectory() {

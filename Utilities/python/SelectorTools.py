@@ -16,6 +16,7 @@ class SelectorDriver(object):
             "Zstudy_2016" : "ZSelector",
             "Zstudy_2017" : "ZSelector",
             "ZZGen" : "ZZGenSelector",
+            "TTT" : "TTTSelector",
         }
 
         self.analysis = analysis
