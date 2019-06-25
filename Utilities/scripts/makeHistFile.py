@@ -95,53 +95,6 @@ if selection == "Inclusive2Jet":
 analysis = "/".join([args['analysis'], selection])
 hists, hist_inputs = UserInput.getHistInfo(analysis, args['hist_names'], args['noHistConfig'])
 
-# <<<<<<< HEAD
-# tselection = [ROOT.TNamed("selection", args['output_selection'])]
-# nanoAOD = not args['uwvv']
-# channels = ["Inclusive"] if nanoAOD else args['channels']
-
-# if "WZxsec2016" in analysis and "FakeRate" not in args['output_selection'] and not args['test']:
-#     background = SelectorTools.applySelector(["WZxsec2016data"] +
-#         ConfigureJobs.getListOfEWKFilenames() + ["wz3lnu-powheg"] +
-#         ConfigureJobs.getListOfNonpromptFilenames(), 
-#             "WZBackgroundSelector", args['selection'], fOut, 
-#             extra_inputs=sf_inputs+fr_inputs+hist_inputs+tselection, 
-#             channels=channels,
-#             addSumweights=False,
-#             nanoAOD=nanoAOD,
-#             parallel=args.parallel,
-#             )
-
-# selector_map = {
-#     "WZxsec2016" : "WZSelector",
-#     "Zstudy" : "ZSelector",
-#     "Zstudy_2016" : "ZSelector",
-#     "Zstudy_2017" : "ZSelector",
-#     "ZZGen" : "ZZGenSelector",
-# }
-
-# mc = SelectorTools.applySelector(args['filenames'], selector_map[args['analysis']], 
-#         args['selection'], fOut, 
-#         analysis=args['analysis'],
-#         extra_inputs=sf_inputs+hist_inputs+tselection, 
-#         channels=channels,
-#         nanoAOD=nanoAOD,
-#         addSumweights=True,
-#                                  parallel=args['parallel'],
-#         )
-# =======
-#if "WZxsec2016" in analysis and "FakeRate" not in args['output_selection'] and not args['test']:
-#    background = SelectorTools.applySelector(["WZxsec2016data"] +
-#        ConfigureJobs.getListOfEWKFilenames() + ["wz3lnu-powheg"] +
-#        ConfigureJobs.getListOfNonpromptFilenames(), 
-#            "WZBackgroundSelector", args['selection'], fOut, 
-#            extra_inputs=sf_inputs+fr_inputs+hist_inputs+tselection, 
-#            channels=channels,
-#            addSumweights=False,
-#            nanoAOD=nanoAOD,
-#            parallel=args['parallel'],
-#            )
-
 selector = SelectorTools.SelectorDriver(args['analysis'], args['selection'], args['input_tier'])
 selector.setOutputfile(fOut.GetName())
 selector.setInputs(sf_inputs+hist_inputs)

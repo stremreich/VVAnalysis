@@ -43,7 +43,7 @@ void TTTSelector::Init(TTree *tree)
 {
   b.SetTree(tree);
   
-  allChannels_ = {"ee", "mm", "em"};
+  allChannels_ = {"ee", "mm", "em", "all"};
   hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR"};
 
   SelectorBase::Init(tree);
@@ -67,8 +67,10 @@ void TTTSelector::SetBranchesNanoAOD() {
   b.SetBranch("Muon_eta", Muon_eta);
   b.SetBranch("Muon_phi", Muon_phi);
   b.SetBranch("Muon_tightId", Muon_tightId);
+  b.SetBranch("Muon_mediumId", Muon_mediumId);
   b.SetBranch("Muon_tkIsoId", Muon_tkIsoId);
   b.SetBranch("Muon_pfRelIso04_all", Muon_pfRelIso04_all);
+  b.SetBranch("Muon_miniPFRelIso_all", Muon_miniPFRelIso_all);
   b.SetBranch("Muon_charge", Muon_charge);
   b.SetBranch("Muon_mass", Muon_mass);
 
@@ -216,8 +218,8 @@ void TTTSelector::ApplyScaleFactors() {
 bool TTTSelector::IsTightMuon(size_t index) {
   return ( (Muon_pt[index] > 20) &&
 	   (abs(Muon_eta[index]) < 2.4) &&
-	   Muon_tightId[index] &&
-	   (Muon_pfRelIso04_all[index] < 0.16) );
+	   Muon_mediumId[index] &&
+	   (Muon_miniPFRelIso_all[index] < 0.16) );
 }
 
 bool TTTSelector::IsTightElectron(size_t index) {
@@ -241,7 +243,7 @@ bool TTTSelector::IsTightBJet(size_t index) {
 
 bool TTTSelector::IsOverlap(size_t index) {
   TLorentzVector tmp;
-  double dR = 0.3;
+  double dR = 0.4;
   tmp.SetPtEtaPhiM(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);
   return ((tmp.DeltaR(goodParts[0].v) > dR) &&
 	  (tmp.DeltaR(goodParts[1].v) > dR));
@@ -278,10 +280,15 @@ void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::stri
   if(nBJets < 2) return;
   
   // veto cut
-    
+
   SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), goodParts[0].v.Pt(), weight);
   SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), goodParts[1].v.Pt(), weight);
   SafeHistFill(histMap1D_, getHistName("SR", variation.second), getSRBin(), weight);
+
+  SafeHistFill(histMap1D_, "ptl1_all", goodParts[0].v.Pt(), weight);
+  SafeHistFill(histMap1D_, "ptl2_all", goodParts[1].v.Pt(), weight);
+  SafeHistFill(histMap1D_, "SR_all", getSRBin(), weight);
+  
 }
 
 void TTTSelector::SetupNewDirectory() {
@@ -292,7 +299,7 @@ void TTTSelector::SetupNewDirectory() {
 
 int TTTSelector::getSRBin() {
   if(nBJets == 2) {
-    //    if(nTightJet <= 5) return 1;
+    if(nTightJet <= 5)      return 0;
     if(nTightJet == 6)      return 1;
     else if(nTightJet == 7) return 2;
     else if(nTightJet >= 8) return 3;
@@ -301,7 +308,9 @@ int TTTSelector::getSRBin() {
     else if(nTightJet == 6) return 5;
     else if(nTightJet == 7) return 6;
     else if(nTightJet >= 8) return 7;
-  } else{              return 8; }
+  } else if(nBJets >= 4) {
+    if(nTightJet >= 5)     return 8;
+  }
   return -1;
 }
 

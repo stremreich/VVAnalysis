@@ -110,10 +110,13 @@ class SelectorDriver(object):
             print e
             return
         output_list = select.GetOutputList()
+
         name = self.inputs.FindObject("name").GetTitle()
         dataset_list = output_list.FindObject(name)
         if not dataset_list or dataset_list.ClassName() != "TList":
             print "WARNING: No output found for dataset %s" % dataset
+            print file_path
+            print "This is probably wrong"
             dataset_list = output_list.FindObject("Unknown")
             if dataset_list and dataset_list.ClassName() == "TList":
                 print 'WARNING: Falling back to dataset "Unknown"'
