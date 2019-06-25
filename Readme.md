@@ -103,6 +103,16 @@ This will submit jobs for each file with a name matching the pattern "data*", de
 
 See [this commit](https://github.com/kdlong/VVAnalysis/commit/18a1d903e149653fff3985b43f1acc834632a7ac) for an example of how to add histograms to a selector using the configuration setup. [These corresponding changes](https://github.com/kdlong/AnalysisDatasetManager/commit/39909f6e76046b6ab39b293fa3ea209d1cd202a8) to the [AnalysisDatasetManager repository](https://github.com/kdlong/AnalysisDatasetManager) are necessary.
 
+The main program that runs the analysis is the file ```./Utilities/scripts/makeHistFile.py``` . This file is a wrapper for the running the selector defined in your src directory over the files specified in the AnalysisDatasetManager. This code works with a conviention used in most of this code suite, that is a selection, analysis, and input tier are needed for most all functions to run. for completeness, each option for the code will be explained and the user can know how to use the software:
+
+* **-s**: Selection. ____________
+* **-v**: Version. Pretty self explanitory
+* **-a**: Analysis. _________________
+* **-f**: Filenames. The name of the files to be run over, in quotes seperated by commas. The filenames are those specified in the AnalysisDatasetManager, specifically with the FileInfo folder.
+* **-j**: Number of Cores. Same as with Make, number of cores used to run the jobs
+* **-c**: Channels: If you want to only run over a certain number of channels, put those channels in quotes seperated by commas. Default to Inclusive
+* **-o**: Output File: Name of the outfile. One one is made, all the samples are put into folders after the filename
+
 ### Implementing your own selector
 
 ### The WZ selector
@@ -112,4 +122,29 @@ See [this commit](https://github.com/kdlong/VVAnalysis/commit/18a1d903e149653fff
 ## Running Statistical Analysis 
 
 ## Plotting
+
+## Addendum: AnalysisDatasetManager
+
+The [AnalysisDatasetManager](https://github.com/kdlong/AnalysisDatasetManager) is a repo used for handing generic histogram and file information across softwares. Because of it's importance, it's worth explaining (may move this to the actual repo, but here for now). It is worth it to fork your own version of this repo.
+
+This section will divided up into explaining each of the important folders in this repo and how they relate to the code
+
+### FileInfo
+
+The FileInfo folder contains two main parts. The first is a folder named after the Anaysis in question. As per the Z selector example above, there is a Zstudy_2016 folder for that specific study. Inside each analysis folder is a python file (all the data is stored in json-esque data format, but in python file for convience) with names corresponding to the input-tier/skim name. If our input files were skimmed by the "NanoDileptonSkim" skim for our Z study, we'd expect to see a ```./AnalysisDatasetManager/FileInfo/Zstudy_2016/NanoDileptonSkim.py ``` file that contains the information of the files. For an example of what the file should look like, [look here](https://github.com/kdlong/AnalysisDatasetManager/blob/master/FileInfo/Zstudy_2016/NanoDileptonSkim.py).
+
+The other use is to cold monte carlo information that is used for plotting. It also allows you to put extra information about the MC's name, generator, etc so that has easy reference for later. It also allows you to put in k-factors so that doesn't have to be done by hand. All of this is locate in ```./AnalysisDatasetManager/FileInfo/montecarlo/```.
+
+### PlotGroups
+
+The PlotGroups gives a place to show how different MC samples will be added together in the plot. So for Zstudy_2016, there is a ```PlotGroups/Zstudy_2016.py``` that lists which files go with which overall group and assigns a name and color to it. These colors are what are specified in the ```./AnalysisDatasetManager/Styles``` folder.
+
+### PlotObjects
+
+Like the FileInfo directory, the PlotObjects contains folders for each analysis and a file in each analysis folder for the selection made. These files each contain information about the different plots, the initialize subcategory allowing for setting up the histogram based on the input quantites for a TH1 object and the Attributes being the ROOT functions to be run on the TH1 with it's corresponding input value. From this, the axis can be labelled and simple formatting can be done with relative ease. 
+
+-------------------------------------------------------------------------------
+
+With all of these understood, one can create different selection and apply different coloring convientions, have different skims for different studies, etc in one place so that one's skimming, analysis, and plotting software all have a common area to look for the configuration input.
+
 

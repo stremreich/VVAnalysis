@@ -40,7 +40,7 @@ class TTTSelector : public SelectorBase {
   Float_t type1_pfMETPhi;
 
   //NanoAOD variables
-  static const unsigned int N_KEEP_MU_E_ = 10;
+  static const unsigned int N_KEEP_MU_E_ = 15;
   static const unsigned int N_KEEP_JET_ = 35;
   UInt_t nElectron;
   UInt_t nMuon;
@@ -59,6 +59,8 @@ class TTTSelector : public SelectorBase {
   Bool_t Muon_mediumId[N_KEEP_MU_E_];
   UChar_t Muon_tkIsoId[N_KEEP_MU_E_];
   Float_t Muon_pfRelIso04_all[N_KEEP_MU_E_];
+  Float_t Muon_miniPFRelIso_all[N_KEEP_MU_E_];
+
   Int_t numPU;
 
   UInt_t nJet;
@@ -69,44 +71,7 @@ class TTTSelector : public SelectorBase {
   Float_t Jet_pt[N_KEEP_JET_];
   Float_t Jet_mass[N_KEEP_JET_];
   
-  /* UInt_t nWZTightMuon; */
-  /* UInt_t nWZMediumMuon; */
-  /* Bool_t l1IsTight; */
-  /* Bool_t l2IsTight; */
-  /* Bool_t l3IsTight; */
-  /* Float_t l1GenPt; */
-  /* Float_t l2GenPt; */
-  /* Float_t l3GenPt; */
-  /* Bool_t e1IsEB; */
-  /* Bool_t e2IsEB; */
-  /* Bool_t e3IsEB; */
-  /* Float_t e1PVDXY; */
-  /* Float_t e2PVDXY; */
-  /* Float_t e3PVDXY; */
-  /* Float_t e1PVDZ; */
-  /* Float_t e2PVDZ; */
-  /* Float_t e3PVDZ; */
-  /* Float_t m1RelPFIsoDBR04; */
-  /* Float_t m2RelPFIsoDBR04; */
-  /* Float_t m3RelPFIsoDBR04; */
-  /* Float_t l1Eta; */
-  /* Float_t l2Eta; */
-  /* Float_t l3Eta; */
-  /* Float_t l1Pt; */
-  /* Float_t l2Pt; */
-  /* Float_t l3Pt; */
-  /* Float_t l3MtToMET; */
-  /* Float_t Flag_BadChargedCandidateFilterPass; */
-  /* Float_t Flag_BadPFMuonFilterPass; */
-  /* Bool_t Flag_duplicateMuonsPass; */
-  /* Bool_t Flag_badMuonsPass; */
-  /* Bool_t Flag_HBHENoiseFilterPass; */
-  /* Bool_t Flag_HBHENoiseIsoFilterPass; */
-  /* Bool_t Flag_EcalDeadCellTriggerPrimitiveFilterPass; */
-  /* Bool_t Flag_goodVerticesPass; */
-  /* Bool_t Flag_eeBadScFilterPass; */
-  /* Bool_t Flag_globalTightHalo2016FilterPass; */
-    
+
   std::vector<GoodPart> goodParts;
   
   
