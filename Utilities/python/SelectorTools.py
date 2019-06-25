@@ -150,6 +150,7 @@ class SelectorDriver(object):
             sumweights_hist.SetDirectory(ROOT.gROOT)
         self.processLocalFiles(select, file_path, addSumweights, chan)
         output_list = select.GetOutputList()
+
         name = self.inputs.FindObject("name").GetTitle()
         dataset_list = output_list.FindObject(name)
         if not dataset_list or dataset_list.ClassName() != "TList":
