@@ -91,11 +91,14 @@ Run ```./farmoutNtupleSkim.py --help``` for a full list of arguments to this scr
 
 An example to produce the output for the WZ inclusive analysis, with loosely IDed leptons (necessary for the fake rate step) would be
 
-```./farmoutNtupleSkim.py -f data* -s 3MediumLeptonsNoVeto```
+```./farmoutNtupleSkim.py -f data* -s 3MediumLeptonsNoVeto
+```
 
 This will submit jobs for each file with a name matching the pattern "data*", defined in AnalysisDatasetManager, creating a skim of events passing the [3LooseLeptonsNoVeto.json](Cuts/WZxsec2016/3LooseLeptonsNoVeto.json) selection. The script creates submit folders for each dataset, by default in the location ```/<storage>/<username>/YYYY-MM-DD_VVAnalysisJobs```, where <storage> is either /nfs_scratch or /data. It will produce output files copied to ```/store/user/<username>/VVAnalysisJobs_YYYY-MM-DD```. If you want to copy these locally, you can use the script [copyFromHdfs.py](https://github.com/kdlong/AnalysisDatasetManager/blob/master/copyFromHdfs.py).
   
-```./copyFromHdfs.py /hdfs/store/user/<username>/...```
+``` ./copyFromHdfs.py /hdfs/store/user/<username>/...
+```
+
 
 ## Running analysis code
 
@@ -105,13 +108,32 @@ See [this commit](https://github.com/kdlong/VVAnalysis/commit/18a1d903e149653fff
 
 The main program that runs the analysis is the file ```./Utilities/scripts/makeHistFile.py``` . This file is a wrapper for the running the selector defined in your src directory over the files specified in the AnalysisDatasetManager. This code works with a conviention used in most of this code suite, that is a selection, analysis, and input tier are needed for most all functions to run. for completeness, each option for the code will be explained and the user can know how to use the software:
 
-* **-s**: Selection. ____________
+* **-s**: Selection. User defined selection to be implimented in Analyzer. Need to put in flags in cc files for make any difference (ie PlotObjects area)
 * **-v**: Version. Pretty self explanitory
-* **-a**: Analysis. _________________
+* **-a**: Analysis. Name used to determine with cc/TSelector will fun over your files. Map defined in ```./Utilities/python/SelectorTools.py``` (Name from AnalysisDatasetManager)
 * **-f**: Filenames. The name of the files to be run over, in quotes seperated by commas. The filenames are those specified in the AnalysisDatasetManager, specifically with the FileInfo folder.
 * **-j**: Number of Cores. Same as with Make, number of cores used to run the jobs
 * **-c**: Channels: If you want to only run over a certain number of channels, put those channels in quotes seperated by commas. Default to Inclusive
 * **-o**: Output File: Name of the outfile. One one is made, all the samples are put into folders after the filename
+* **-b**: Hist Names: If you only want specific histograms, put names in quotes seperated by commas
+* **--input_tier**: Name corresponding to the skim used on the files (ie FileInfo area)
+* **--lumi**: Self Explanitory
+* **--test**: Confusing naming (without context at least), but basically doesn't do Data driven backgrounds
+* **--uwvv**: Legacy Ntuple format
+* **--noHistConfig**: Ignore Histogram information from ADM. Generally unsafe, would ignore
+
+So, if you want to run a basic analysis, you could write:
+
+``` sh
+./Utilities/scripts/makeHistFile.py -a Zstudy_2016 
+	                                --input_tier NanoDileptonSkims 
+									-s TightWithLooseVeto
+									-f "dy, data_2016"
+									--lumi 35.9
+									--test
+									-o output_zstudy.root
+```
+So this corresponds to running the ZSelector over the events in the dy and data_2016 files that were skimmed with NanoDileptonSkims and analyzed to TightWithLooseVeto. The Luminosity is 35.9 and we are ignoring data driven backgrounds (--test)
 
 ### Implementing your own selector
 
