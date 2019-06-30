@@ -72,7 +72,7 @@ void TTTSelector::SetBranchesNanoAOD() {
   b.SetBranch("Muon_mediumId", Muon_mediumId);
   b.SetBranch("Muon_tkIsoId", Muon_tkIsoId);
   b.SetBranch("Muon_pfRelIso04_all", Muon_pfRelIso04_all);
-  b.SetBranch("Muon_miniPFRelIso_all", Muon_miniPFRelIso_all);
+  b.SetBranch("Muon_miniPFRnelIso_all", Muon_miniPFRelIso_all);
   b.SetBranch("Muon_charge", Muon_charge);
   b.SetBranch("Muon_mass", Muon_mass);
 
@@ -175,6 +175,8 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
       nTightJet++;
       HT += Jet_pt[i];
     }
+    // add tight jet requirement with branch added in time and continue statements 
+    
     // bjet 
     if(IsGoodBJet(i)) {
       nBJets++;
@@ -279,6 +281,7 @@ bool TTTSelector::isTightJetId(size_t index) {
 }
 
 bool TTTSelector::IsOverlap(size_t index) {
+  return true;
   TLorentzVector tmp;
   double dR = 0.4;
   tmp.SetPtEtaPhiM(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);
