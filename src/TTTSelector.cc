@@ -4,6 +4,8 @@
 #include <regex>
 #include "TParameter.h"
 
+#define FullFill(NAME, VALUE_) SafeHistFill(histMap1D_, NAME, VALUE_, weight);
+
 // This is very WZ specific and should really be improved or likely removed
 std::string TTTSelector::GetNameFromFile() {
   std::regex expr = std::regex("201[0-9]-[0-9][0-9]-[0-9][0-9]-(.*)-WZxsec2016");
@@ -44,7 +46,7 @@ void TTTSelector::Init(TTree *tree)
   b.SetTree(tree);
   
   allChannels_ = {"ee", "mm", "em", "all"};
-  hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR"};
+  hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR", "bjetpt", "jetpt", "nbjet", "njet"};
 
   SelectorBase::Init(tree);
   
@@ -70,7 +72,7 @@ void TTTSelector::SetBranchesNanoAOD() {
   b.SetBranch("Muon_mediumId", Muon_mediumId);
   b.SetBranch("Muon_tkIsoId", Muon_tkIsoId);
   b.SetBranch("Muon_pfRelIso04_all", Muon_pfRelIso04_all);
-  b.SetBranch("Muon_miniPFRelIso_all", Muon_miniPFRelIso_all);
+  b.SetBranch("Muon_miniPFRnelIso_all", Muon_miniPFRelIso_all);
   b.SetBranch("Muon_charge", Muon_charge);
   b.SetBranch("Muon_mass", Muon_mass);
 
@@ -169,6 +171,8 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
       nTightJet++;
       HT += Jet_pt[i];
     }
+    // add tight jet requirement with branch added in time and continue statements 
+    
     // bjet 
     if(IsTightBJet(i)) {
       nBJets++;
@@ -206,8 +210,8 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
 
 
 void TTTSelector::ApplyScaleFactors() {
-  //  weight = genWeight;
-  weight = 1;
+  weight *= (genWeight > 0) ? 1.0 : -1.0;
+  //  weight = 1;
   // skipping for now
   return;
   //// to add!!
@@ -242,6 +246,7 @@ bool TTTSelector::IsTightBJet(size_t index) {
 }
 
 bool TTTSelector::IsOverlap(size_t index) {
+  return true;
   TLorentzVector tmp;
   double dR = 0.4;
   tmp.SetPtEtaPhiM(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);
@@ -252,7 +257,8 @@ bool TTTSelector::IsOverlap(size_t index) {
 void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
   int step = 0;
   SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
-
+  SafeHistFill(histMap1D_, "CutFlow_all", 0, weight);
+  
   /// 2 good leptons
   if(goodParts.size() != 2) return;
   SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
@@ -281,14 +287,35 @@ void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::stri
   
   // veto cut
 
-  SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), goodParts[0].v.Pt(), weight);
-  SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), goodParts[1].v.Pt(), weight);
-  SafeHistFill(histMap1D_, getHistName("SR", variation.second), getSRBin(), weight);
+  // in SR stuff
+  SafeHistFill(histMap1D_, "CutFlow_all", 1, weight);
 
-  SafeHistFill(histMap1D_, "ptl1_all", goodParts[0].v.Pt(), weight);
-  SafeHistFill(histMap1D_, "ptl2_all", goodParts[1].v.Pt(), weight);
-  SafeHistFill(histMap1D_, "SR_all", getSRBin(), weight);
+  FullFill(getHistName("ptl1", variation.second), goodParts[0].v.Pt());
+  FullFill("ptl1_all", goodParts[0].v.Pt());
+
+  FullFill(getHistName("ptl2", variation.second), goodParts[1].v.Pt());
+  FullFill("ptl2_all", goodParts[1].v.Pt());
   
+  FullFill(getHistName("SR", variation.second), getSRBin());
+  FullFill("SR_all", getSRBin());
+
+  FullFill(getHistName("njet", variation.second), nTightJet);
+  FullFill("njet_all", nTightJet);
+
+  FullFill(getHistName("nbjet", variation.second), nBJets);
+  FullFill("nbjet_all", nBJets);
+
+  
+  for(size_t i = 0; i < nJet; i++) {
+    if(IsTightJet(i)) {
+      FullFill(getHistName("jetpt", variation.second), Jet_pt[i]);
+      FullFill("jetpt_all", Jet_pt[i]);
+    }
+    if(IsTightBJet(i)) {
+      FullFill(getHistName("bjetpt", variation.second), Jet_pt[i]);
+      FullFill("bjetpt_all", Jet_pt[i]);
+    }
+  }
 }
 
 void TTTSelector::SetupNewDirectory() {
