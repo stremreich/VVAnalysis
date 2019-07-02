@@ -17,23 +17,24 @@ GetEnv               = false
 WhenToTransferOutput = On_Exit
 ShouldTransferFiles  = yes
 +IsFastQueueJob      = True
-request_memory       = 1000
+request_memory       = 2000
 request_disk         = 2048000
 Requirements         = TARGET.Arch == "X86_64" && IsSlowSlot=!=true && (MY.RequiresSharedFS=!=true || TARGET.HasAFS_OSG) && (TARGET.HasParrotCVMFS=?=true || (TARGET.UWCMS_CVMFS_Exists  && TARGET.CMS_CVMFS_Exists))
 # stop jobs from running if they blow up
 periodic_hold        = DiskUsage/1024 > 10.0*2000
 Analysis = ZGen
-Filelist = DYNano_LOandNLO_rand_filelist
-NPerJob = 2
+Filelist = DYNano_LOandNLO
+#NPerJob = 2
 #NProcesses = 94
-NProcesses = 5
+NPerJob = 2
+NProcesses = 10
 
 # Recommend randomizing file list so that one job does not
 # end up processing a bunch of the same files that take longer
 # such as Drell-Yan.  e.g.
 # mv list.txt tmp && sort -R tmp > list.txt
 
-# example: --inputs_from_file DYNano_LOandNLO_rand_filelist.txt 2 0 -s Zselection --input_tier NanoAOD -o testZGenJets.root -a ZGen --test
+# example: --inputs_from_file DYNano_LOandNLO.txt 2 0 -s Zselection --input_tier NanoAOD -o testZGenJets.root -a ZGen --test
 Arguments            = -a $(Analysis) -s Zselection --output_file $(Analysis)_$(Filelist)_$(Process).root --input_tier NanoAOD --test --inputs_from_file $(Filelist).txt $(NPerJob) $(Process) 
 Transfer_Input_Files = ZGen_AnalysisCode.tgz,userproxy
 output               = $(Analysis)_$(Filelist)_$(Process).out
