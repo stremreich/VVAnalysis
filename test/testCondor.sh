@@ -33,7 +33,8 @@ popd
 filelist="test/filelists/DYNano_LOandNLO.txt"
 filelist_name=$(basename $filelist) 
 cp $filelist $filelist_name
+cp /tmp/x509up_u$UID userproxy
 
-tar chzf ${analysis}_AnalysisCode.tgz Utilities data lib $manager_name $filelist_name $wrapper_name
+tar chzf ${analysis}_AnalysisCode.tgz Utilities data lib userproxy $manager_name $filelist_name $wrapper_name
 
-rm -r lib $manager_name $filelist_name 
+rm -r lib $manager_name $filelist_name userproxy
