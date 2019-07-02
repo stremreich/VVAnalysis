@@ -30,7 +30,7 @@ cp -r ${adm_path}/FileInfo/montecarlo .
 popd
 popd
 
-filelist="test/filelists/DYNano_LOandNLO_rand_filelist.txt"
+filelist="test/filelists/DYNano_LOandNLO.txt"
 filelist_name=$(basename $filelist) 
 cp $filelist $filelist_name
 
