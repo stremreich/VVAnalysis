@@ -7,9 +7,12 @@ import sys
 import os
 import multiprocessing
 import subprocess
+import logging
 
 class SelectorDriver(object):
     def __init__(self, analysis, selection, input_tier):
+        logging.basicConfig(level=logging.DEBUG)
+
         selector_map = {
             "WZxsec2016" : "WZSelector",
             "Zstudy" : "ZSelector",
@@ -17,6 +20,8 @@ class SelectorDriver(object):
             "Zstudy_2017" : "ZSelector",
             "ZZGen" : "ZZGenSelector",
             "TTT" : "TTTSelector",
+            "WGen" : "WGenSelector",
+            "ZGen" : "ZGenSelector",
         }
 
         self.analysis = analysis
@@ -32,6 +37,7 @@ class SelectorDriver(object):
         self.numCores = 1
         self.channels = ["Inclusive"]
         self.outfile_name = "temp.root"
+        self.datasets = {}
 
     # Needed to parallelize class member function, see
     # https://stackoverflow.com/questions/1816958/cant-pickle-type-instancemethod-when-using-multiprocessing-pool-map
@@ -75,40 +81,74 @@ class SelectorDriver(object):
     def setNumCores(self, numCores):
         self.numCores = numCores
 
-    def applySelector(self, datalist):
+    def setFileList(self, list_of_files, nPerJob, jobNum):
+        if not os.path.isfile(list_of_files):
+            raise ValueError("%s is not a valid file.")
+        filelist = [f.split("#")[0].strip() for f in open(list_of_files).readlines()]
+        # Remove empty/commented lines
+        filelist = filter(lambda  x: len(x) > 2, filelist)
+        nPerJob = int(nPerJob)
+        jobNum = int(jobNum)
+        maxNum = len(filelist)
+        firstEntry = nPerJob*jobNum
+        if firstEntry > maxNum:
+            raise ValueError("The first file to process (nPerJob*jobNum) = (%i*%i)" % (nPerJob, jobNum) \
+                    + " is greater than the number of entries in file %s (%s)." % (list_of_files, maxNum))
+        lastEntry = min(nPerJob*(jobNum+1), maxNum)
+        
+        for line in filelist[firstEntry:lastEntry]:
+            if "@" not in line:
+                dataset = "Unknown"
+                file_path = line
+            else:
+                # Intended for running specified files, use the format name:file
+                dataset, file_path = line.split("@")
+            if dataset not in self.datasets.keys():
+                self.datasets[dataset] = [file_path]
+            else:
+                self.datasets[dataset].append(file_path)
+
+    def setDatasets(self, datalist):
+        datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier)
+        for dataset in datasets:
+            try:
+                file_path = ConfigureJobs.getInputFilesPath(dataset, 
+                    self.input_tier, self.analysis)
+            except ValueError as e:
+                print e
+                continue
+            self.datasets[dataset] = file_path
+
+    def applySelector(self):
         for chan in self.channels:
             self.addTNamed("channel", chan)
-            print "INFO: Processing channel %s" % chan
-            datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier)
+            logging.info("Processing channel %s" % chan)
             if self.numCores > 1:
-                self.processParallelByDataset(datasets, chan)
+                self.processParallelByDataset(self.datasets, chan)
             else: 
-                for dataset in datasets:
-                    self.processDataset(dataset, chan)
+                for dataset, file_path in self.datasets.iteritems():
+                    self.processDataset(dataset, file_path, chan)
+        if len(self.channels) > 1 and self.numCores > 1:
+            tempfiles = [self.outfile_name.replace(".root", "_%s.root" % c) for c in self.channels]
+            self.combineParallelFiles(tempfiles, "Inclusive")
 
-    def processDataset(self, dataset, chan):
-        print "Processing dataset %s" % dataset
+    def processDataset(self, dataset, file_path, chan):
+        logging.info("Processing dataset %s" % dataset)
         select = getattr(ROOT, self.selector_name)()
         select.SetInputList(self.inputs)
-        # Intended for running over single file, use the format name:file
-        specified_name = dataset.split("@")
-        if len(specified_name) == 2:
-            self.addTNamed("name", specified_name[0])
-            dataset = specified_name[1]
-        else:
-            self.addTNamed("name", dataset)
-        try:
-            file_path = ConfigureJobs.getInputFilesPath(dataset, 
-                self.input_tier, self.analysis)
-            # Only add for one channel
-            addSumweights = self.addSumweights and self.channels.index(chan) == 0 and "data" not in dataset
-            if addSumweights:
-                ROOT.gROOT.cd()
+        self.addTNamed("name", dataset)
+        # Only add for one channel
+        addSumweights = self.addSumweights and self.channels.index(chan) == 0 and "data" not in dataset
+        if addSumweights:
+            sumweights_hist = ROOT.gROOT.FindObject("sumweights")
+            if not sumweights_hist:
+                if not self.outfile:
+                    self.outfile = ROOT.TFile.Open(self.outfile_name)
+                sumweights_hist = self.outfile.Get("%s/sumweights" % dataset)
+            if not sumweights_hist:
                 sumweights_hist = ROOT.TH1D("sumweights", "sumweights", 100, 0, 100)
-            self.processLocalFiles(select, file_path, addSumweights, chan)
-        except ValueError as e:
-            print e
-            return
+            sumweights_hist.SetDirectory(ROOT.gROOT)
+        self.processLocalFiles(select, file_path, addSumweights, chan)
         output_list = select.GetOutputList()
 
         name = self.inputs.FindObject("name").GetTitle()
@@ -136,13 +176,18 @@ class SelectorDriver(object):
         return True
 
     def getFileNames(self, file_path):
-        xrootd = "/store/user" in file_path.split("/hdfs/")[0][:12]
+        xrootd = "/store" in file_path.split("/hdfs/")[0][:7]
+        xrootd_user = "/store/user" in file_path.split("/hdfs/")[0][:12]
         if not (xrootd or os.path.isfile(file_path) or os.path.isdir(file_path.rsplit("/", 1)[0].rstrip("/*"))):
             raise ValueError("Invalid path! Skipping dataset. Path was %s" 
                 % file_path)
 
         # Assuming these are user files on HDFS, otherwise it won't work
-        filenames =  glob.glob(file_path) if not xrootd else \
+        if (xrootd and not xrootd_user):
+            xrd = 'root://%s/' % ConfigureJobs.getXrdRedirector()
+            filenames = [xrd + file_path]
+            return filenames
+        filenames =  glob.glob(file_path) if not xrootd_user else \
                 ConfigureJobs.getListOfHDFSFiles(file_path)
         filenames = ['root://cmsxrootd.hep.wisc.edu/' + f if "/store/user" in f[0:12] else f for f in filenames]
         return filenames
@@ -153,29 +198,38 @@ class SelectorDriver(object):
         channel = chan if chan != "mmee" else "eemm"
         return "Events" if self.ntupleType == "NanoAOD" else ("%s/ntuple" % channel)
 
-    def processParallelByDataset(self, datasets, chan):
-        numCores = min(self.numCores, len(datasets))
-        p = multiprocessing.Pool(processes=self.numCores)
-        p.map(self, [[dataset, chan] for dataset in datasets])
-        # Store arrays in temp files, since it can get way too big to keep around in memory
-        tempfiles = [self.tempfileName(d) for d in datasets] 
+    def combineParallelFiles(self, tempfiles, chan):
         tempfiles = filter(os.path.isfile, tempfiles)
-        rval = subprocess.call(["hadd", "-f", self.outfile_name] + tempfiles)
+        outfile = self.outfile_name
+        if chan != "Inclusive":
+            outfile = self.outfile_name.replace(".root", "_%s.root" % chan)
+        rval = subprocess.call(["hadd", "-f", outfile] + tempfiles)
         if rval == 0:
             map(os.remove, tempfiles)
         else:
             raise RuntimeError("Failed to collect data from parallel run")
+
+    def processParallelByDataset(self, datasets, chan):
+        numCores = min(self.numCores, len(datasets))
+        p = multiprocessing.Pool(processes=self.numCores)
+        p.map(self, [[dataset, f, chan] for dataset, f in datasets.iteritems()])
+        # Store arrays in temp files, since it can get way too big to keep around in memory
+        tempfiles = [self.tempfileName(d) for d in datasets] 
+        self.combineParallelFiles(tempfiles, chan)
 
     # Pool.map can only take in one argument, so expand the array
     def processDatasetHelper(self, args):
         self.processDataset(*args)
 
     def processLocalFiles(self, selector, file_path, addSumweights, chan,):
-        filenames = self.getFileNames(file_path)
+        filenames = []
+        for entry in file_path:
+            filenames.extend(self.getFileNames(entry))
         for i, filename in enumerate(filenames):
             self.processFile(selector, filename, addSumweights, chan, i+1)
 
     def processFile(self, selector, filename, addSumweights, chan, filenum=1):
+        logging.debug("Processing file: %s" % filename)
         rtfile = ROOT.TFile.Open(filename)
         tree_name = self.getTreeName(chan)
         tree = rtfile.Get(tree_name)

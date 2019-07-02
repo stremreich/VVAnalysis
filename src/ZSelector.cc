@@ -257,6 +257,7 @@ void ZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::stri
 
     if (isMC_) {
         b_genWeight->GetEntry(entry);
+        weight = genWeight;
     }
     b_ZMass->GetEntry(entry);
     b_l1IsTight->GetEntry(entry);

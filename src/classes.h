@@ -2,6 +2,9 @@
 #include "Analysis/VVAnalysis/interface/SelectorBase.h"
 #include "Analysis/VVAnalysis/interface/ZSelector.h"
 #include "Analysis/VVAnalysis/interface/ZZGenSelector.h"
+#include "Analysis/VVAnalysis/interface/WGenSelector.h"
+#include "Analysis/VVAnalysis/interface/ZGenSelector.h"
+#include "Analysis/VVAnalysis/interface/NanoGenSelectorBase.h"
 #include "Analysis/VVAnalysis/interface/WZSelector.h"
 #include "Analysis/VVAnalysis/interface/TTTSelector.h"
 #include "Analysis/VVAnalysis/interface/WZSelectorBase.h"
@@ -17,8 +20,11 @@ namespace{
     SelectorBase pSelectorBase;
     ZSelector pZSelector;
     WZSelector pWZSelector;
+    NanoGenSelectorBase pNanoGenSelectorBase;
     ZZGenSelector pZZGenSelector;
     TTTSelector pTTTSelector;
+    WGenSelector pWGenSelector;
+    ZGenSelector pZGenSelector;
     WZBackgroundSelector pWZBackgroundSelector;
     ScaleFactor pScaleFactor;
     disambiguateFinalStates pDisambiguator;

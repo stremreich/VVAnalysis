@@ -1,3 +1,5 @@
+<use name="DataFormats/HepMCCandidate"/>
+<use name="DataFormats/Math"/>
 <use name="root"/>
 <use name="boost"/>
 <use name="rootphysics"/>

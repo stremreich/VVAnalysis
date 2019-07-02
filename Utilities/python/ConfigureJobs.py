@@ -45,10 +45,16 @@ def getChannels(analysis='WZ'):
         return ["eee", "eem", "emm", "mmm"]
 def getManagerPath():
     config = configparser.ConfigParser()
-    config.read_file(open("Templates/config.%s" % os.environ["USER"]))
-    if "dataset_manager_path" not in config['Setup']:
-        raise ValueError("dataset_manager_path not specified in config file Template/config.%s" 
+    try:
+        config.read_file(open("Templates/config.%s" % os.environ["USER"]))
+        if "dataset_manager_path" not in config['Setup']:
+            raise ValueError("dataset_manager_path not specified in config file Template/config.%s" 
                             % os.environ["USER"])
+    except ValueError as e:
+        if os.path.isdir('AnalysisDatasetManager'):
+            return '.'
+        raise e
+
     return config['Setup']['dataset_manager_path'] + "/"
 def getCombinePath():
     config = configparser.ConfigParser()
@@ -163,6 +169,13 @@ def getListOfFiles(filelist, selection, manager_path=""):
                 continue
             names += [name]
     return [str(i) for i in names]
+
+def getXrdRedirector():
+    usbased = ["hep.wisc.edu"]
+    if any(i in os.environ["HOSTNAME"] for i in usbased):
+        return 'cmsxrootd.fnal.gov'
+    return 'cms-xrd-global.cern.ch'
+
 def fillTemplatedFile(template_file_name, out_file_name, template_dict):
     with open(template_file_name, "r") as templateFile:
         source = string.Template(templateFile.read())
