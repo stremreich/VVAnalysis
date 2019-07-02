@@ -231,8 +231,9 @@ class SelectorDriver(object):
 
     def processLocalFiles(self, selector, file_path, addSumweights, chan,):
         filenames = []
-        for entry in file_path:
-            filenames.extend(self.getFileNames(entry))
+
+#        for entry in file_path:
+        filenames.extend(self.getFileNames(file_path))
         for i, filename in enumerate(filenames):
             self.processFile(selector, filename, addSumweights, chan, i+1)
 

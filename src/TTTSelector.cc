@@ -72,7 +72,7 @@ void TTTSelector::SetBranchesNanoAOD() {
   b.SetBranch("Muon_mediumId", Muon_mediumId);
   b.SetBranch("Muon_tkIsoId", Muon_tkIsoId);
   b.SetBranch("Muon_pfRelIso04_all", Muon_pfRelIso04_all);
-  b.SetBranch("Muon_miniPFRnelIso_all", Muon_miniPFRelIso_all);
+  b.SetBranch("Muon_miniPFRelIso_all", Muon_miniPFRelIso_all);
   b.SetBranch("Muon_charge", Muon_charge);
   b.SetBranch("Muon_mass", Muon_mass);
 
