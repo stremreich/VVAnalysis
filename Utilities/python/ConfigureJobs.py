@@ -50,7 +50,7 @@ def getManagerPath():
         if "dataset_manager_path" not in config['Setup']:
             raise ValueError("dataset_manager_path not specified in config file Template/config.%s" 
                             % os.environ["USER"])
-    except ValueError as e:
+    except IOError as e:
         if os.path.isdir('AnalysisDatasetManager'):
             return '.'
         raise e
@@ -239,7 +239,7 @@ def getConfigFileName(config_file_name):
     for extension in ["json", "py"]:
         if os.path.isfile(".".join([config_file_name, extension])):
             return ".".join([config_file_name, extension])
-    raise IOError("Invalid configuration file. Tried to read %s which does not exist" % \
+    raise ValueError("Invalid configuration file. Tried to read %s which does not exist" % \
             config_file_name)
 
 def getInputFilesPath(sample_name, selection, analysis, manager_path=""):
