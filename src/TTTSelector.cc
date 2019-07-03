@@ -4,7 +4,7 @@
 #include <regex>
 #include "TParameter.h"
 
-#define FullFill(NAME, VALUE_) SafeHistFill(histMap1D_, NAME, VALUE_, weight);
+#define Fill1D(NAME, VALUE_) HistFullFill(histMap1D_, NAME, variation.second, VALUE_, weight);
 
 // This is very WZ specific and should really be improved or likely removed
 std::string TTTSelector::GetNameFromFile() {
@@ -83,14 +83,17 @@ void TTTSelector::SetBranchesNanoAOD() {
   b.SetBranch("Jet_phi", Jet_phi);
   b.SetBranch("Jet_pt", Jet_pt);
   b.SetBranch("Jet_mass", Jet_mass);
-  
+
+  b.SetBranch("Jet_neHEF", Jet_neHEF);
+  b.SetBranch("Jet_neEmEF", Jet_neEmEF);
+  b.SetBranch("Jet_nConstituents", Jet_nConstituents);
+  b.SetBranch("Jet_chHEF", Jet_chHEF);
+  b.SetBranch("Jet_chEmEF", Jet_chEmEF);
+
   b.SetBranch("MET_pt", MET);
   b.SetBranch("MET_phi", type1_pfMETPhi);
   
   if (isMC_) {
-    //b.SetBranch("e1GenPt", l1GenPt, );
-    //b.SetBranch("e2GenPt", l2GenPt, );
-    //b.SetBranch("e3GenPt", l3GenPt, );
     b.SetBranch("genWeight", genWeight);
     b.SetBranch("Pileup_nPU", numPU);
   }
@@ -129,7 +132,7 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   int nCBVIDTightElec = 0;
   int nCBVIDVetoElec = std::count(Electron_cutBased, Electron_cutBased+nElectron, 1);
   int nTightIdMuon = 0;
-  int nMediumIdMuon = 0;
+  int nLooseIdMuon = 0;
   
   
   /////////////////////
@@ -137,7 +140,7 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   /////////////////////
     
   for (size_t i = 0; i < nElectron; i++) {
-    if(IsTightElectron(i)) {
+    if(IsGoodElectron(i)) {
       nCBVIDTightElec++;
       goodParts.push_back(GoodPart());
       goodParts.back().SetTVector(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
@@ -151,8 +154,8 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   /////////////////
   
   for (size_t i = 0; i < nMuon; i++) {
-    nMediumIdMuon += (Muon_mediumId[i] && Muon_pfRelIso04_all[i] < 0.15*Muon_pt[i]);
-    if(IsTightMuon(i)) {
+    nLooseIdMuon += (Muon_pt[i] > 20 && abs(Muon_eta[i]) < 2.4);
+    if(IsGoodMuon(i)) {
       nTightIdMuon++;
       goodParts.push_back(GoodPart());
       goodParts.back().SetTVector(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
@@ -166,25 +169,22 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   ////////////////
   for(size_t i = 0; i < nJet; i++) {
     if(goodParts.size() != 2) break;
+    if(!isLooseJetId(i)) continue;
     // regular jets
-    if(IsTightJet(i)) {
+    if(IsGoodJet(i)) {
       nTightJet++;
       HT += Jet_pt[i];
     }
-    // add tight jet requirement with branch added in time and continue statements 
-    
     // bjet 
-    if(IsTightBJet(i)) {
+    if(IsGoodBJet(i)) {
       nBJets++;
     }
   }
   
- 
   channel_ = channelMap_[channelName_];
   if (nTightIdMuon == 2) {
     channel_ = mm;
     channelName_ = "mm";
-
   } else if (nCBVIDTightElec == 2) {
     channel_ = ee;
     channelName_ = "ee";
@@ -205,7 +205,8 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   }
 
   //// need veto stuff
-  //  passesLeptonVeto = (nMuon + nElectron) == 3;
+
+  passesLeptonVeto = (nLooseIdMuon + nCBVIDVetoElec) == 2;
 }
 
 
@@ -219,34 +220,65 @@ void TTTSelector::ApplyScaleFactors() {
 
 // Meant to be a wrapper for the tight ID just in case it changes
 // To be a function of multiple variables
-bool TTTSelector::IsTightMuon(size_t index) {
+bool TTTSelector::IsGoodMuon(size_t index) {
   return ( (Muon_pt[index] > 20) &&
 	   (abs(Muon_eta[index]) < 2.4) &&
 	   Muon_mediumId[index] &&
 	   (Muon_miniPFRelIso_all[index] < 0.16) );
 }
 
-bool TTTSelector::IsTightElectron(size_t index) {
+bool TTTSelector::IsGoodElectron(size_t index) {
   return ((Electron_pt[index] > 20) &&
 	  (abs(Electron_eta[index]) < 2.5) &&
 	  (Electron_cutBased[index] == 4));
 }
 
-bool TTTSelector::IsTightJet(size_t index) {
-  return ((Jet_pt[index] > 40) &&
-	  (abs(Jet_eta[index]) < 2.4) &&
-	  IsOverlap(index));
+bool TTTSelector::IsGoodMVAElectron(size_t index) {
+  bool mvaRec = false;
+  if(abs(Electron_eta[index]) < 0.8)
+    mvaRec = max(0.52, 0.77-0.025*(Electron_pt[i]-15));
+  else if(abs(Electron_eta[index]) < 1.479)
+    mvaRec = max(0.11, 0.56-0.045*(Electron_pt[i]-15));
+  else if(abs(Electron_eta[index]) < 2.5)
+    mvaRec = max(-0.01, 0.48-0.049*(Electron_pt[i]-15));
+
+  return ((Electron_pt[index] > 20) &&
+	  mvaRec);
 }
 
-bool TTTSelector::IsTightBJet(size_t index) {
-  return ((Jet_pt[index] > 25) &&
+bool TTTSelector::IsGoodJet(size_t index) {
+  return ((Jet_pt[index] > 40.0) &&
+	  (abs(Jet_eta[index]) < 2.4) &&
+	  IsOverlap(index)
+	  );
+}
+
+bool TTTSelector::IsGoodBJet(size_t index) {
+  return ((Jet_pt[index] > 25.0) &&
 	  (abs(Jet_eta[index]) < 2.4) &&
 	  (Jet_btagCSVV2[index] > 0.8484) &&
-	  IsOverlap(index));
+	  IsOverlap(index)
+	  );
+}
+
+bool TTTSelector::isLooseJetId(size_t index) {
+  return (Jet_neHEF[index] < 0.99 &&
+	  Jet_neEmEF[index] < 0.99 &&
+	  Jet_nConstituents[index] > 1 &&
+	  Jet_chHEF[index] > 0 &&
+	  Jet_chEmEF[index] < 0.99
+	  );
+}
+
+bool TTTSelector::isTightJetId(size_t index) {
+  return (Jet_neHEF[index] < 0.9 &&
+	  Jet_neEmEF[index] < 0.9 &&
+	  Jet_nConstituents[index] > 1 &&
+	  Jet_chHEF[index] > 0
+	  );
 }
 
 bool TTTSelector::IsOverlap(size_t index) {
-  return true;
   TLorentzVector tmp;
   double dR = 0.4;
   tmp.SetPtEtaPhiM(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);
@@ -256,67 +288,58 @@ bool TTTSelector::IsOverlap(size_t index) {
 
 void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
   int step = 0;
-  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
-  SafeHistFill(histMap1D_, "CutFlow_all", 0, weight);
+  Fill1D("CutFlow", 0);
   
   /// 2 good leptons
   if(goodParts.size() != 2) return;
-  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  Fill1D("CutFlow", ++step);
 
   // first lep requirement
   if(goodParts[0].v.Pt() < 25) return;
-  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  Fill1D("CutFlow", ++step);
   
   // same sign requirement
   if(goodParts[0].charge * goodParts[1].charge != 1) return;
-  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  Fill1D("CutFlow", ++step);
 
   // met cut
   if (MET < 50) return;
-  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  Fill1D("CutFlow", ++step);
 
   // ht cut
   if(HT < 300 ) return;
-  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  Fill1D("CutFlow", ++step);
   
   // jet cut
   if(nTightJet < 4) return;
+  Fill1D("CutFlow", ++step);
   
   // bjet cut
   if(nBJets < 2) return;
+  Fill1D("CutFlow", ++step);
   
-  // veto cut
-
+  // // veto cut
+  // if(!passesLeptonVeto)
+  //   Fill1D("CutFlow", ++step);
   // in SR stuff
-  SafeHistFill(histMap1D_, "CutFlow_all", 1, weight);
 
-  FullFill(getHistName("ptl1", variation.second), goodParts[0].v.Pt());
-  FullFill("ptl1_all", goodParts[0].v.Pt());
 
-  FullFill(getHistName("ptl2", variation.second), goodParts[1].v.Pt());
-  FullFill("ptl2_all", goodParts[1].v.Pt());
-  
-  FullFill(getHistName("SR", variation.second), getSRBin());
-  FullFill("SR_all", getSRBin());
-
-  FullFill(getHistName("njet", variation.second), nTightJet);
-  FullFill("njet_all", nTightJet);
-
-  FullFill(getHistName("nbjet", variation.second), nBJets);
-  FullFill("nbjet_all", nBJets);
-
+  Fill1D("ptl1", goodParts[0].Pt());
+  Fill1D("ptl2", goodParts[1].Pt());
+  Fill1D("SR", getSRBin());
+  Fill1D("njet", nTightJet);
+  Fill1D("nbjet", nBJets);
   
   for(size_t i = 0; i < nJet; i++) {
-    if(IsTightJet(i)) {
-      FullFill(getHistName("jetpt", variation.second), Jet_pt[i]);
-      FullFill("jetpt_all", Jet_pt[i]);
+    if(IsGoodJet(i)) {
+      Fill1D("jetpt", Jet_pt[i]);
     }
-    if(IsTightBJet(i)) {
-      FullFill(getHistName("bjetpt", variation.second), Jet_pt[i]);
-      FullFill("bjetpt_all", Jet_pt[i]);
+    if(IsGoodBJet(i)) {
+      Fill1D("bjetpt", Jet_pt[i]);
     }
   }
 }
+
 
 void TTTSelector::SetupNewDirectory() {
   SelectorBase::SetupNewDirectory();

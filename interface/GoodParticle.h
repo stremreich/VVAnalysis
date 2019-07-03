@@ -18,4 +18,8 @@ struct GoodPart {
   void SetCharge(int c) {
     charge = c;
   }
+
+  double Pt() {return v.Pt();}
+  double Eta() {return v.Eta();}
+  double Phi() {return v.Phi();}
 };
