@@ -175,8 +175,6 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
       nTightJet++;
       HT += Jet_pt[i];
     }
-    // add tight jet requirement with branch added in time and continue statements 
-    
     // bjet 
     if(IsGoodBJet(i)) {
       nBJets++;
@@ -281,7 +279,6 @@ bool TTTSelector::isTightJetId(size_t index) {
 }
 
 bool TTTSelector::IsOverlap(size_t index) {
-  return true;
   TLorentzVector tmp;
   double dR = 0.4;
   tmp.SetPtEtaPhiM(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);

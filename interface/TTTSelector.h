@@ -114,18 +114,18 @@ class TTTSelector : public SelectorBase {
   int nTightJet, nBJets;
   
   virtual std::string GetNameFromFile() override;
-    virtual void    SetBranchesNanoAOD() override;
-    virtual void    SetBranchesUWVV() override;
-    void LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) override;
-    void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
-    void ApplyScaleFactors();
-    void SetShiftedMasses();
-    void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
-    virtual void    SetupNewDirectory() override;
+  virtual void    SetBranchesNanoAOD() override;
+  virtual void    SetBranchesUWVV() override;
+  void LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+  void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+  void ApplyScaleFactors();
+  void SetShiftedMasses();
+  void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+  virtual void    SetupNewDirectory() override;
 
-    BranchManager b;
+  BranchManager b;
   
-  };
+};
 
 #endif
 
