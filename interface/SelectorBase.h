@@ -231,10 +231,18 @@ protected:
     std::string getHistName(std::string histName, std::string variationName);
     template<typename T, typename... Args>
     void SafeHistFill(std::map<std::string, T*> container, 
-            std::string histname, Args... args) {
-        if (container[histname] != nullptr)
-            container[histname]->Fill(args...);
+		      std::string histname, Args... args) {
+      if (container[histname] != nullptr)
+	container[histname]->Fill(args...);
     };
+  
+  template<typename T, typename... Args>
+  void HistFullFill(std::map<std::string, T*> container,
+		    std::string histname, std::string var, Args... args) {
+    SafeHistFill(container, getHistName(histname, var), args...);
+    SafeHistFill(container, getHistName(histname, var, "all"), args...);
+  }
+    
 };
 
 #endif
