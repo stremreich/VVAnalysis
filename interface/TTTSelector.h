@@ -42,18 +42,20 @@ class TTTSelector : public SelectorBase {
   //NanoAOD variables
   static const unsigned int N_KEEP_MU_E_ = 15;
   static const unsigned int N_KEEP_JET_ = 35;
+
   UInt_t nElectron;
-  UInt_t nMuon;
   Float_t Electron_pt[N_KEEP_MU_E_];
   Float_t Electron_eta[N_KEEP_MU_E_];
   Float_t Electron_phi[N_KEEP_MU_E_];
   Float_t Electron_mass[N_KEEP_MU_E_];
+  Int_t Electron_cutBased[N_KEEP_MU_E_];
+  Int_t Electron_charge[N_KEEP_MU_E_];
+
+  UInt_t nMuon;
   Float_t Muon_pt[N_KEEP_MU_E_];
   Float_t Muon_eta[N_KEEP_MU_E_];
   Float_t Muon_phi[N_KEEP_MU_E_];
   Float_t Muon_mass[N_KEEP_MU_E_];
-  Int_t Electron_cutBased[N_KEEP_MU_E_];
-  Int_t Electron_charge[N_KEEP_MU_E_];
   Int_t Muon_charge[N_KEEP_MU_E_];
   Bool_t Muon_tightId[N_KEEP_MU_E_];
   Bool_t Muon_mediumId[N_KEEP_MU_E_];
@@ -70,7 +72,11 @@ class TTTSelector : public SelectorBase {
   Float_t Jet_phi[N_KEEP_JET_];
   Float_t Jet_pt[N_KEEP_JET_];
   Float_t Jet_mass[N_KEEP_JET_];
-  
+  Float_t Jet_neHEF[N_KEEP_JET_];
+  Float_t Jet_neEmEF[N_KEEP_JET_];
+  Float_t Jet_nConstituents[N_KEEP_JET_];
+  Float_t Jet_chHEF[N_KEEP_JET_];  
+  Float_t Jet_chEmEF[N_KEEP_JET_]; 
 
   std::vector<GoodPart> goodParts;
   
@@ -94,29 +100,32 @@ class TTTSelector : public SelectorBase {
   bool isZgamma_;
   const float FR_MAX_PT_ = 50;
   const float FR_MAX_ETA_ = 2.5;
-  bool IsTightMuon(size_t);
-  bool IsTightElectron(size_t);
-  bool IsTightJet(size_t);
-  bool IsTightBJet(size_t);
+  bool IsGoodMuon(size_t);
+  bool IsGoodElectron(size_t);
+  bool IsGoodJet(size_t);
+  bool IsGoodBJet(size_t);
   bool IsOverlap(size_t);
 
+  bool isLooseJetId(size_t);
+  bool isTightJetId(size_t);
+  
   int getSRBin();
   double HT;
   int nTightJet, nBJets;
   
   virtual std::string GetNameFromFile() override;
-    virtual void    SetBranchesNanoAOD() override;
-    virtual void    SetBranchesUWVV() override;
-    void LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) override;
-    void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
-    void ApplyScaleFactors();
-    void SetShiftedMasses();
-    void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
-    virtual void    SetupNewDirectory() override;
+  virtual void    SetBranchesNanoAOD() override;
+  virtual void    SetBranchesUWVV() override;
+  void LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+  void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+  void ApplyScaleFactors();
+  void SetShiftedMasses();
+  void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+  virtual void    SetupNewDirectory() override;
 
-    BranchManager b;
+  BranchManager b;
   
-  };
+};
 
 #endif
 
