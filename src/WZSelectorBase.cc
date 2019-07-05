@@ -63,168 +63,181 @@ void WZSelectorBase::Init(TTree *tree)
             isZgamma_ = true;
         }
     }
+
+    b.SetTree(tree);
     SelectorBase::Init(tree);
 }
 
 void WZSelectorBase::SetBranchesUWVV() {
+    b.CleanUp();
     if (isMC_){
-        fChain->SetBranchAddress("genWeight", &genWeight, &b_genWeight);
-        fChain->SetBranchAddress("nTruePU", &nTruePU, &b_nTruePU);
+        b.SetBranch("genWeight", genWeight);
+        b.SetBranch("nTruePU", nTruePU);
     }
     else {
-        fChain->SetBranchAddress("Flag_duplicateMuonsPass", &Flag_duplicateMuonsPass, &b_Flag_duplicateMuonsPass);
-        fChain->SetBranchAddress("Flag_badMuonsPass", &Flag_badMuonsPass, &b_Flag_badMuonsPass);
+        b.SetBranch("Flag_duplicateMuonsPass", Flag_duplicateMuonsPass);
+        b.SetBranch("Flag_badMuonsPass", Flag_badMuonsPass);
     }
 
     if (channel_ == eee) {
-        fChain->SetBranchAddress("e1IsCBVIDTight", &l1IsTight, &b_l1IsTight);
-        fChain->SetBranchAddress("e2IsCBVIDTight", &l2IsTight, &b_l2IsTight);
-        fChain->SetBranchAddress("e3IsCBVIDTight", &l3IsTight, &b_l3IsTight);
-        fChain->SetBranchAddress("e1_e2_Mass", &ZMass, &b_ZMass);
-        fChain->SetBranchAddress("e1Pt", &l1Pt, &b_l1Pt);
-        fChain->SetBranchAddress("e2Pt", &l2Pt, &b_l2Pt);
-        fChain->SetBranchAddress("e3Pt", &l3Pt, &b_l3Pt);
-        fChain->SetBranchAddress("e1Eta", &l1Eta, &b_l1Eta);
-        fChain->SetBranchAddress("e2Eta", &l2Eta, &b_l2Eta);
-        fChain->SetBranchAddress("e3Eta", &l3Eta, &b_l3Eta);
-        fChain->SetBranchAddress("e3MtToMET", &l3MtToMET, &b_l3MtToMET);
+        b.SetBranch("e1IsCBVIDTight", l1IsTight);
+        b.SetBranch("e2IsCBVIDTight", l2IsTight);
+        b.SetBranch("e3IsCBVIDTight", l3IsTight);
+        b.SetBranch("Mass", Mass);
+        b.SetBranch("e1_e2_Mass", ZMass);
+        b.SetBranch("e1Pt", l1Pt);
+        b.SetBranch("e2Pt", l2Pt);
+        b.SetBranch("e3Pt", l3Pt);
+        b.SetBranch("e1Eta", l1Eta);
+        b.SetBranch("e2Eta", l2Eta);
+        b.SetBranch("e3Eta", l3Eta);
+        b.SetBranch("e1Phi", l1Phi);
+        b.SetBranch("e2Phi", l2Phi);
+        b.SetBranch("e3Phi", l3Phi);
+        b.SetBranch("e1Mass", l1Mass);
+        b.SetBranch("e2Mass", l2Mass);
+        b.SetBranch("e3Mass", l3Mass);
+        b.SetBranch("e3MtToMET", l3MtToMET);
         if (isMC_) {
-            fChain->SetBranchAddress("e1GenPt", &l1GenPt, &b_l1GenPt);
-            fChain->SetBranchAddress("e2GenPt", &l2GenPt, &b_l2GenPt);
-            fChain->SetBranchAddress("e3GenPt", &l3GenPt, &b_l3GenPt);
+            b.SetBranch("e1GenPt", l1GenPt);
+            b.SetBranch("e2GenPt", l2GenPt);
+            b.SetBranch("e3GenPt", l3GenPt);
         }
     }
     else if (channel_ == eem) {
-        fChain->SetBranchAddress("e1IsCBVIDTight", &l1IsTight, &b_l1IsTight);
-        fChain->SetBranchAddress("e2IsCBVIDTight", &l2IsTight, &b_l2IsTight);
-        fChain->SetBranchAddress("mIsWZTight", &l3IsTight, &b_l3IsTight);
-        fChain->SetBranchAddress("e1_e2_Mass", &ZMass, &b_ZMass);
-        fChain->SetBranchAddress("e1Pt", &l1Pt, &b_l1Pt);
-        fChain->SetBranchAddress("e2Pt", &l2Pt, &b_l2Pt);
-        fChain->SetBranchAddress("mPt", &l3Pt, &b_l3Pt);
-        fChain->SetBranchAddress("e1Eta", &l1Eta, &b_l1Eta);
-        fChain->SetBranchAddress("e2Eta", &l2Eta, &b_l2Eta);
-        fChain->SetBranchAddress("mEta", &l3Eta, &b_l3Eta);
-        fChain->SetBranchAddress("mMtToMET", &l3MtToMET, &b_l3MtToMET);
+        b.SetBranch("e1IsCBVIDTight", l1IsTight);
+        b.SetBranch("e2IsCBVIDTight", l2IsTight);
+        b.SetBranch("mIsWZTight", l3IsTight);
+        b.SetBranch("e1_e2_Mass", ZMass);
+        b.SetBranch("e1Pt", l1Pt);
+        b.SetBranch("e2Pt", l2Pt);
+        b.SetBranch("mPt", l3Pt);
+        b.SetBranch("e1Eta", l1Eta);
+        b.SetBranch("e2Eta", l2Eta);
+        b.SetBranch("mEta", l3Eta);
+        b.SetBranch("e1Phi", l1Phi);
+        b.SetBranch("e2Phi", l2Phi);
+        b.SetBranch("mPhi", l3Phi);
+        b.SetBranch("e1Mass", l1Mass);
+        b.SetBranch("e2Mass", l2Mass);
+        b.SetBranch("mMass", l3Mass);
+        b.SetBranch("mMtToMET", l3MtToMET);
         if (isMC_) {
-            fChain->SetBranchAddress("mGenPt", &l3GenPt, &b_l3GenPt);
-            fChain->SetBranchAddress("e1GenPt", &l1GenPt, &b_l1GenPt);
-            fChain->SetBranchAddress("e2GenPt", &l2GenPt, &b_l2GenPt);
+            b.SetBranch("mGenPt", l3GenPt);
+            b.SetBranch("e1GenPt", l1GenPt);
+            b.SetBranch("e2GenPt", l2GenPt);
         }
     }
     else if (channel_ == emm) {
-        fChain->SetBranchAddress("eIsCBVIDTight", &l3IsTight, &b_l3IsTight);
-        fChain->SetBranchAddress("m1IsWZTight", &l1IsTight, &b_l1IsTight);
-        fChain->SetBranchAddress("m2IsWZTight", &l2IsTight, &b_l2IsTight);
-        fChain->SetBranchAddress("m1_m2_Mass", &ZMass, &b_ZMass);
-        fChain->SetBranchAddress("m1Pt", &l1Pt, &b_l1Pt);
-        fChain->SetBranchAddress("m2Pt", &l2Pt, &b_l2Pt);
-        fChain->SetBranchAddress("ePt", &l3Pt, &b_l3Pt);
-        fChain->SetBranchAddress("m1Eta", &l1Eta, &b_l1Eta);
-        fChain->SetBranchAddress("m2Eta", &l2Eta, &b_l2Eta);
-        fChain->SetBranchAddress("eEta", &l3Eta, &b_l3Eta);
-        fChain->SetBranchAddress("eMtToMET", &l3MtToMET, &b_l3MtToMET);
+        b.SetBranch("eIsCBVIDTight", l3IsTight);
+        b.SetBranch("m1IsWZTight", l1IsTight);
+        b.SetBranch("m2IsWZTight", l2IsTight);
+        b.SetBranch("m1_m2_Mass", ZMass);
+        b.SetBranch("m1Pt", l1Pt);
+        b.SetBranch("m2Pt", l2Pt);
+        b.SetBranch("ePt", l3Pt);
+        b.SetBranch("m1Eta", l1Eta);
+        b.SetBranch("m2Eta", l2Eta);
+        b.SetBranch("eEta", l3Eta);
+        b.SetBranch("m1Phi", l1Phi);
+        b.SetBranch("m2Phi", l2Phi);
+        b.SetBranch("ePhi", l3Phi);
+        b.SetBranch("m1Mass", l1Mass);
+        b.SetBranch("m2Mass", l2Mass);
+        b.SetBranch("eMass", l3Mass);
+        b.SetBranch("eMtToMET", l3MtToMET);
         if (isMC_) {
-            fChain->SetBranchAddress("eGenPt", &l3GenPt, &b_l3GenPt);
-            fChain->SetBranchAddress("m1GenPt", &l1GenPt, &b_l1GenPt);
-            fChain->SetBranchAddress("m2GenPt", &l2GenPt, &b_l2GenPt);
+            b.SetBranch("eGenPt", l3GenPt);
+            b.SetBranch("m1GenPt", l1GenPt);
+            b.SetBranch("m2GenPt", l2GenPt);
         }
     }
     else if (channel_ == mmm) {
-        fChain->SetBranchAddress("m1IsWZTight", &l1IsTight, &b_l1IsTight);
-        fChain->SetBranchAddress("m2IsWZTight", &l2IsTight, &b_l2IsTight);
-        fChain->SetBranchAddress("m3IsWZTight", &l3IsTight, &b_l3IsTight);
-        fChain->SetBranchAddress("m1_m2_Mass", &ZMass, &b_ZMass);
-        fChain->SetBranchAddress("m1Pt", &l1Pt, &b_l1Pt);
-        fChain->SetBranchAddress("m2Pt", &l2Pt, &b_l2Pt);
-        fChain->SetBranchAddress("m3Pt", &l3Pt, &b_l3Pt);
-        fChain->SetBranchAddress("m1Eta", &l1Eta, &b_l1Eta);
-        fChain->SetBranchAddress("m2Eta", &l2Eta, &b_l2Eta);
-        fChain->SetBranchAddress("m3Eta", &l3Eta, &b_l3Eta);
-        fChain->SetBranchAddress("m3MtToMET", &l3MtToMET, &b_l3MtToMET);
+        b.SetBranch("m1IsWZTight", l1IsTight);
+        b.SetBranch("m2IsWZTight", l2IsTight);
+        b.SetBranch("m3IsWZTight", l3IsTight);
+        b.SetBranch("m1_m2_Mass", ZMass);
+        b.SetBranch("m1Pt", l1Pt);
+        b.SetBranch("m2Pt", l2Pt);
+        b.SetBranch("m3Pt", l3Pt);
+        b.SetBranch("m1Eta", l1Eta);
+        b.SetBranch("m2Eta", l2Eta);
+        b.SetBranch("m3Eta", l3Eta);
+        b.SetBranch("m1Phi", l1Phi);
+        b.SetBranch("m2Phi", l2Phi);
+        b.SetBranch("m3Phi", l3Phi);
+        b.SetBranch("m1Mass", l1Mass);
+        b.SetBranch("m2Mass", l2Mass);
+        b.SetBranch("m3Mass", l3Mass);
+        b.SetBranch("m3MtToMET", l3MtToMET);
         if (isMC_) {
-            fChain->SetBranchAddress("m1GenPt", &l1GenPt, &b_l1GenPt);
-            fChain->SetBranchAddress("m2GenPt", &l2GenPt, &b_l2GenPt);
-            fChain->SetBranchAddress("m3GenPt", &l3GenPt, &b_l3GenPt);
+            b.SetBranch("m1GenPt", l1GenPt);
+            b.SetBranch("m2GenPt", l2GenPt);
+            b.SetBranch("m3GenPt", l3GenPt);
         }
     }
 
-    fChain->SetBranchAddress("type1_pfMETEt", &MET, &b_MET);
-    fChain->SetBranchAddress("type1_pfMETPhi", &type1_pfMETPhi, &b_type1_pfMETPhi);
-    fChain->SetBranchAddress("nCBVIDTightElec", &nCBVIDTightElec, &b_nCBVIDTightElec);
-    fChain->SetBranchAddress("nCBVIDHLTSafeElec", &nCBVIDHLTSafeElec, &b_nCBVIDHLTSafeElec);
-    fChain->SetBranchAddress("nCBVIDVetoElec", &nCBVIDVetoElec, &b_nCBVIDVetoElec);
-    fChain->SetBranchAddress("nWZTightMuon", &nWZTightMuon, &b_nWZTightMuon);
-    fChain->SetBranchAddress("nWZMediumMuon", &nWZMediumMuon, &b_nWZMediumMuon);
-    fChain->SetBranchAddress("Flag_BadChargedCandidateFilterPass", &Flag_BadChargedCandidateFilterPass, &b_Flag_BadChargedCandidateFilterPass);
-    fChain->SetBranchAddress("Flag_BadPFMuonFilterPass", &Flag_BadPFMuonFilterPass, &b_Flag_BadPFMuonFilterPass);
-    fChain->SetBranchAddress("Flag_HBHENoiseFilterPass", &Flag_HBHENoiseFilterPass, &b_Flag_HBHENoiseFilterPass);
-    fChain->SetBranchAddress("Flag_HBHENoiseIsoFilterPass", &Flag_HBHENoiseIsoFilterPass, &b_Flag_HBHENoiseIsoFilterPass);
-    fChain->SetBranchAddress("Flag_EcalDeadCellTriggerPrimitiveFilterPass", &Flag_EcalDeadCellTriggerPrimitiveFilterPass, &b_Flag_EcalDeadCellTriggerPrimitiveFilterPass);
-    fChain->SetBranchAddress("Flag_goodVerticesPass", &Flag_goodVerticesPass, &b_Flag_goodVerticesPass);
-    fChain->SetBranchAddress("Flag_eeBadScFilterPass", &Flag_eeBadScFilterPass, &b_Flag_eeBadScFilterPass);
-    fChain->SetBranchAddress("Flag_globalTightHalo2016FilterPass", &Flag_globalTightHalo2016FilterPass, &b_Flag_globalTightHalo2016FilterPass);
+    b.SetBranch("type1_pfMETEt", MET);
+    b.SetBranch("type1_pfMETPhi", type1_pfMETPhi);
+    b.SetBranch("nCBVIDTightElec", nCBVIDTightElec);
+    b.SetBranch("nCBVIDHLTSafeElec", nCBVIDHLTSafeElec);
+    b.SetBranch("nCBVIDVetoElec", nCBVIDVetoElec);
+    b.SetBranch("nWZTightMuon", nWZTightMuon);
+    b.SetBranch("nWZMediumMuon", nWZMediumMuon);
+    b.SetBranch("Flag_BadChargedCandidateFilterPass", Flag_BadChargedCandidateFilterPass);
+    b.SetBranch("Flag_BadPFMuonFilterPass", Flag_BadPFMuonFilterPass);
+    b.SetBranch("Flag_HBHENoiseFilterPass", Flag_HBHENoiseFilterPass);
+    b.SetBranch("Flag_HBHENoiseIsoFilterPass", Flag_HBHENoiseIsoFilterPass);
+    b.SetBranch("Flag_EcalDeadCellTriggerPrimitiveFilterPass", Flag_EcalDeadCellTriggerPrimitiveFilterPass);
+    b.SetBranch("Flag_goodVerticesPass", Flag_goodVerticesPass);
+    b.SetBranch("Flag_eeBadScFilterPass", Flag_eeBadScFilterPass);
+    b.SetBranch("Flag_globalTightHalo2016FilterPass", Flag_globalTightHalo2016FilterPass);
 }
 
 void WZSelectorBase::SetBranchesNanoAOD() {
-    fChain->SetBranchAddress("nElectron", &nElectron, &b_nElectron);
-    fChain->SetBranchAddress("nMuon", &nMuon, &b_nMuon);
-    fChain->SetBranchAddress("Electron_pt", &Electron_pt, &b_Electron_pt);
-    fChain->SetBranchAddress("Electron_eta", &Electron_eta, &b_Electron_eta);
-    fChain->SetBranchAddress("Electron_phi", &Electron_phi, &b_Electron_phi);
-    fChain->SetBranchAddress("Electron_mass", &Electron_mass, &b_Electron_mass);
-    fChain->SetBranchAddress("Muon_pt", &Muon_pt, &b_Muon_pt);
-    fChain->SetBranchAddress("Muon_eta", &Muon_eta, &b_Muon_eta);
-    fChain->SetBranchAddress("Muon_phi", &Muon_phi, &b_Muon_phi);
-    fChain->SetBranchAddress("Muon_mass", &Muon_mass, &b_Muon_mass);
-    fChain->SetBranchAddress("Muon_pfRelIso04_all", &Muon_pfRelIso04_all, &b_Muon_pfRelIso04_all);
-    fChain->SetBranchAddress("Electron_cutBased", &Electron_cutBased, &b_Electron_cutBased);
-    fChain->SetBranchAddress("Muon_tightId", &Muon_tightId, &b_Muon_tightId);
-    fChain->SetBranchAddress("Muon_tkIsoId", &Muon_tkIsoId, &b_Muon_tkIsoId);
-    fChain->SetBranchAddress("MET_pt", &MET, &b_MET);
-    fChain->SetBranchAddress("MET_phi", &type1_pfMETPhi, &b_type1_pfMETPhi);
-    fChain->SetBranchAddress("Electron_charge", &Electron_charge, &b_Electron_charge);
-    fChain->SetBranchAddress("Muon_charge", &Muon_charge, &b_Muon_charge);
+    b.CleanUp();
+    b.SetBranch("nElectron", nElectron);
+    b.SetBranch("nMuon", nMuon);
+    b.SetBranch("Electron_pt", Electron_pt);
+    b.SetBranch("Electron_eta", Electron_eta);
+    b.SetBranch("Electron_phi", Electron_phi);
+    b.SetBranch("Electron_mass", Electron_mass);
+    b.SetBranch("Muon_pt", Muon_pt);
+    b.SetBranch("Muon_eta", Muon_eta);
+    b.SetBranch("Muon_phi", Muon_phi);
+    b.SetBranch("Muon_mass", Muon_mass);
+    b.SetBranch("Muon_pfRelIso04_all", Muon_pfRelIso04_all);
+    b.SetBranch("Electron_cutBased", Electron_cutBased);
+    b.SetBranch("Muon_tightId", Muon_tightId);
+    b.SetBranch("Muon_tkIsoId", Muon_tkIsoId);
+    b.SetBranch("MET_pt", MET);
+    b.SetBranch("MET_phi", type1_pfMETPhi);
+    b.SetBranch("Electron_charge", Electron_charge);
+    b.SetBranch("Muon_charge", Muon_charge);
     if (isMC_) {
-        //fChain->SetBranchAddress("e1GenPt", &l1GenPt, &b_l1GenPt);
-        //fChain->SetBranchAddress("e2GenPt", &l2GenPt, &b_l2GenPt);
-        //fChain->SetBranchAddress("e3GenPt", &l3GenPt, &b_l3GenPt);
-        fChain->SetBranchAddress("genWeight", &genWeight, &b_genWeight);
-        fChain->SetBranchAddress("Pileup_nPU", &numPU, &b_numPU);
+        //b.SetBranch("e1GenPt", l1GenPt);
+        //b.SetBranch("e2GenPt", l2GenPt);
+        //b.SetBranch("e3GenPt", l3GenPt);
+        b.SetBranch("genWeight", genWeight);
+        b.SetBranch("Pileup_nPU", numPU);
     }
     //else {
-    //    fChain->SetBranchAddress("Flag_duplicateMuonsPass", &Flag_duplicateMuonsPass, &b_Flag_duplicateMuonsPass);
-    //    fChain->SetBranchAddress("Flag_badMuonsPass", &Flag_badMuonsPass, &b_Flag_badMuonsPass);
+    //    b.SetBranch("Flag_duplicateMuonsPass", Flag_duplicateMuonsPass);
+    //    b.SetBranch("Flag_badMuonsPass", Flag_badMuonsPass);
     //}
-    //fChain->SetBranchAddress("Flag_BadChargedCandidateFilterPass", &Flag_BadChargedCandidateFilterPass, &b_Flag_BadChargedCandidateFilterPass);
-    //fChain->SetBranchAddress("Flag_BadPFMuonFilterPass", &Flag_BadPFMuonFilterPass, &b_Flag_BadPFMuonFilterPass);
-    //fChain->SetBranchAddress("Flag_HBHENoiseFilterPass", &Flag_HBHENoiseFilterPass, &b_Flag_HBHENoiseFilterPass);
-    //fChain->SetBranchAddress("Flag_HBHENoiseIsoFilterPass", &Flag_HBHENoiseIsoFilterPass, &b_Flag_HBHENoiseIsoFilterPass);
-    //fChain->SetBranchAddress("Flag_EcalDeadCellTriggerPrimitiveFilterPass", &Flag_EcalDeadCellTriggerPrimitiveFilterPass, &b_Flag_EcalDeadCellTriggerPrimitiveFilterPass);
-    //fChain->SetBranchAddress("Flag_goodVerticesPass", &Flag_goodVerticesPass, &b_Flag_goodVerticesPass);
-    //fChain->SetBranchAddress("Flag_eeBadScFilterPass", &Flag_eeBadScFilterPass, &b_Flag_eeBadScFilterPass);
-    //fChain->SetBranchAddress("Flag_globalTightHalo2016FilterPass", &Flag_globalTightHalo2016FilterPass, &b_Flag_globalTightHalo2016FilterPass);
+    //b.SetBranch("Flag_BadChargedCandidateFilterPass", Flag_BadChargedCandidateFilterPass);
+    //b.SetBranch("Flag_BadPFMuonFilterPass", Flag_BadPFMuonFilterPass);
+    //b.SetBranch("Flag_HBHENoiseFilterPass", Flag_HBHENoiseFilterPass);
+    //b.SetBranch("Flag_HBHENoiseIsoFilterPass", Flag_HBHENoiseIsoFilterPass);
+    //b.SetBranch("Flag_EcalDeadCellTriggerPrimitiveFilterPass", Flag_EcalDeadCellTriggerPrimitiveFilterPass);
+    //b.SetBranch("Flag_goodVerticesPass", Flag_goodVerticesPass);
+    //b.SetBranch("Flag_eeBadScFilterPass", Flag_eeBadScFilterPass);
+    //b.SetBranch("Flag_globalTightHalo2016FilterPass", Flag_globalTightHalo2016FilterPass);
 }
 
 void WZSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) { 
+    b.SetEntry(entry);
     weight = 1;
-    b_nElectron->GetEntry(entry);
-    b_nMuon->GetEntry(entry);
-    b_Electron_pt->GetEntry(entry);
-    b_Electron_eta->GetEntry(entry);
-    b_Electron_phi->GetEntry(entry);
-    b_Muon_pt->GetEntry(entry);
-    b_Muon_eta->GetEntry(entry);
-    b_Muon_phi->GetEntry(entry);
-    b_Electron_cutBased->GetEntry(entry);
-    b_Muon_tightId->GetEntry(entry);
-    b_Muon_tightId->GetEntry(entry);
-    b_Muon_pfRelIso04_all->GetEntry(entry);
-    b_Electron_charge->GetEntry(entry);
-    b_Muon_charge->GetEntry(entry);
-    b_Electron_mass->GetEntry(entry);
-    b_Muon_mass->GetEntry(entry);
-    b_MET->GetEntry(entry);
 
     if (nElectron > N_KEEP_MU_E_ || nMuon > N_KEEP_MU_E_) {
         std::string message = "Found more electrons or muons than max read number.\n    Found ";
@@ -263,9 +276,7 @@ void WZSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, s
     SetMasses();
 
     if (isMC_) {
-        b_genWeight->GetEntry(entry);
-        b_numPU->GetEntry(entry);
-        //ApplyScaleFactors();
+        ApplyScaleFactors();
     }
     //else {
     //}
@@ -390,46 +401,12 @@ void WZSelectorBase::SetChannelAndIndicesNano() {
 }
 
 void WZSelectorBase::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation){ 
+    b.SetEntry(entry);
     weight = 1;
-    b_l1Pt->GetEntry(entry);
-    b_l2Pt->GetEntry(entry);
-    b_l3Pt->GetEntry(entry);
-    b_l1Eta->GetEntry(entry);
-    b_l2Eta->GetEntry(entry);
-    b_l3Eta->GetEntry(entry);
 
     if (isMC_) {
-        b_genWeight->GetEntry(entry);
-        b_l1GenPt->GetEntry(entry);
-        b_l2GenPt->GetEntry(entry);
-        b_l3GenPt->GetEntry(entry);
-        b_nTruePU->GetEntry(entry);
         ApplyScaleFactors();
     }
-    else {
-        b_Flag_duplicateMuonsPass->GetEntry(entry);          
-        b_Flag_badMuonsPass->GetEntry(entry);          
-    }
-    b_ZMass->GetEntry(entry);
-    b_l1IsTight->GetEntry(entry);
-    b_l2IsTight->GetEntry(entry);
-    b_l3IsTight->GetEntry(entry);
-    b_l3MtToMET->GetEntry(entry);
-    b_MET->GetEntry(entry);
-    b_nCBVIDTightElec->GetEntry(entry);
-    b_nCBVIDHLTSafeElec->GetEntry(entry);
-    b_nCBVIDVetoElec->GetEntry(entry);
-    b_nWZTightMuon->GetEntry(entry);
-    b_nWZMediumMuon->GetEntry(entry);
-    b_Flag_BadPFMuonFilterPass->GetEntry(entry);                    
-    b_Flag_BadChargedCandidateFilterPass->GetEntry(entry);          
-    b_Flag_HBHENoiseFilterPass->GetEntry(entry);                    
-    b_Flag_HBHENoiseIsoFilterPass->GetEntry(entry);                 
-    b_Flag_EcalDeadCellTriggerPrimitiveFilterPass->GetEntry(entry); 
-    b_Flag_goodVerticesPass->GetEntry(entry);                       
-    b_Flag_eeBadScFilterPass->GetEntry(entry);                      
-    b_Flag_globalTightHalo2016FilterPass->GetEntry(entry);          
-
     // Veto on tight leptons
     // Make sure tight leptons also pass loose
     // passesLeptonVeto = nWZTightMuon + nCBVIDTightElec <= 3 &&
