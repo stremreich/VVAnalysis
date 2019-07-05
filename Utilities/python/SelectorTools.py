@@ -19,6 +19,7 @@ class SelectorDriver(object):
             "Zstudy_2016" : "ZSelector",
             "Zstudy_2017" : "ZSelector",
             "ZZGen" : "ZZGenSelector",
+            "TTT" : "TTTSelector",
             "WGen" : "WGenSelector",
             "ZGen" : "ZGenSelector",
             "TTT" : "TTTSelector",

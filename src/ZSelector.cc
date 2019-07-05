@@ -222,6 +222,7 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
     //    //        (!Dielectron_Trigger && SingleElectron_Trigger));
     passesTrigger = SingleMuon_Trigger || SingleElectron_Trigger;
 
+
     passesLeptonVeto = (std::min(nMediumIdMuon, nLooseIsoMuon) + nCBVIDVetoElec) == 2;
 }
 
@@ -246,15 +247,10 @@ void ZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::stri
 }
 
 void ZSelector::ApplyScaleFactors() {
-    if (channel_ == ee) {
-        if (eIdSF_ != nullptr) {
-            weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
-        if (eGsfSF_ != nullptr) {
-            weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
+  if (channel_ == ee) {
+    if (eIdSF_ != nullptr) {
+      weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+      weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
     }
     if (eGsfSF_ != nullptr) {
       weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
@@ -306,10 +302,11 @@ bool ZSelector::tightZLeptons() {
 }
 
 void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
-    int step = 0;
-    SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  int step = 0;
+  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
-    if (channel_ != mm && channel_ != ee) 
+
+  if (channel_ != mm && channel_ != ee) 
         return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
