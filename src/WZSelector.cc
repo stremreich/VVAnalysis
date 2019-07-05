@@ -35,66 +35,38 @@ void WZSelector::Init(TTree *tree)
         //"MTWZ",
     };
 
-    histMap1D_ = {
-        { "yield",  {} },
-        //{ "backgroundControlYield",  {} },
-        //{ "nTruePU",  {} },
-        //{ "nvtx",  {} },
-        { "ZMass",  {} },
-        //{ "ZPt",  {} },
-        //{ "ZEta",  {} },
-        //{ "ZPhi",  {} },
-        //{ "dR_lW_Z",  {} },
-        { "lep1_Eta",  {} },
-        { "lep1_Phi",  {} },
-        { "lep1_Pt",  {} },
-        { "lep2_Eta",  {} },
-        { "lep2_Phi",  {} },
-        { "lep2_Pt",  {} },
-        { "MET", {} },
-        //{ "MTWZ", {} },
-        //{ "M3lMET", {} },
-        //{ "Mass", {} },
-        //{ "Pt", {} },
-        //{ "nJets", {} },
-        //{ "nJetCSVv2T", {} },
-        //{ "jetPt[0]", {} },
-        //{ "jetPt[1]", {} },
-        //{ "jetPt[2]", {} },
-        //{ "jetEta12", {} },
-        //{ "jetEta[0]", {} },
-        //{ "jetEta[1]", {} },
-        //{ "jetEta[2]", {} },
-        //{ "mjj",  {} },
-        //{ "MtW",  {} },
-        //{ "dEtajj",  {} },
-        //{ "dRjj",  {} },
-        //{ "zep3l",  {} },
-        //{ "zepj3",  {} },
-        //{ "Eta",  {} },
-        //{ "m_l1l3",  {} },
+    hists1D_ = {"yield", "Zlep1_Eta", "Zlep1_Phi", "Zlep1_Pt",
+        "Zlep2_Eta", "Zlep2_Phi", "Zlep2_Pt", "Wlep_Eta", "Wlep_Phi", "Wlep_Pt",
+        "ZMass", "Mass", "MET", "nJets",
+        //"ZPt",
+        //"ZEta",
+        //"ZPhi",
+        //"dR_lW_Z",
+        //"backgroundControlYield",
+        //"nTruePU",
+        //"nvtx",
+        //"MTWZ",
+        //"M3lMET",
+        //"Mass",
+        //"Pt",
+        //"nJets",
+        //"nJetCSVv2T",
+        //"jetPt[0]",
+        //"jetPt[1]",
+        //"jetPt[2]",
+        //"jetEta12",
+        //"jetEta[0]",
+        //"jetEta[1]",
+        //"jetEta[2]",
+        //"mjj",
+        //"MtW",
+        //"dEtajj",
+        //"dRjj",
+        //"zep3l",
+        //"zepj3",
+        //"Eta",
+        //"m_l1l3",
     };
-
-    weighthists_ = {
-        //{ "backgroundControlYield",  {} },
-        //{ "mjj",  {} },
-        //{ "MTWZ",  {} },
-        { "yield",  {} },
-    };
-    
-    hists2D_ = {
-        //{"mjj_etajj_2D", {}},
-        //{"mjj_dRjj_2D", {}}
-    };
-
-    systHists2D_ = {
-        "mjj_etajj_2D", "mjj_dRjj_2D"
-    };
-
-    //weighthists2D_ {
-        //{"mjj_etajj_2D", {}},
-        //{"mjj_dRjj_2D", {}}
-    //};
 
     WZSelectorBase::Init(tree);
 }
@@ -374,7 +346,7 @@ void WZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
                 scaleUnc = GetMuonScaleUncertainty(l3Eta);
                 l3Pt *= variation.first == muonScaleUp ? (1+scaleUnc) : (1-scaleUnc);
             }
-            SetShiftedMasses();
+            SetMasses();
         }
         else if (variation.first == electronScaleUp || variation.first == electronScaleDown) {
             if (channel_ == eee) {
@@ -397,7 +369,7 @@ void WZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
             }
             else if (channel_ == mmm)
                 return;
-            SetShiftedMasses();
+            SetMasses();
         }
         else if (variation.first == metUnclusteredEnergyDown) {
             b_type1_pfMETEt_unclusteredEnUp->GetEntry(entry);
@@ -543,20 +515,20 @@ bool WZSelector::PassesVBSSelection(bool noBlind) {
              selection_ == VBSBackgroundControlLoose_Full) { 
         return PassesVBSBackgroundControlSelection();
     }
-    //return mjj > 500 && dEtajj > 2.5;
+    return mjj > 500 && dEtajj > 2.5;
     // ATLAS
-    return mjj > 150;
+    //return mjj > 150;
 }
 
 bool WZSelector::PassesFullWZSelection(Long64_t entry) {
-    if (ZMass > 106.1876 || ZMass < 76.1876)
-        return false;
+    //if (ZMass > 106.1876 || ZMass < 76.1876)
+    //    return false;
     if (l1Pt < 25 || l2Pt < 15 || l3Pt < 20)
         return false;
-    if (Mass < 100)
-        return false;
-    if (MET < 30)
-        return false;
+    //if (Mass < 100)
+    //    return false;
+    //if (MET < 30)
+    //    return false;
 
     //b_jetCSVv2->GetEntry(entry);
     //for (const auto& jetCSVval : *jetCSVv2) {
@@ -708,12 +680,12 @@ void WZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("MET", variation.second), MET, weight);
     // Just doing what works for now
     return;
+    SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jetPt->size(), weight);
     SafeHistFill(histMap1D_, getHistName("m_l1l3", variation.second), Zlep1_Wlep_Mass, weight);
     SafeHistFill(histMap1D_, getHistName("m_l2l3", variation.second), Zlep2_Wlep_Mass, weight);
     SafeHistFill(histMap1D_, getHistName("ZPhi", variation.second), ZPhi, weight);
     SafeHistFill(histMap1D_, getHistName("ZEta", variation.second), ZEta, weight);
     SafeHistFill(histMap1D_, getHistName("MtW", variation.second), l3MtToMET, weight);
-    SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jetPt->size(), weight);
     SafeHistFill(histMap1D_, getHistName("Eta", variation.second), Eta, weight);
 
     if (histMap1D_[getHistName("dR_lW_Z", variation.second)] != nullptr) {

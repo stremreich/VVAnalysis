@@ -14,33 +14,30 @@ std::string WZSelectorBase::GetNameFromFile() {
     return std::string(matches.str(1));
 }
 
-void WZSelectorBase::SlaveBegin(TTree * /*tree*/)
-{
+void WZSelectorBase::SetScaleFactors() {
     pileupSF_ = (ScaleFactor *) GetInputList()->FindObject("pileupSF");
     if (pileupSF_ == nullptr ) 
-        Abort("Must pass pileup weights SF");
+        std::invalid_argument("Must pass pileup weights SF");
     eIdSF_ = (ScaleFactor *) GetInputList()->FindObject("electronTightIdSF");
     if (eIdSF_ == nullptr ) 
-        Abort("Must pass electron ID SF");
+        std::invalid_argument("Must pass electron ID SF");
     eGsfSF_ = (ScaleFactor *) GetInputList()->FindObject("electronGsfSF");
     if (eGsfSF_ == nullptr ) 
-        Abort("Must pass electron GSF SF");
+        std::invalid_argument("Must pass electron GSF SF");
     mIdSF_ = (ScaleFactor *) GetInputList()->FindObject("muonTightIdSF");
     if (mIdSF_ == nullptr ) 
-        Abort("Must pass muon ID SF");
+        std::invalid_argument("Must pass muon ID SF");
     mIsoSF_ = (ScaleFactor *) GetInputList()->FindObject("muonIsoSF");
     if (mIsoSF_ == nullptr ) 
-        Abort("Must pass muon Iso SF");
+        std::invalid_argument("Must pass muon Iso SF");
 
     prefireEff_ = (TEfficiency*) GetInputList()->FindObject("prefireEfficiencyMap");
     if (prefireEff_ == nullptr ) 
-        Abort("Must pass prefiring efficiency map");
-
+        std::invalid_argument("Must pass prefiring efficiency map");
 }
 
 void WZSelectorBase::Init(TTree *tree)
 {
-    SelectorBase::Init(tree);
     isVBS_ = (selection_ == VBSselection_Loose || 
         selection_ == VBSselection_Loose_Full || 
         selection_ == VBSselection_NoZeppenfeld || 
@@ -65,16 +62,8 @@ void WZSelectorBase::Init(TTree *tree)
         else if (name_ == "zg") {
             isZgamma_ = true;
         }
-        if (addSumweights_) {
-            TFile* file = fChain->GetTree()->GetDirectory()->GetFile(); 
-            TTree* metaInfo = dynamic_cast<TTree*>(file->Get("metaInfo/metaInfo"));
-            if (metaInfo == nullptr)
-                std::cerr << "WARNING: Failed to add sumWeights histogram" << std::endl;
-            else {
-                metaInfo->Draw("1>>sumweights", "summedWeights");
-            }
-        }
     }
+    SelectorBase::Init(tree);
 }
 
 void WZSelectorBase::SetBranchesUWVV() {
@@ -164,6 +153,7 @@ void WZSelectorBase::SetBranchesUWVV() {
     fChain->SetBranchAddress("type1_pfMETPhi", &type1_pfMETPhi, &b_type1_pfMETPhi);
     fChain->SetBranchAddress("nCBVIDTightElec", &nCBVIDTightElec, &b_nCBVIDTightElec);
     fChain->SetBranchAddress("nCBVIDHLTSafeElec", &nCBVIDHLTSafeElec, &b_nCBVIDHLTSafeElec);
+    fChain->SetBranchAddress("nCBVIDVetoElec", &nCBVIDVetoElec, &b_nCBVIDVetoElec);
     fChain->SetBranchAddress("nWZTightMuon", &nWZTightMuon, &b_nWZTightMuon);
     fChain->SetBranchAddress("nWZMediumMuon", &nWZMediumMuon, &b_nWZMediumMuon);
     fChain->SetBranchAddress("Flag_BadChargedCandidateFilterPass", &Flag_BadChargedCandidateFilterPass, &b_Flag_BadChargedCandidateFilterPass);
@@ -182,9 +172,12 @@ void WZSelectorBase::SetBranchesNanoAOD() {
     fChain->SetBranchAddress("Electron_pt", &Electron_pt, &b_Electron_pt);
     fChain->SetBranchAddress("Electron_eta", &Electron_eta, &b_Electron_eta);
     fChain->SetBranchAddress("Electron_phi", &Electron_phi, &b_Electron_phi);
+    fChain->SetBranchAddress("Electron_mass", &Electron_mass, &b_Electron_mass);
     fChain->SetBranchAddress("Muon_pt", &Muon_pt, &b_Muon_pt);
     fChain->SetBranchAddress("Muon_eta", &Muon_eta, &b_Muon_eta);
     fChain->SetBranchAddress("Muon_phi", &Muon_phi, &b_Muon_phi);
+    fChain->SetBranchAddress("Muon_mass", &Muon_mass, &b_Muon_mass);
+    fChain->SetBranchAddress("Muon_pfRelIso04_all", &Muon_pfRelIso04_all, &b_Muon_pfRelIso04_all);
     fChain->SetBranchAddress("Electron_cutBased", &Electron_cutBased, &b_Electron_cutBased);
     fChain->SetBranchAddress("Muon_tightId", &Muon_tightId, &b_Muon_tightId);
     fChain->SetBranchAddress("Muon_tkIsoId", &Muon_tkIsoId, &b_Muon_tkIsoId);
@@ -192,8 +185,6 @@ void WZSelectorBase::SetBranchesNanoAOD() {
     fChain->SetBranchAddress("MET_phi", &type1_pfMETPhi, &b_type1_pfMETPhi);
     fChain->SetBranchAddress("Electron_charge", &Electron_charge, &b_Electron_charge);
     fChain->SetBranchAddress("Muon_charge", &Muon_charge, &b_Muon_charge);
-    fChain->SetBranchAddress("Electron_mass", &Electron_mass, &b_Electron_mass);
-    fChain->SetBranchAddress("Muon_mass", &Muon_mass, &b_Muon_mass);
     if (isMC_) {
         //fChain->SetBranchAddress("e1GenPt", &l1GenPt, &b_l1GenPt);
         //fChain->SetBranchAddress("e2GenPt", &l2GenPt, &b_l2GenPt);
@@ -227,7 +218,8 @@ void WZSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, s
     b_Muon_phi->GetEntry(entry);
     b_Electron_cutBased->GetEntry(entry);
     b_Muon_tightId->GetEntry(entry);
-    b_Muon_tkIsoId->GetEntry(entry);
+    b_Muon_tightId->GetEntry(entry);
+    b_Muon_pfRelIso04_all->GetEntry(entry);
     b_Electron_charge->GetEntry(entry);
     b_Muon_charge->GetEntry(entry);
     b_Electron_mass->GetEntry(entry);
@@ -245,7 +237,6 @@ void WZSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, s
         throw std::domain_error(message);
     }
 
-    ZMass = 0;
     l1Pt = 0;
     l2Pt = 0;
     l3Pt = 0;
@@ -258,67 +249,144 @@ void WZSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, s
     l1Mass = 0;
     l2Mass = 0;
     l3Mass = 0;
-    if (nElectron == 2 && nMuon == 1) {
-        channel_ = eem;
-        if (Electron_charge[0] != Electron_charge[1]) {
-            l1Pt = Electron_pt[0];
-            l2Pt = Electron_pt[1];
-            l3Pt = Muon_pt[0];
-            l1Eta = Electron_eta[0];
-            l2Eta = Electron_eta[1];
-            l3Eta = Muon_eta[0];
-            l1Phi = Electron_phi[0];
-            l2Phi = Electron_phi[1];
-            l3Phi = Muon_phi[0];
-            l1Mass = Electron_mass[0];
-            l2Mass = Electron_mass[1];
-            l3Mass = Muon_mass[0];
-            SetShiftedMasses();
-            // cut-based ID Fall17 V2 (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
-            l1IsTight = (Electron_cutBased[0] == 4);
-            l2IsTight = (Electron_cutBased[1] == 4);
-            // cut-based ID, tight WP; TkIso ID (1=TkIsoLoose, 2=TkIsoTight)
-            l3IsTight = (Muon_tightId[0] && (Muon_tkIsoId[0] == 2));
-        }
+
+    SetChannelAndIndicesNano();
+    if (channel_ != eee && channel_ != eem && channel_ != emm && channel_ != mmm) {
+        passesLeptonVeto = false;
+        return;
     }
-    else if (nElectron == 1 && nMuon == 2) {
-        channel_ = emm;
-        if (Muon_charge[0] != Muon_charge[1]) {
-            l1Pt = Muon_pt[0];
-            l2Pt = Muon_pt[1];
-            l3Pt = Electron_pt[0];
-            l1Eta = Muon_eta[0];
-            l2Eta = Muon_eta[1];
-            l3Eta = Electron_eta[0];
-            l1Phi = Muon_phi[0];
-            l2Phi = Muon_phi[1];
-            l3Phi = Electron_phi[0];
-            l1Mass = Muon_mass[0];
-            l2Mass = Muon_mass[1];
-            l3Mass = Electron_mass[0];
-            SetShiftedMasses();
-            // cut-based ID, tight WP; TkIso ID (1=TkIsoLoose, 2=TkIsoTight)
-            l1IsTight = (Muon_tightId[0] && (Muon_tkIsoId[0] == 2));
-            l2IsTight = (Muon_tightId[1] && (Muon_tkIsoId[1] == 2));
-            // cut-based ID Fall17 V2 (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
-            l3IsTight = (Electron_cutBased[1] == 4);
-        }
-    }
+    else
+        passesLeptonVeto = true;
+
+    SetGoodLeptonsFromNano();
+    SetLeptonVarsNano();
+    SetMasses();
 
     if (isMC_) {
         b_genWeight->GetEntry(entry);
         b_numPU->GetEntry(entry);
-        //b_l1GenPt->GetEntry(entry);
-        //b_l2GenPt->GetEntry(entry);
-        //b_l3GenPt->GetEntry(entry);
         //ApplyScaleFactors();
     }
-    else {
-        b_Flag_duplicateMuonsPass->GetEntry(entry);          
-        b_Flag_badMuonsPass->GetEntry(entry);          
+    //else {
+    //}
+
+}
+
+void WZSelectorBase::SetLeptonVarsNano() {
+    auto& l1 = leptons.at(0);
+    auto& l2 = leptons.at(1);
+    auto& l3 = leptons.at(2);
+
+    l1Pt = l1.pt();
+    l1Eta = l1.eta();
+    l1Phi = l1.phi();
+    l1Mass= l1.mass();
+    l2Pt = l2.pt();
+    l2Eta = l2.eta();
+    l2Phi = l2.phi();
+    l2Mass= l2.mass();
+    l3Pt = l3.pt();
+    l3Eta = l3.eta();
+    l3Phi = l3.phi();
+    l3Mass= l3.mass();
+
+    if (channel_ == eee) {
+        l1IsTight = (Electron_cutBased[looseElecIndices.at(0)] == 4);
+        l2IsTight = (Electron_cutBased[looseElecIndices.at(1)] == 4);
+        l3IsTight = (Electron_cutBased[looseElecIndices.at(2)] == 4);
+    }
+    else if (channel_ == eem) {
+        l1IsTight = (Electron_cutBased[looseElecIndices.at(0)] == 4);
+        l2IsTight = (Electron_cutBased[looseElecIndices.at(1)] == 4);
+        size_t imu = looseMuonIndices.at(0);
+        l3IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
+    }
+    else if (channel_ == eem) {
+        size_t imu = looseMuonIndices.at(0);
+        l1IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
+        imu = looseMuonIndices.at(1);
+        l2IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
+        l3IsTight = (Electron_cutBased[looseElecIndices.at(1)] == 4);
+     }
+     else if (channel_ == mmm) {
+        size_t imu = looseMuonIndices.at(0);
+        l1IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
+        imu = looseMuonIndices.at(1);
+        l2IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
+        imu = looseMuonIndices.at(2);
+        l3IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
+     }
+}
+
+// Always ordered: 0 - Zlep1, 1 - Zlep2, 2 - Wlep (lep IDs are clear from channel)
+void WZSelectorBase::SetGoodLeptonsFromNano() {
+    leptons.clear();
+    bool zee = (channel_ == eem || channel_ == eee);
+    auto& indices = zee ? looseElecIndices : looseMuonIndices;
+    if (!(indices.size() == 2 || indices.size() == 3)) {
+        throw std::length_error("Invalid lepton indices");
+    }
+    for (const auto& i : indices) {
+        auto lep = zee ?
+            LorentzVector(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]) :
+            LorentzVector(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
+        leptons.push_back(lep);
     }
 
-    passesLeptonVeto = (nMuon + nElectron) == 3;
+    if (channel_ == eem || channel_ == emm) {
+        auto& wIndices = (channel_ == eem) ? looseMuonIndices : looseElecIndices;
+        if (wIndices.size() != 1)
+            throw std::length_error("Invalid W lepton indices");
+        size_t wi = wIndices.at(0);
+        auto wlep = (channel_ == eem) ?
+                LorentzVector(Muon_pt[wi], Muon_eta[wi], Muon_phi[wi], Muon_mass[wi]) :
+                LorentzVector(Electron_pt[wi], Electron_eta[wi], Electron_phi[wi], Electron_mass[wi]);
+        leptons.push_back(wlep);
+    }
+}
+
+void WZSelectorBase::SetChannelAndIndicesNano() {
+    // cut-based ID Fall17 V2 (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
+    nCBVIDTightElec = 0;
+    nCBVIDVetoElec = 0;
+    nWZTightMuon = 0;
+    nWZMediumMuon = 0;
+
+    //TODO: Embed these variables in the NanoSkims
+    looseMuonIndices.clear();
+    looseElecIndices.clear();
+    for (size_t i = 0; i < nMuon; i++) {
+        if (Muon_tightId[i] && Muon_pfRelIso04_all[i] < 0.40) {
+            nWZMediumMuon++;
+            looseMuonIndices.push_back(i);
+            nWZTightMuon += (Muon_pfRelIso04_all[i] < 0.15);
+        }
+    }
+
+    for (size_t i = 0; i < nElectron; i++) {
+        if (Electron_cutBased[i] >= 1) {
+            nCBVIDVetoElec++;
+            looseElecIndices.push_back(i);
+        }
+        if (Electron_cutBased[i] == 4)
+            nCBVIDTightElec++;
+    }
+
+    if (nWZMediumMuon == 0 && nCBVIDVetoElec == 3)
+        channelName_ = "eee";
+    else if (nWZMediumMuon == 1 && nCBVIDVetoElec == 2)
+        channelName_ = "eem";
+    else if (nWZMediumMuon == 2 && nCBVIDVetoElec == 1)
+        channelName_ = "emm";
+    else if (nWZMediumMuon == 3 && nCBVIDVetoElec == 0)
+        channelName_ = "mmm";
+    else
+        channelName_ = "Unknown";
+    
+    //std::cout << "Channel " << channelName_ << " " << channel_ << " elecIndices " << looseElecIndices.size() 
+    //          << " muon indices " << looseMuonIndices.size() << std::endl;
+
+    channel_ = channelMap_[channelName_];
 }
 
 void WZSelectorBase::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation){ 
@@ -350,6 +418,7 @@ void WZSelectorBase::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std:
     b_MET->GetEntry(entry);
     b_nCBVIDTightElec->GetEntry(entry);
     b_nCBVIDHLTSafeElec->GetEntry(entry);
+    b_nCBVIDVetoElec->GetEntry(entry);
     b_nWZTightMuon->GetEntry(entry);
     b_nWZMediumMuon->GetEntry(entry);
     b_Flag_BadPFMuonFilterPass->GetEntry(entry);                    
@@ -369,56 +438,84 @@ void WZSelectorBase::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std:
     // passesLeptonVeto = std::abs(nWZMediumMuon + nCBVIDHLTSafeElec - (l1IsLoose +l2IsLoose +l3IsLoose)) < 0.1;
 
     // Veto on loose leptons
-    passesLeptonVeto = (nWZMediumMuon + nCBVIDHLTSafeElec) == 3;
+    //passesLeptonVeto = (nWZMediumMuon + nCBVIDHLTSafeElec) == 3;
+    passesLeptonVeto = (nWZMediumMuon + nCBVIDVetoElec) == 3;
  
 }
 
 void WZSelectorBase::ApplyScaleFactors() {
     weight = genWeight;
     if (channel_ == eee) {
-        weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-        weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-        weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        weight *= eIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-        weight *= eGsfSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        if (eIdSF_ != nullptr) {
+            weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+            weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+            weight *= eIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        }
+        if (eGsfSF_ != nullptr) {
+            weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+            weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+            weight *= eGsfSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        }
     }
     else if (channel_ == eem) {
-        weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-        weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-        weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        weight *= mIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-        weight *= mIsoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        if (eIdSF_ != nullptr) {
+            weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+            weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+        }
+        if (eGsfSF_ != nullptr) {
+            weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+            weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+        }
+        if (mIdSF_ != nullptr) {
+            weight *= mIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        }
+        if (mIsoSF_ != nullptr) {
+            weight *= mIsoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        }
     }
     else if (channel_ == emm) {
-        weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-        weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-        weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        weight *= mIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-        weight *= mIsoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        if (eIdSF_ != nullptr) {
+            weight *= eIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        }
+        if (eGsfSF_ != nullptr) {
+            weight *= eGsfSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        }
+        if (mIdSF_ != nullptr) {
+            weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+            weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+        }
+        if (mIsoSF_ != nullptr) {
+            weight *= mIsoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+            weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+        }
     }
     else {
-        weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-        weight *= mIsoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-        weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        weight *= mIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
-        weight *= mIsoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        if (mIdSF_ != nullptr) {
+            weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+            weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+            weight *= mIdSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        }
+        if (mIsoSF_ != nullptr) {
+            weight *= mIsoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+            weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+            weight *= mIsoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        }
     }
-    weight *= pileupSF_->Evaluate1D(nTruePU);
+    if (pileupSF_ != nullptr) {
+        //weight *= pileupSF_->Evaluate1D(numPU);
+        weight *= pileupSF_->Evaluate1D(nTruePU);
+    }
 }
 
-void WZSelectorBase::SetShiftedMasses() {
-    TLorentzVector lepton1;
-    lepton1.SetPtEtaPhiM(l1Pt, l1Eta, l1Phi, l1Mass);
-    TLorentzVector lepton2;
-    lepton2.SetPtEtaPhiM(l2Pt, l2Eta, l2Phi, l2Mass);
-    TLorentzVector lepton3;
-    lepton3.SetPtEtaPhiM(l3Pt, l3Eta, l3Phi, l3Mass);
-    ZMass = (lepton1+lepton2).M();
-    Mass = (lepton1+lepton2+lepton3).M();
+void WZSelectorBase::SetMasses() {
+    if (leptons.size() == 0) {
+        leptons.push_back(LorentzVector(l1Pt, l1Eta, l1Phi, l1Mass));
+        leptons.push_back(LorentzVector(l2Pt, l2Eta, l2Phi, l2Mass));
+        leptons.push_back(LorentzVector(l3Pt, l3Eta, l3Phi, l3Mass));
+    }
+
+    ZMass = (leptons.at(0)+leptons.at(1)).M();
+    Mass = (leptons.at(0)+leptons.at(1)+leptons.at(2)).M();
 }
 
 // Meant to be a wrapper for the tight ID just in case it changes

@@ -1,13 +1,15 @@
 #include "Analysis/VVAnalysis/interface/ZSelector.h"
-#include "TLorentzVector.h"
 #include <TStyle.h>
 #include <regex>
 
 void ZSelector::Init(TTree *tree)
 {
     allChannels_ = {"ee", "mm", "Unknown"};
-    hists1D_ = {"CutFlow", "ZMass", "ZEta", "yZ", "ZPt", "ptl1", "etal1", "ptl2", "etal2"};
+    hists1D_ = {"CutFlow", "ZMass", "ZEta", "yZ", "ZPt", "ptl1", "etal1", "ptl2", "etal2",
+        "ptj1", "ptj2", "ptj3", "etaj1", "etaj2", "etaj3", "phij1", "phij2", "phij3", "nJets",
+        "MET",};
 
+    b.SetTree(tree);
     SelectorBase::Init(tree);
     
     singleLepton_ = false;
@@ -70,58 +72,44 @@ void ZSelector::SetBranchesUWVV() {
 }
 
 void ZSelector::SetBranchesNanoAOD() {
-    fChain->SetBranchAddress("nElectron", &nElectron, &b_nElectron);
-    fChain->SetBranchAddress("nMuon", &nMuon, &b_nMuon);
-    fChain->SetBranchAddress("Electron_pt", &Electron_pt, &b_Electron_pt);
-    fChain->SetBranchAddress("Electron_eta", &Electron_eta, &b_Electron_eta);
-    fChain->SetBranchAddress("Electron_phi", &Electron_phi, &b_Electron_phi);
-    fChain->SetBranchAddress("Muon_pt", &Muon_pt, &b_Muon_pt);
-    fChain->SetBranchAddress("Muon_eta", &Muon_eta, &b_Muon_eta);
-    fChain->SetBranchAddress("Muon_phi", &Muon_phi, &b_Muon_phi);
-    fChain->SetBranchAddress("Electron_cutBased", &Electron_cutBased, &b_Electron_cutBased);
-    fChain->SetBranchAddress("Muon_tightId", &Muon_tightId, &b_Muon_tightId);
-    fChain->SetBranchAddress("Muon_mediumId", &Muon_mediumId, &b_Muon_mediumId);
-    fChain->SetBranchAddress("Muon_pfRelIso04_all", &Muon_pfRelIso04_all, &b_Muon_pfRelIso04_all);
-    fChain->SetBranchAddress("MET_pt", &MET, &b_MET);
-    fChain->SetBranchAddress("MET_phi", &type1_pfMETPhi, &b_type1_pfMETPhi);
-    fChain->SetBranchAddress("Electron_charge", &Electron_charge, &b_Electron_charge);
-    fChain->SetBranchAddress("Muon_charge", &Muon_charge, &b_Muon_charge);
-    fChain->SetBranchAddress("Electron_mass", &Electron_mass, &b_Electron_mass);
-    fChain->SetBranchAddress("Muon_mass", &Muon_mass, &b_Muon_mass);
-    //fChain->SetBranchAddress("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL", &Dimuon_Trigger, &b_Dimuon_Trigger);
-    fChain->SetBranchAddress("HLT_IsoMu24", &SingleMuon_Trigger, &b_SingleMuon_Trigger);
-    //fChain->SetBranchAddress("HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ", &Dielectron_Trigger, &b_Dielectron_Trigger);
-    fChain->SetBranchAddress("HLT_Ele27_WPTight_Gsf", &SingleElectron_Trigger, &b_SingleElectron_Trigger);
+    b.CleanUp();
+    b.SetBranch("nElectron", nElectron);
+    b.SetBranch("nMuon", nMuon);
+    b.SetBranch("nJet", nJet);
+    b.SetBranch("Electron_pt", Electron_pt);
+    b.SetBranch("Electron_eta", Electron_eta);
+    b.SetBranch("Electron_phi", Electron_phi);
+    b.SetBranch("Electron_mass", Electron_mass);
+    b.SetBranch("Muon_pt", Muon_pt);
+    b.SetBranch("Muon_eta", Muon_eta);
+    b.SetBranch("Muon_phi", Muon_phi);
+    b.SetBranch("Muon_mass", Muon_mass);
+    b.SetBranch("Jet_pt", Jet_pt);
+    b.SetBranch("Jet_eta", Jet_eta);
+    b.SetBranch("Jet_phi", Jet_phi);
+    b.SetBranch("Jet_mass", Jet_mass);
+    b.SetBranch("Electron_cutBased", Electron_cutBased);
+    b.SetBranch("Muon_tightId", Muon_tightId);
+    b.SetBranch("Muon_mediumId", Muon_mediumId);
+    b.SetBranch("Muon_pfRelIso04_all", Muon_pfRelIso04_all);
+    b.SetBranch("MET_pt", MET);
+    b.SetBranch("MET_phi", type1_pfMETPhi);
+    b.SetBranch("Electron_charge", Electron_charge);
+    b.SetBranch("Muon_charge", Muon_charge);
+    //b.SetBranch("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL", Dimuon_Trigger);
+    b.SetBranch("HLT_IsoMu24", SingleMuon_Trigger);
+    //b.SetBranch("HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ", Dielectron_Trigger);
+    b.SetBranch("HLT_Ele27_WPTight_Gsf", SingleElectron_Trigger);
     if (isMC_) {
-        fChain->SetBranchAddress("genWeight", &genWeight, &b_genWeight);
-        fChain->SetBranchAddress("Pileup_nPU", &numPU, &b_numPU);
+        b.SetBranch("genWeight", genWeight);
+        b.SetBranch("Pileup_nPU", numPU);
     }
 }
 
 void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) { 
     weight = 1;
-    b_nElectron->GetEntry(entry);
-    b_nMuon->GetEntry(entry);
-    b_Electron_pt->GetEntry(entry);
-    b_Electron_eta->GetEntry(entry);
-    b_Electron_phi->GetEntry(entry);
-    b_Muon_pt->GetEntry(entry);
-    b_Muon_eta->GetEntry(entry);
-    b_Muon_phi->GetEntry(entry);
-    b_Electron_cutBased->GetEntry(entry);
-    b_Muon_tightId->GetEntry(entry);
-    b_Muon_mediumId->GetEntry(entry);
-    b_Muon_pfRelIso04_all->GetEntry(entry);
-    b_Electron_charge->GetEntry(entry);
-    b_Muon_charge->GetEntry(entry);
-    b_Electron_mass->GetEntry(entry);
-    b_Muon_mass->GetEntry(entry);
-    b_MET->GetEntry(entry);
-    b_SingleMuon_Trigger->GetEntry(entry);
-    //b_Dimuon_Trigger->GetEntry(entry);
-    b_SingleElectron_Trigger->GetEntry(entry);
-    //b_Dielectron_Trigger->GetEntry(entry);
-
+    b.SetEntry(entry);
+    
     if (nElectron > N_KEEP_MU_E_ || nMuon > N_KEEP_MU_E_) {
         std::string message = "Found more electrons or muons than max read number.\n    Found ";
         message += std::to_string(nElectron);
@@ -130,6 +118,15 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
         message += " Muons\n  --> Max read number was ";
         message += std::to_string(N_KEEP_MU_E_);
         message += "\nExiting because this can cause problems. Increase N_KEEP_MU_E_ to avoid this error.\n";
+        throw std::domain_error(message);
+    }
+
+    if (nJet > N_KEEP_JET_) {
+        std::string message = "Found more jets than max read number.\n    Found ";
+        message += std::to_string(nJet);
+        message += " particles\n  --> Max read number was ";
+        message += std::to_string(N_KEEP_JET_);
+        message += "\nExiting because this can cause problems. Increase N_KEEP_JET_ to avoid this error.\n";
         throw std::domain_error(message);
     }
 
@@ -151,7 +148,7 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
 
     for (size_t i = 0; i < nMuon; i++) {
         //nMediumIdMuon += (Muon_mediumId[i] && Muon_pfRelIso04_all[i] < 0.15);
-        nMediumIdMuon += (Muon_mediumId[i] && Muon_pfRelIso04_all[i] < 0.15*Muon_pt[i]);
+        nMediumIdMuon += (Muon_mediumId[i] && Muon_pfRelIso04_all[i] < 0.15);
         nTightIdMuon += (Muon_tightId[i] && Muon_pfRelIso04_all[i] < 0.15);
     }
 
@@ -216,21 +213,40 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
         channel_ = Unknown;
         channelName_ = "Unknown";
     }
+
+    leptons.clear();
+    jets.clear();
+
+    auto lep1 = LorentzVector();
+    lep1.SetPt(l1Pt);
+    lep1.SetEta(l1Eta);
+    lep1.SetPhi(l1Phi);
+    lep1.SetM(l1Mass);
+    auto lep2 = LorentzVector();
+    lep2.SetPt(l2Pt);
+    lep2.SetEta(l2Eta);
+    lep2.SetPhi(l2Phi);
+    lep2.SetM(l2Mass);
+
+    leptons.push_back(lep1);
+    leptons.push_back(lep2);
+    for (size_t i = 0; i < nJet; i++) {
+        LorentzVector jet;
+        jet.SetPt(Jet_pt[i]);
+        jet.SetEta(Jet_eta[i]);
+        jet.SetPhi(Jet_phi[i]);
+        jet.SetM(Jet_mass[i]);
+        if (jet.pt() > 30 && !helpers::overlapsCollection(jet, leptons, 0.4, leptons.size()))
+            jets.push_back(jet);
+    } 
     SetComposite();
 
     if (isMC_) {
-        b_genWeight->GetEntry(entry);
-        b_numPU->GetEntry(entry);
         weight = genWeight;
-        //b_l1GenPt->GetEntry(entry);
-        //b_l2GenPt->GetEntry(entry);
-        //b_l3GenPt->GetEntry(entry);
         ApplyScaleFactors();
     }
     else {
         //TODO: add MET filters
-        //b_Flag_duplicateMuonsPass->GetEntry(entry);          
-        //b_Flag_badMuonsPass->GetEntry(entry);          
     }
 
 
@@ -262,8 +278,8 @@ void ZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::stri
     b_l1IsTight->GetEntry(entry);
     b_l2IsTight->GetEntry(entry);
     b_MET->GetEntry(entry);
-    //b_nCBVIDTightElec->GetEntry(entry);
-    //
+    b_nCBVIDTightElec->GetEntry(entry);
+    
     passesTrigger = true;
 }
 
@@ -297,14 +313,10 @@ void ZSelector::SetComposite() {
     if (l1Pt == 0. || l2Pt == 0.) {
         return;
     }
-    TLorentzVector lepton1;
-    lepton1.SetPtEtaPhiM(l1Pt, l1Eta, l1Phi, l1Mass);
-    TLorentzVector lepton2;
-    lepton2.SetPtEtaPhiM(l2Pt, l2Eta, l2Phi, l2Mass);
-    auto system = lepton1+lepton2;
-    ZMass = system.M();
-    ZPt = system.Pt();
-    ZEta = system.PseudoRapidity();
+    auto system = leptons.at(0)+leptons.at(1);
+    ZMass = system.mass();
+    ZPt = system.pt();
+    ZEta = system.eta();
     Zy = system.Rapidity();
 }
 
@@ -364,6 +376,16 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
     SafeHistFill(histMap1D_, getHistName("ZEta", variation.second), ZEta, weight);
     SafeHistFill(histMap1D_, getHistName("yZ", variation.second), Zy, weight);
     SafeHistFill(histMap1D_, getHistName("ZPt", variation.second), ZPt, weight);
+    SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jets.size(), weight);
+    SafeHistFill(histMap1D_, getHistName("MET", variation.second), MET, weight);
+    for (size_t i = 1; i <= 3; i++) {
+        if (jets.size() >= i ) {
+            const auto& jet = jets.at(i-1);
+            SafeHistFill(histMap1D_, getHistName("ptj"+std::to_string(i), variation.second), jet.pt(), weight);
+            SafeHistFill(histMap1D_, getHistName("etaj"+std::to_string(i), variation.second), jet.eta(), weight);
+            SafeHistFill(histMap1D_, getHistName("phij"+std::to_string(i), variation.second), jet.phi(), weight);
+        }  
+    }
 }
 
 void ZSelector::SetupNewDirectory() {

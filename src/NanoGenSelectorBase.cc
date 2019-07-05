@@ -1,5 +1,5 @@
 #include "Analysis/VVAnalysis/interface/NanoGenSelectorBase.h"
-#include "DataFormats/Math/interface/LorentzVector.h"
+#include "Analysis/VVAnalysis/interface/helpers.h"
 #include <TStyle.h>
 #include <regex>
 
@@ -97,7 +97,7 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
         jet.SetEta(GenJet_eta[i]);
         jet.SetPhi(GenJet_phi[i]);
         jet.SetM(GenJet_mass[i]);
-        if (jet.pt() > 30 && !overlapsCollection(jet, leptons, 0.4, nLeptons_))
+        if (jet.pt() > 30 && !helpers::overlapsCollection(jet, leptons, 0.4, nLeptons_))
             jets.push_back(jet);
     } // No need to sort jets, they're already pt sorted
 
@@ -109,18 +109,6 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
     SetComposite();
     b_genWeight->GetEntry(entry);
     weight = genWeight;
-}
-
-bool NanoGenSelectorBase::overlapsCollection(const LorentzVector& cand,
-                                  reco::GenParticleCollection& collection,
-                                  const float deltaRCut,
-                                  size_t maxCompare) {
-    for(size_t i = 0; i < std::min(maxCompare, collection.size()); ++i) {
-        if (reco::deltaR(collection[i], cand) < deltaRCut) {
-            return true;
-        }
-    }
-    return false;
 }
 
 void NanoGenSelectorBase::SetupNewDirectory() {

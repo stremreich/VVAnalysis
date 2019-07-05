@@ -15,9 +15,7 @@
 #include "Analysis/VVAnalysis/interface/ScaleFactor.h"
 #include "Analysis/VVAnalysis/interface/SelectorBase.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
-#include "DataFormats/Math/interface/deltaR.h"
-
-typedef reco::Particle::PolarLorentzVector LorentzVector;
+#include "Analysis/VVAnalysis/interface/helpers.h"
 
 class NanoGenSelectorBase : public SelectorBase {
 public :

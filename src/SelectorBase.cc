@@ -202,7 +202,8 @@ void SelectorBase::InitializeHistogramsFromConfig() {
             if (hists2D_.find(histName) != hists2D_.end() || histMap1D_.find(histName) != histMap1D_.end()) { 
                 InitializeHistogramFromConfig(name, chan, histData);
             }
-            else
+            //No need to print warning for every channel
+            else if (chan == channels.front())
                 std::cerr << "Skipping invalid histogram " << name << std::endl;
         }
     }

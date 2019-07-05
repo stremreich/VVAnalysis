@@ -26,7 +26,7 @@ def getComLineArgs():
         default="", help="Selection stage of input files")
     parser.add_argument("-c", "--channels", 
                         type=lambda x : [i.strip() for i in x.split(',')],
-                        default=["eee","eem","emm"], help="List of channels"
+                        default=["eee","eem","emm","mmm"], help="List of channels"
                         "separated by commas. NOTE: set to Inclusive for NanoAOD")
     parser.add_argument("-b", "--hist_names", 
                         type=lambda x : [i.strip() for i in x.split(',')],
@@ -112,6 +112,7 @@ def makeHistFile(args):
     selector.setInputs(sf_inputs+hist_inputs)
     selector.setNtupeType("UWVV" if args['uwvv'] else "NanoAOD")
     if args['uwvv']:
+        print "Channels", args['channels']
         selector.setChannels(args['channels'])
     selector.setNumCores(args['numCores'])
 
