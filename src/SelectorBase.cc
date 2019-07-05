@@ -31,20 +31,21 @@ void SelectorBase::Init(TTree *tree)
         TNamed* name = (TNamed *) GetInputList()->FindObject("name");
         TNamed* chan = (TNamed *) GetInputList()->FindObject("channel");
         TNamed* selection = (TNamed *) GetInputList()->FindObject("selection");
+	TNamed* year = (TNamed *) GetInputList()->FindObject("year");
 
-        if (ntupleType != nullptr) {
-            std::string ntupleName = ntupleType->GetTitle();
-            if (ntupleName == "NanoAOD")
-                ntupleType_ = NanoAOD;
-            else if (ntupleName  == "UWVV")
-                ntupleType_ = UWVV;
-            else
-                throw std::invalid_argument("Unsupported ntuple type!");
-        }
-        else {
-            std::cerr << "INFO: Assuming NanoAOD ntuples" << std::endl;
-            ntupleType_ = NanoAOD;
-        }
+	if (ntupleType != nullptr) {
+	    std::string ntupleName = ntupleType->GetTitle();
+	    if (ntupleName == "NanoAOD")
+		ntupleType_ = NanoAOD;
+	    else if (ntupleName  == "UWVV")
+		ntupleType_ = UWVV;
+	    else
+		throw std::invalid_argument("Unsupported ntuple type!");
+	}
+	else {
+	    std::cerr << "INFO: Assuming NanoAOD ntuples" << std::endl;
+	    ntupleType_ = NanoAOD;
+	}
 
         if (name != nullptr) {
             name_ = name->GetTitle();
@@ -56,11 +57,14 @@ void SelectorBase::Init(TTree *tree)
             std::cerr << "INFO: Using default name \"Unknown\" for file" << std::endl;
             name_ = "Unknown";
         }
-
-        if (chan != nullptr) {
-            channelName_ = chan->GetTitle();
-        }
-        else if (ntupleType_ == UWVV)
+	if(year != nullptr) {
+	    year_ = yearMap_[year->GetTitle()];
+	}
+	
+	if (chan != nullptr) {
+	    channelName_ = chan->GetTitle();
+	}
+	else if (ntupleType_ == UWVV)
             channelName_ = fChain->GetTree()->GetDirectory()->GetName();
         if (selection != nullptr) {
             selectionName_ = selection->GetTitle();

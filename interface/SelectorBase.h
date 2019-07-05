@@ -72,7 +72,7 @@ public :
     };
 
     std::map<std::string, Selection> selectionMap_ = {
-        {"tightleptons", tightleptons},
+      {"tightleptons", tightleptons},
         {"ZZGenFiducial", ZZGenFiducial},
         {"Wselection", Wselection},
         {"Zselection", Zselection},
@@ -95,6 +95,20 @@ public :
         {"TightWithLooseVeto", TightWithLooseVeto},
     };
 
+    enum Year {
+	yrdefault,
+	yr2016,
+	yr2017,
+	yr2018
+    };
+
+    std::map<std::string, Year> yearMap_ = {
+	{"default", yrdefault},
+	{"2016", yr2016},
+	{"2017", yr2017},
+	{"2018", yr2018},
+    };
+    
     std::map<std::string, Channel> channelMap_ = {
         {"e", e},
         {"m", m},
@@ -113,23 +127,23 @@ public :
     };
 
     enum Systematic {
-        Central,
-        jetEnergyScaleUp,
-        jetEnergyScaleDown,
-        jetEnergyResolutionUp,
-        jetEnergyResolutionDown,
-        metUnclusteredEnergyUp,
-        metUnclusteredEnergyDown,
-        muonEfficiencyUp,
-        muonEfficiencyDown,
-        muonScaleUp,
-        muonScaleDown,
-        electronEfficiencyUp,
-        electronEfficiencyDown,
-        electronScaleUp,
-        electronScaleDown,
-        pileupUp,
-        pileupDown,
+	Central,
+	jetEnergyScaleUp,
+	jetEnergyScaleDown,
+	jetEnergyResolutionUp,
+	jetEnergyResolutionDown,
+	metUnclusteredEnergyUp,
+	metUnclusteredEnergyDown,
+	muonEfficiencyUp,
+	muonEfficiencyDown,
+	muonScaleUp,
+	muonScaleDown,
+	electronEfficiencyUp,
+	electronEfficiencyDown,
+	electronScaleUp,
+	electronScaleDown,
+	pileupUp,
+	pileupDown,
     }; 
 
 
@@ -206,6 +220,7 @@ protected:
     NtupleType ntupleType_ = NanoAOD;
     std::string selectionName_ = "tightleptons";
     Selection selection_ = tightleptons;
+    Year year_ = yrdefault;
     bool isMC_;
     float GetPrefiringEfficiencyWeight(std::vector<float>* jetPt, std::vector<float>* jetEta);
     virtual std::string GetNameFromFile() { return ""; }
