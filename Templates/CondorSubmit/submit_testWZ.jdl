@@ -37,9 +37,10 @@ NProcesses = 47
 
 # example: --inputs_from_file DYNano_LOandNLO.txt 2 0 -s Zselection --input_tier NanoAOD -o testZGenJets.root -a ZGen --test
 Arguments            = -a $(Analysis) -s Wselection_Full --output_file $(Analysis)_$(Filelist)_$(Process).root --input_tier NanoAOD --test --inputs_from_file $(Filelist).txt $(NPerJob) $(Process) 
-Transfer_Input_Files = ZGen_AnalysisCode.tgz
+Transfer_Input_Files = $(Analysis)_AnalysisCode.tgz
 output               = $(Analysis)_$(Filelist)_$(Process).out
 error                = $(Analysis)_$(Filelist)_$(Process).err
 Log                  = $(Analysis)_$(Filelist)_$(Process).log
 
 Queue $(NProcesses)
+
