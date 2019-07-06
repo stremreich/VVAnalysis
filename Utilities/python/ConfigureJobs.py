@@ -7,6 +7,7 @@ import os
 import json
 import array
 import string
+import socket
 #try:
 import configparser
 #except:
@@ -43,19 +44,25 @@ def getBinning(variable='MTWZ', isVBS=True, isHiggs=False):
 def getChannels(analysis='WZ'):
     if analysis == 'WZ':
         return ["eee", "eem", "emm", "mmm"]
+
 def getManagerPath():
-    config = configparser.ConfigParser()
-    try:
-        config.read_file(open("Templates/config.%s" % os.environ["USER"]))
-        if "dataset_manager_path" not in config['Setup']:
-            raise ValueError("dataset_manager_path not specified in config file Template/config.%s" 
-                            % os.environ["USER"])
-    except ValueError as e:
+    config_name = "Templates/config"
+    # User env variable isn't defined for cluster machines
+    if "USER" in os.environ.keys():
+        config_name = '.'.join([config_name, os.environ["USER"]])
+    if not os.path.isfile(config_name):
         if os.path.isdir('AnalysisDatasetManager'):
             return '.'
-        raise e
-
+        else:
+            raise IOError("Failed to find valid config file. Looking for %s" 
+                    % config_name)
+    config = configparser.ConfigParser()
+    config.read_file(open(config_name))
+    if "dataset_manager_path" not in config['Setup']:
+        raise ValueError("dataset_manager_path not specified in config file %s"
+                        % config_name)
     return config['Setup']['dataset_manager_path'] + "/"
+
 def getCombinePath():
     config = configparser.ConfigParser()
     config.read_file(open("Templates/config.%s" % os.environ["USER"]))
@@ -171,10 +178,13 @@ def getListOfFiles(filelist, selection, manager_path=""):
     return [str(i) for i in names]
 
 def getXrdRedirector():
-    usbased = ["hep.wisc.edu"]
-    if any(i in os.environ["HOSTNAME"] for i in usbased):
-        return 'cmsxrootd.fnal.gov'
-    return 'cms-xrd-global.cern.ch'
+    usbased = ["wisc.edu"]
+    usredir = 'cmsxrootd.fnal.gov'
+    globalredir = 'cms-xrd-global.cern.ch'
+    # Cluster machines may not have this env variable
+    if any(i in socket.gethostname() for i in usbased):
+        return usredir
+    return globalredir
 
 def fillTemplatedFile(template_file_name, out_file_name, template_dict):
     with open(template_file_name, "r") as templateFile:
@@ -239,7 +249,7 @@ def getConfigFileName(config_file_name):
     for extension in ["json", "py"]:
         if os.path.isfile(".".join([config_file_name, extension])):
             return ".".join([config_file_name, extension])
-    raise IOError("Invalid configuration file. Tried to read %s which does not exist" % \
+    raise ValueError("Invalid configuration file. Tried to read %s which does not exist" % \
             config_file_name)
 
 def getInputFilesPath(sample_name, selection, analysis, manager_path=""):
