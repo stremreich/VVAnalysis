@@ -53,7 +53,7 @@ public :
     Float_t l3Mass;
 
     //NanoAOD variables
-    static const unsigned int N_KEEP_MU_E_ = 10;
+    static const unsigned int N_KEEP_MU_E_ = 20;
     UInt_t nElectron;
     UInt_t nMuon;
     Float_t Electron_pt[N_KEEP_MU_E_];
