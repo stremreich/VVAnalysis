@@ -312,7 +312,7 @@ void WZSelectorBase::SetLeptonVarsNano() {
         size_t imu = looseMuonIndices.at(0);
         l3IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
     }
-    else if (channel_ == eem) {
+    else if (channel_ == emm) {
         size_t imu = looseMuonIndices.at(0);
         l1IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
         imu = looseMuonIndices.at(1);
