@@ -140,13 +140,15 @@ class SelectorDriver(object):
         addSumweights = self.addSumweights and self.channels.index(chan) == 0 and "data" not in dataset
         if addSumweights:
             sumweights_hist = ROOT.gROOT.FindObject("sumweights")
-            if not sumweights_hist:
-                if not self.outfile:
-                    self.outfile = ROOT.TFile.Open(self.outfile_name)
-                sumweights_hist = self.outfile.Get("%s/sumweights" % dataset)
+            # Avoid accidentally combining sumweights across datasets
+            if sumweights_hist:
+                del sumweights_hist
+            if not self.outfile:
+                self.outfile = ROOT.TFile.Open(self.outfile_name)
+            sumweights_hist = self.outfile.Get("%s/sumweights" % dataset)
             if not sumweights_hist:
                 sumweights_hist = ROOT.TH1D("sumweights", "sumweights", 100, 0, 100)
-            sumweights_hist.SetDirectory(ROOT.gROOT)
+        sumweights_hist.SetDirectory(ROOT.gROOT)
         self.processLocalFiles(select, file_path, addSumweights, chan)
         output_list = select.GetOutputList()
         name = self.inputs.FindObject("name").GetTitle()
@@ -166,6 +168,7 @@ class SelectorDriver(object):
             chanNum = self.channels.index(chan)
             self.current_file = ROOT.TFile.Open(self.tempfileName(dataset), "recreate" if chanNum == 0 else "update")
         OutputTools.writeOutputListItem(dataset_list, self.current_file)
+        dataset_list.Delete()
         output_list.Delete()
         if self.current_file != self.outfile:
             self.current_file.Close()

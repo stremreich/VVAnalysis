@@ -24,7 +24,7 @@ Requirements         = TARGET.Arch == "X86_64" && IsSlowSlot=!=true && (MY.Requi
 # stop jobs from running if they blow up
 periodic_hold        = DiskUsage/1024 > 10.0*2000
 Analysis = WZxsec2016
-Filelist = WZ2016MC.txt
+Filelist = WZ2016MC
 # TODO: Actually fill these From templates
 NPerJob = 5
 #There are 231 files for the test script
@@ -37,9 +37,10 @@ NProcesses = 47
 
 # example: --inputs_from_file DYNano_LOandNLO.txt 2 0 -s Zselection --input_tier NanoAOD -o testZGenJets.root -a ZGen --test
 Arguments            = -a $(Analysis) -s Wselection_Full --output_file $(Analysis)_$(Filelist)_$(Process).root --input_tier NanoAOD --test --inputs_from_file $(Filelist).txt $(NPerJob) $(Process) 
-Transfer_Input_Files = ZGen_AnalysisCode.tgz
-output               = $(Analysis)_$(Filelist)_$(Process).out
-error                = $(Analysis)_$(Filelist)_$(Process).err
-Log                  = $(Analysis)_$(Filelist)_$(Process).log
+Transfer_Input_Files = $(Analysis)_AnalysisCode.tgz
+output               = logs/$(Analysis)_$(Filelist)_$(Process).out
+error                = logs/$(Analysis)_$(Filelist)_$(Process).err
+Log                  = logs/$(Analysis)_$(Filelist)_$(Process).log
 
 Queue $(NProcesses)
+

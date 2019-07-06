@@ -3,9 +3,8 @@
 # Following implementation by N. Smith, Fermilabl
 # https://gitlab.cern.ch/ncsmith/monoZ/tree/master/selector 
 
-tar xvzf ZGen_AnalysisCode.tgz
-
-# TODO: these could be filled in from a template
+# TODO: should be filled in from a template
+tar xvzf WZxsec2016_AnalysisCode.tgz
 CMSSW_RELEASE_BASE="/cvmfs/cms.cern.ch/slc7_amd64_gcc700/cms/cmssw-patch/CMSSW_10_4_0_patch1/"
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
