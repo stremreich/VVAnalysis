@@ -532,17 +532,25 @@ bool WZSelector::PassesFullWZSelection(Long64_t entry) {
     if (MET < 30)
         return false;
 
-    if (ntupleType_ == UWVV)
+    if (ntupleType_ == UWVV) {
         b_jetCSVv2->GetEntry(entry);
+        b_Zlep1_Wlep_Mass->GetEntry(entry);
+        b_Zlep2_Wlep_Mass->GetEntry(entry);
+    }
+    else { 
+        if (leptons.size() < 3) {
+            std::cout << "The leptons size is " << leptons.size() << std::endl;
+        }
+        Zlep1_Wlep_Mass = (leptons.at(0) + leptons.at(2)).mass();
+        Zlep2_Wlep_Mass = (leptons.at(1) + leptons.at(2)).mass();
+    }
 
     for (const auto& jetCSVval : *jetCSVv2) {
         if (jetCSVval > 0.9535)
             return false;
     }
-    //b_Zlep1_Wlep_Mass->GetEntry(entry);
-    //b_Zlep2_Wlep_Mass->GetEntry(entry);
-    //if (Zlep1_Wlep_Mass < 4 || Zlep2_Wlep_Mass < 4)
-    //    return false;
+    if (Zlep1_Wlep_Mass < 4 || Zlep2_Wlep_Mass < 4)
+        return false;
 
     return true;
 }
