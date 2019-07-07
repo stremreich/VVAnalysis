@@ -550,6 +550,8 @@ void WZSelectorBase::SetMasses() {
 
     ZMass = (leptons.at(0)+leptons.at(1)).M();
     Mass = (leptons.at(0)+leptons.at(1)+leptons.at(2)).M();
+    Eta = (leptons.at(0)+leptons.at(1)+leptons.at(2)).eta();
+    Pt = (leptons.at(0)+leptons.at(1)+leptons.at(2)).pt();
 }
 
 // Meant to be a wrapper for the tight ID just in case it changes

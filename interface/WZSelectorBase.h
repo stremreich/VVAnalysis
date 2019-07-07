@@ -32,7 +32,6 @@ public :
     bool passesLeptonVeto;
     Float_t weight;
     std::vector<LorentzVector> leptons;
-    std::vector<LorentzVector> jets;
     std::vector<size_t> looseMuonIndices;
     std::vector<size_t> looseElecIndices;
 
@@ -43,6 +42,8 @@ public :
     Float_t genWeight;
     Float_t ZMass;
     Float_t Mass;
+    Float_t Eta;
+    Float_t Pt;
     Float_t MET;
     Float_t type1_pfMETPhi;
     Float_t l1Phi;

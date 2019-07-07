@@ -233,11 +233,7 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
     leptons.push_back(lep1);
     leptons.push_back(lep2);
     for (size_t i = 0; i < nJet; i++) {
-        LorentzVector jet;
-        jet.SetPt(Jet_pt[i]);
-        jet.SetEta(Jet_eta[i]);
-        jet.SetPhi(Jet_phi[i]);
-        jet.SetM(Jet_mass[i]);
+        LorentzVector jet(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
         if (jet.pt() > 30 && !helpers::overlapsCollection(jet, leptons, 0.4, leptons.size()))
             jets.push_back(jet);
     } 

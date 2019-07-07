@@ -12,6 +12,16 @@ public :
     bool isaQGC_ = false;
     bool doaQGC_ = false;
 
+    std::vector<LorentzVector> jets;
+
+    //NanoAOD vars
+    static const unsigned int N_KEEP_JET_ = 50;
+    UInt_t nJet;
+    Float_t Jet_pt[N_KEEP_JET_];
+    Float_t Jet_eta[N_KEEP_JET_];
+    Float_t Jet_phi[N_KEEP_JET_];
+    Float_t Jet_mass[N_KEEP_JET_];
+
     std::vector<float>* scaleWeights = NULL;
     std::vector<float>* pdfWeights = NULL;
     std::vector<float> lheWeights;
@@ -50,8 +60,6 @@ public :
     UInt_t nvtx;
     Float_t Zlep1_Wlep_Mass;
     Float_t Zlep2_Wlep_Mass;
-    Float_t Eta;
-    Float_t Pt;
     Float_t ZPt;
     Float_t ZEta;
     Float_t ZPhi;
@@ -124,8 +132,10 @@ public :
 
     ClassDefOverride(WZSelector,0);
 protected:
+    virtual void    SetBranchesNanoAOD() override;
+    virtual void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
     virtual void    SetBranchesUWVV() override;
-    void LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+    virtual void LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) override;
     void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
     void FillVBSHistograms(float weight, bool noBlind, 
             std::pair<Systematic, std::string> variation);
@@ -136,6 +146,7 @@ protected:
     unsigned int GetLheWeightInfo();
     void ShiftEfficiencies(Systematic variation);
     float GetMuonScaleUncertainty(float muEta);
+    void SetJetsFromNano();
 };
 
 #endif
