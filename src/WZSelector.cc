@@ -160,6 +160,7 @@ void WZSelector::SetJetsFromNano() {
         jetPt = new std::vector<float>();
         jetEta = new std::vector<float>();
         jetPhi = new std::vector<float>();
+        jetCSVv2 = new std::vector<float>();
     }
     else {
         jetPt->clear();
@@ -168,8 +169,11 @@ void WZSelector::SetJetsFromNano() {
     }
     for (size_t i = 0; i < nJet; i++) {
         LorentzVector jet(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
-        if (jet.pt() > 30 && !helpers::overlapsCollection(jet, leptons, 0.4, leptons.size()))
+        if (jet.pt() > 30 && !helpers::overlapsCollection(jet, leptons, 0.4, leptons.size())) {
             jets.push_back(jet);
+            jetIndices.push_back(i);
+            jetCSVv2->push_back(Jet_btagCSVV2[i]);
+        }
     } 
     for (auto& jet: jets) {
         jetPt->push_back(jet.pt());
@@ -528,11 +532,13 @@ bool WZSelector::PassesFullWZSelection(Long64_t entry) {
     if (MET < 30)
         return false;
 
-    //b_jetCSVv2->GetEntry(entry);
-    //for (const auto& jetCSVval : *jetCSVv2) {
-    //    if (jetCSVval > 0.9535)
-    //        return false;
-    //}
+    if (ntupleType_ == UWVV)
+        b_jetCSVv2->GetEntry(entry);
+
+    for (const auto& jetCSVval : *jetCSVv2) {
+        if (jetCSVval > 0.9535)
+            return false;
+    }
     //b_Zlep1_Wlep_Mass->GetEntry(entry);
     //b_Zlep2_Wlep_Mass->GetEntry(entry);
     //if (Zlep1_Wlep_Mass < 4 || Zlep2_Wlep_Mass < 4)

@@ -21,6 +21,8 @@ public :
     Float_t Jet_eta[N_KEEP_JET_];
     Float_t Jet_phi[N_KEEP_JET_];
     Float_t Jet_mass[N_KEEP_JET_];
+    Float_t Jet_btagCSVV2[N_KEEP_JET_];
+    std::vector<size_t> jetIndices;
 
     std::vector<float>* scaleWeights = NULL;
     std::vector<float>* pdfWeights = NULL;

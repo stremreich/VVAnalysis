@@ -231,8 +231,8 @@ void WZSelectorBase::SetBranchesNanoAOD() {
     b.SetBranch("Muon_phi", Muon_phi);
     b.SetBranch("Muon_mass", Muon_mass);
     b.SetBranch("Muon_pfRelIso04_all", Muon_pfRelIso04_all);
-    //b.SetBranch("Electron_cutBased", Electron_cutBased);
-    b.SetBranch("Electron_cutBased_Fall17_V1", Electron_cutBased);
+    b.SetBranch("Electron_cutBased", Electron_cutBased);
+    //b.SetBranch("Electron_cutBased_Fall17_V1", Electron_cutBased);
     b.SetBranch("Electron_dxy", Electron_dxy);
     b.SetBranch("Electron_dz", Electron_dz);
     b.SetBranch("Muon_tightId", Muon_tightId);
