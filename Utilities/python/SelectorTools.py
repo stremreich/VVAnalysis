@@ -87,6 +87,8 @@ class SelectorDriver(object):
         # Remove empty/commented lines
         filelist = filter(lambda  x: len(x) > 2, filelist)
         nPerJob = int(nPerJob)
+        if nPerJob < 1:
+            raise ValueError("Number of files per job must be >= 1.")
         jobNum = int(jobNum)
         maxNum = len(filelist)
         firstEntry = nPerJob*jobNum
