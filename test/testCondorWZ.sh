@@ -60,7 +60,7 @@ copy_manager_files
 #make_file_list "ZGTo2LG_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8" "zg" 1
 #make_file_list "TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8" "tt_lep" 1
 #make_file_list "TTZToLLNuNu_M-10_TuneCUETP8M1_13TeV-amcatnlo-pythia8" "ttz" 1
-#make_file_list "ZZTo4L_13TeV_powheg_pythia8" "zz" 1
+#make_file_list "ZZTo4L_13TeV_powheg_pythia8" "zz4l_powheg" 1
 
 # No reason data and MC can't go together but it's easier for now to do one or the other
 make_file_list "SingleMuon/Run2016B_ver2-Nano1June2019_ver2-v1" "data_SingleMuon_Run2016B_ver2-Nano1June2018_ver2-v1" 0
