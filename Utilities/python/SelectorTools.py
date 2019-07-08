@@ -232,7 +232,7 @@ class SelectorDriver(object):
     def processFile(self, selector, filename, addSumweights, chan, filenum=1):
         logging.debug("Processing file: %s" % filename)
         rtfile = ROOT.TFile.Open(filename)
-        if rtfile.IsZombie():
+        if rtfile.IsZombie() or not rtfile.IsOpen():
             raise IOError("Failed to open file %s!" % filename)
         tree_name = self.getTreeName(chan)
         tree = rtfile.Get(tree_name)
