@@ -232,7 +232,7 @@ class SelectorDriver(object):
     def processFile(self, selector, filename, addSumweights, chan, filenum=1):
         logging.debug("Processing file: %s" % filename)
         rtfile = ROOT.TFile.Open(filename)
-        if rtfile.IsZombie() or not rtfile.IsOpen():
+        if not rtfile or not rtfile.IsOpen() or rtfile.IsZombie():
             raise IOError("Failed to open file %s!" % filename)
         tree_name = self.getTreeName(chan)
         tree = rtfile.Get(tree_name)
@@ -241,10 +241,12 @@ class SelectorDriver(object):
                     "Either the file is corrupted or the ntupleType (%s) is wrong.") 
                 % (tree_name, filename, self.ntupleType)
             )
-
+        logging.debug("Processing tree %s for file %s." % (tree.GetName(), rtfile.GetName()))
         tree.Process(selector, "")
+        logging.debug("Processed with selector %s." % selector.GetName())
         if addSumweights:
             self.fillSumweightsHist(rtfile, filenum)
+        logging.debug("Added sumweights hist.")
         rtfile.Close()
 
     # You can use filenum to index the files and sum separately, but it's not necessary
