@@ -166,6 +166,7 @@ void WZSelector::SetJetsFromNano() {
         jetPt->clear();
         jetEta->clear();
         jetPhi->clear();
+        jetCSVv2->clear();
     }
     for (size_t i = 0; i < nJet; i++) {
         LorentzVector jet(Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_mass[i]);
