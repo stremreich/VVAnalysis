@@ -22,11 +22,7 @@ request_memory       = 2000
 request_disk         = 2048000
 Requirements         = TARGET.Arch == "X86_64" && IsSlowSlot=!=true && (MY.RequiresSharedFS=!=true || TARGET.HasAFS_OSG) && (TARGET.HasParrotCVMFS=?=true || (TARGET.UWCMS_CVMFS_Exists  && TARGET.CMS_CVMFS_Exists))
 # stop jobs from running if they blow up
-<<<<<<< HEAD
-periodic_hold        = DiskUsage/1024 > 10.0*2000
-=======
 periodic_hold        = (DiskUsage/1024 > 10.0*2000 ||  ImageSize/1024 > RequestMemory*2)
->>>>>>> 920a63c... Check for invalid file, change to ZZ ID for UWVV Z
 Analysis = WZxsec2016
 Filelist = WZ2016MC
 # TODO: Actually fill these From templates

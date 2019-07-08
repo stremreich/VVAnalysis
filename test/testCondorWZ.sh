@@ -15,11 +15,7 @@ make_2017_mclist() {
     make_file_list "WLLJJ_WToLNu_EWK_TuneCP5_13TeV_madgraph-madspin-pythia8/RunIIFall17NanoAODv5-PU2017_12Apr2018_Nano1June2019_102X_mc2017_realistic_v7-v1" "wzjj_ewk" 1
     make_file_list "DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17NanoAODv4-PU2017RECOSIMstep_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6_ext1-v1" "DYm50__LO" 1
     make_file_list "ZGToLLG_01J_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIIFall17NanoAODv5-PU2017_12Apr2018_Nano1June2019_102X_mc2017_realistic_v7-v1" "zg" 1
-<<<<<<< HEAD
-    make_file_list "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIIFall18NanoAOD-102X_upgrade2018_realistic_v12-v1" "tt_lep" 1
-=======
     make_file_list "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIIFall17NanoAODv5-PU2017_12Apr2018_Nano1June2019_new_pmx_102X_mc2017_realistic_v7-v1" "tt_lep" 1
->>>>>>> 920a63c... Check for invalid file, change to ZZ ID for UWVV Z
     make_file_list "TTZToLLNuNu_M-10_TuneCP5_PSweights_13TeV-amcatnlo-pythia8/RunIIFall17NanoAODv4-PU2017_12Apr2018_Nano14Dec2018_102X_mc2017_realistic_v6-v1" "ttz" 1
     make_file_list "ZZTo4L_13TeV_powheg_pythia8/RunIIFall17NanoAODv5-PU2017_12Apr2018_Nano1June2019_new_pmx_102X_mc2017_realistic_v7-v1" "zz4l_powheg" 1
 }
@@ -134,11 +130,15 @@ copy_manager_files
 
 make_2017_mclist
 filelist_name="WZ2017MC.txt"
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 condor_dir=/nfs_scratch/kdlong/WZAnalysis_CondorTest2017MC
 =======
 condor_dir=/nfs_scratch/kdlong/WZAnalysis_CondorTest2017MC_v2
 >>>>>>> 920a63c... Check for invalid file, change to ZZ ID for UWVV Z
+=======
+condor_dir=/nfs_scratch/kdlong/WZAnalysis_CondorTest2017MC_v2
+>>>>>>> Stashed changes
 #make_2017_datalist
 #filelist_name="WZ2017Data.txt"
 #condor_dir=/nfs_scratch/kdlong/WZAnalysis_CondorTest2017Data
