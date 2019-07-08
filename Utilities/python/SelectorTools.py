@@ -232,10 +232,12 @@ class SelectorDriver(object):
     def processFile(self, selector, filename, addSumweights, chan, filenum=1):
         logging.debug("Processing file: %s" % filename)
         rtfile = ROOT.TFile.Open(filename)
+        if rtfile.IsZombie():
+            raise IOError("Failed to open file %s!" % filename)
         tree_name = self.getTreeName(chan)
         tree = rtfile.Get(tree_name)
         if not tree:
-            raise ValueError(("tree %s not found for file %s. " \
+            raise IOError(("tree %s not found for file %s. " \
                     "Either the file is corrupted or the ntupleType (%s) is wrong.") 
                 % (tree_name, filename, self.ntupleType)
             )
