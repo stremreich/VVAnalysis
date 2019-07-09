@@ -55,8 +55,8 @@ void ZSelector::SetBranchesUWVV() {
         fChain->SetBranchAddress("e2Eta", &l2Eta, &b_l2Eta);
     }
     else if (channel_ == mm) {
-        fChain->SetBranchAddress("m1IsWZTight", &l1IsTight, &b_l1IsTight);
-        fChain->SetBranchAddress("m2IsWZTight", &l2IsTight, &b_l2IsTight);
+        fChain->SetBranchAddress("m1ZZTightID", &l1IsTight, &b_l1IsTight);
+        fChain->SetBranchAddress("m2ZZTightID", &l2IsTight, &b_l2IsTight);
         fChain->SetBranchAddress("m1Pt", &l1Pt, &b_l1Pt);
         fChain->SetBranchAddress("m2Pt", &l2Pt, &b_l2Pt);
         fChain->SetBranchAddress("m1Eta", &l1Eta, &b_l1Eta);
@@ -65,9 +65,9 @@ void ZSelector::SetBranchesUWVV() {
 
     fChain->SetBranchAddress("type1_pfMETEt", &MET, &b_MET);
     fChain->SetBranchAddress("type1_pfMETPhi", &type1_pfMETPhi, &b_type1_pfMETPhi);
-    //fChain->SetBranchAddress("nCBVIDTightElec", &nCBVIDTightElec, &b_nCBVIDTightElec);
+    fChain->SetBranchAddress("nZZTightElec", &nCBVIDTightElec, &b_nCBVIDTightElec);
     //fChain->SetBranchAddress("nCBVIDHLTSafeElec", &nCBVIDHLTSafeElec, &b_nCBVIDHLTSafeElec);
-    //fChain->SetBranchAddress("nWZTightMuon", &nWZTightMuon, &b_nWZTightMuon);
+    fChain->SetBranchAddress("nZZTightMu", &nTightIdMuon, &b_nTightIdMuon);
     //fChain->SetBranchAddress("nWZMediumMuon", &nWZMediumMuon, &b_nWZMediumMuon);
 }
 
@@ -157,7 +157,7 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
     channel_ = channelMap_[channelName_];
     std::vector<size_t> goodIndices = {};
 
-    if (nMediumIdMuon >= 2) {
+    if (nTightIdMuon >= 2) {
         channel_ = mm;
         channelName_ = "mm";
         if (!(Muon_mediumId[0] && Muon_pfRelIso04_all[0] < 0.15
@@ -262,7 +262,7 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
     //    //        (!Dielectron_Trigger && SingleElectron_Trigger));
     passesTrigger = SingleMuon_Trigger || SingleElectron_Trigger;
 
-    passesLeptonVeto = (std::min(nMediumIdMuon, nLooseIsoMuon) + nCBVIDVetoElec) == 2;
+    passesLeptonVeto = (nCBVIDTightElec == 2 || nTightIdMuon == 2);
 }
 
 void ZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation){ 
@@ -281,8 +281,10 @@ void ZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::stri
     b_l2IsTight->GetEntry(entry);
     b_MET->GetEntry(entry);
     b_nCBVIDTightElec->GetEntry(entry);
+    b_nTightIdMuon ->GetEntry(entry);
     
     passesTrigger = true;
+    passesLeptonVeto = (nCBVIDTightElec == 2 || nTightIdMuon == 2);
 }
 
 void ZSelector::ApplyScaleFactors() {

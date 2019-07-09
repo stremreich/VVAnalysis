@@ -99,7 +99,7 @@ public :
     TBranch* b_nTruePU;
     TBranch* b_nCBVIDTightElec;
     TBranch* b_nCBVIDHLTSafeElec;
-    TBranch* b_nWZTightMuon;
+    TBranch* b_nTightIdMuon;
     TBranch* b_nWZMediumMuon;
     TBranch* b_l1IsTight;
     TBranch* b_l2IsTight;
