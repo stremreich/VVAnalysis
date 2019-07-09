@@ -10,6 +10,7 @@ make_2016_mclist() {
     make_file_list "ZZTo4L_13TeV_powheg_pythia8" "zz4l_powheg" 1
 }
 
+
 make_2016_datalist() {
     # No reason data and MC can't go together but it's easier for now to do one or the other
     make_file_list "SingleMuon/Run2016B_ver2-Nano1June2019_ver2-v1" "data_SingleMuon_Run2016B_ver2-Nano1June2019_ver2-v1" 0

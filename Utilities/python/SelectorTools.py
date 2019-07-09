@@ -10,7 +10,7 @@ import subprocess
 import logging
 
 class SelectorDriver(object):
-    def __init__(self, analysis, selection, input_tier):
+    def __init__(self, analysis, selection, input_tier, year):
         logging.basicConfig(level=logging.DEBUG)
 
         selector_map = {
@@ -33,6 +33,7 @@ class SelectorDriver(object):
         self.selector_name = selector_map[analysis]
         self.addSumweights = True
         self.ntupleType = "NanoAOD"
+        self.year = year
         self.numCores = 1
         self.channels = ["Inclusive"]
         self.outfile_name = "temp.root"
@@ -72,6 +73,7 @@ class SelectorDriver(object):
             self.inputs.Add(inp)
         self.addTNamed("ntupleType", self.ntupleType)
         self.addTNamed("selection", self.selection)
+        self.addTNamed("year", self.year)
         
     def setNtupeType(self, ntupleType):
         self.ntupleType = ntupleType
@@ -87,6 +89,8 @@ class SelectorDriver(object):
         # Remove empty/commented lines
         filelist = filter(lambda  x: len(x) > 2, filelist)
         nPerJob = int(nPerJob)
+        if nPerJob < 1:
+            raise ValueError("Number of files per job must be >= 1.")
         jobNum = int(jobNum)
         maxNum = len(filelist)
         firstEntry = nPerJob*jobNum
@@ -230,6 +234,8 @@ class SelectorDriver(object):
     def processFile(self, selector, filename, addSumweights, chan, filenum=1):
         logging.debug("Processing file: %s" % filename)
         rtfile = ROOT.TFile.Open(filename)
+        if not rtfile or not rtfile.IsOpen() or rtfile.IsZombie():
+            raise IOError("Failed to open file %s!" % filename)
         tree_name = self.getTreeName(chan)
         tree = rtfile.Get(tree_name)
         if not tree:
@@ -237,10 +243,12 @@ class SelectorDriver(object):
                     "Either the file is corrupted or the ntupleType (%s) is wrong.") 
                 % (tree_name, filename, self.ntupleType)
             )
-
+        logging.debug("Processing tree %s for file %s." % (tree.GetName(), rtfile.GetName()))
         tree.Process(selector, "")
+        logging.debug("Processed with selector %s." % selector.GetName())
         if addSumweights:
             self.fillSumweightsHist(rtfile, filenum)
+        logging.debug("Added sumweights hist.")
         rtfile.Close()
 
     # You can use filenum to index the files and sum separately, but it's not necessary
