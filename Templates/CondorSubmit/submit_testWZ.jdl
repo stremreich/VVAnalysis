@@ -15,7 +15,7 @@ GetEnv               = false
 # TODO: Understand why AFS is required/remove dependency
 +RequiresSharedFS    = True
 
-WhenToTransferOutput = On_Exit
+WhenToTransferOutput = On_Exit_Or_Evict
 ShouldTransferFiles  = yes
 +IsFastQueueJob      = True
 request_memory       = 2000
