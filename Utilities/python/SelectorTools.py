@@ -112,13 +112,16 @@ class SelectorDriver(object):
     def setDatasets(self, datalist):
         datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier)
         for dataset in datasets:
-            try:
-                file_path = [ConfigureJobs.getInputFilesPath(dataset, 
-                    self.input_tier, self.analysis)]
-            except ValueError as e:
-                print e
-                continue
-            self.datasets[dataset] = file_path
+            if "@" in dataset:
+                dataset, file_path = [f.strip() for f in dataset.split("@")]
+            else:
+                try:
+                    file_path = ConfigureJobs.getInputFilesPath(dataset, 
+                        self.input_tier, self.analysis)
+                except ValueError as e:
+                    logging.warning(e)
+                    continue
+            self.datasets[dataset] = [file_path]
 
     def applySelector(self):
         for chan in self.channels:
