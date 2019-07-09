@@ -9,6 +9,9 @@ void ZGenSelector::Init(TTree *tree)
     hists1D_ = {"CutFlow", "ZMass", "yZ", "ptZ", "ptl1", "etal1", "phil1", "ptl2", "etal2", "phil2", 
         "ptj1", "ptj2", "ptj3", "etaj1", "etaj2", "etaj3", "phij1", "phij2", "phij3", "nJets",
         "MET",};
+    weighthists1D_ = {"ZMass", "yZ", "ptZ", "ptl1", "etal1", "phil1", "ptl2", "etal2", "phil2", 
+        "ptj1", "ptj2", "ptj3", "etaj1", "etaj2", "etaj3", "phij1", "phij2", "phij3", "nJets",
+        "MET",};
     nLeptons_ = 2;
 
     NanoGenSelectorBase::Init(tree);
@@ -84,6 +87,24 @@ void ZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
             SafeHistFill(histMap1D_, getHistName("etaj"+std::to_string(i), variation.second), jet.eta(), weight);
             SafeHistFill(histMap1D_, getHistName("phij"+std::to_string(i), variation.second), jet.phi(), weight);
         }  
+    }
+    if (variation.first == Central) {
+        for (size_t i = 0; i < nLHEScaleWeight+nLHEPdfWeight; i++) {
+            float thweight = i < nLHEScaleWeight ? LHEScaleWeight[i] : LHEPdfWeight[i-nLHEScaleWeight];
+            thweight *= weight/(LHEScaleWeight[0] > 0 ? LHEScaleWeight[0] : 1);
+            //thweight *= weight/(LHEWeight > 0 ? LHEWeight : 1);
+            SafeHistFill(weighthistMap1D_, getHistName("ZMass", variation.second), i, zCand.mass(), weight);
+            SafeHistFill(weighthistMap1D_, getHistName("yZ", variation.second), i, zCand.Rapidity(), weight);
+            SafeHistFill(weighthistMap1D_, getHistName("ptZ", variation.second), i, zCand.pt(), weight);
+            SafeHistFill(weighthistMap1D_, getHistName("ptl1", variation.second), i, lep1.pt(), weight);
+            SafeHistFill(weighthistMap1D_, getHistName("etal1", variation.second), i, lep1.eta(), weight);
+            SafeHistFill(weighthistMap1D_, getHistName("phil1", variation.second), i, lep1.phi(), weight);
+            SafeHistFill(weighthistMap1D_, getHistName("ptl2", variation.second), i, lep2.pt(), weight);
+            SafeHistFill(weighthistMap1D_, getHistName("etal2", variation.second), i, lep2.eta(), weight);
+            SafeHistFill(weighthistMap1D_, getHistName("phil2", variation.second), i, lep2.phi(), weight);
+            SafeHistFill(weighthistMap1D_, getHistName("nJets", variation.second), i, jets.size(), weight);
+            SafeHistFill(weighthistMap1D_, getHistName("MET", variation.second), i, genMet.pt(), weight);
+        }
     }
 }
 
