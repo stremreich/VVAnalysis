@@ -224,12 +224,11 @@ class SelectorDriver(object):
 
     def processLocalFiles(self, selector, file_path, addSumweights, chan,):
         filenames = []
-
-#        for entry in file_path:
-        filenames.extend(self.getFileNames(file_path))
-        for i, filename in enumerate(filenames):
-            self.processFile(selector, filename, addSumweights, chan, i+1)
-
+        for entry in file_path:
+            filenames.extend(self.getFileNames(entry))
+            for i, filename in enumerate(filenames):
+                self.processFile(selector, filename, addSumweights, chan, i+1)
+                
     def processFile(self, selector, filename, addSumweights, chan, filenum=1):
         logging.debug("Processing file: %s" % filename)
         rtfile = ROOT.TFile.Open(filename)
@@ -239,7 +238,6 @@ class SelectorDriver(object):
             raise ValueError(("tree %s not found for file %s. " \
                     "Probably the file is corrupted") % (tree_name, filename)
             )
-
         tree.Process(selector, "")
         if addSumweights:
             self.fillSumweightsHist(rtfile, filenum)
