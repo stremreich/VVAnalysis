@@ -5,7 +5,9 @@
 
 void ZGenSelector::Init(TTree *tree)
 {
-    allChannels_ = {"ee", "mm", "Unknown"};
+    allChannels_ = {"ee", "mm"};
+    // Add CutFlow for Unknown to understand when channels aren't categorized
+    histMap1D_["CutFlow_Unknown"] = {};
     hists1D_ = {"CutFlow", "ZMass", "yZ", "ptZ", "ptl1", "etal1", "phil1", "ptl2", "etal2", "phil2", 
         "ptj1", "ptj2", "ptj3", "etaj1", "etaj2", "etaj3", "phij1", "phij2", "phij3", "nJets",
         "MET",};
