@@ -91,6 +91,7 @@ void ZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
     if (variation.first == Central) {
         for (size_t i = 0; i < nLHEScaleWeight+nLHEPdfWeight; i++) {
             float thweight = i < nLHEScaleWeight ? LHEScaleWeight[i] : LHEPdfWeight[i-nLHEScaleWeight];
+            thweight *= weight;
             //thweight *= weight/(LHEWeight > 0 ? LHEWeight : 1);
             SafeHistFill(weighthistMap1D_, getHistName("ZMass", variation.second), zCand.mass(), i, thweight);
             SafeHistFill(weighthistMap1D_, getHistName("yZ", variation.second), zCand.Rapidity(), i, thweight);
