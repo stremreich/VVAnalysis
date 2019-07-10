@@ -11,8 +11,7 @@ import random
 def getComLineArgs():
     parser = UserInput.getDefaultParser(False)
     parser.add_argument("-o", "--output_file", type=str,
-                        required=True, help="Name of file containing file"
-                        " to be created (containing list of files)")
+                        required=True, help="Name of output text file")
     return vars(parser.parse_args())
 
 def getDASFilesWithName(name, das_path):
