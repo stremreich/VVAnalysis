@@ -126,12 +126,13 @@ def getLHEWeightHists(init2D_hist, entries, name, variation_name, rebin=None):
     hist_name = init2D_hist.GetName().replace("lheWeights", "%s_%sUp" % (variation_name, name))
     return hists, hist_name
 
-def getPDFHists(init2D_hist, entries, name, rebin=None):
+def getPDFHists(init2D_hist, entries, name, rebin=None, central=0):
     hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
     #return hists
     return getVariationHists(hists, name, hist_name, 
-            lambda x: x[0]*(1+getPDFPercentVariation(x)), 
-            lambda x: x[0]*(1-getPDFPercentVariation(x))
+            lambda x: x[central]*(1+getPDFPercentVariation(x)), 
+            lambda x: x[central]*(1-getPDFPercentVariation(x)),
+            central
     )
 
 def getPDFPercentVariation(values):
@@ -140,20 +141,20 @@ def getPDFPercentVariation(values):
         return 0
     return abs(values[84] - values[16])/denom
 
-def getScaleHists(scale_hist2D, name, rebin=None):
-    entries = [i for i in range(1,10) if i not in [7, 9]]
+def getScaleHists(scale_hist2D, name, rebin=None, central=0, exclude=[7,9]):
+    entries = [i for i in range(1,10) if i not in exclude]
     hists, hist_name = getLHEWeightHists(scale_hist2D, entries, name, "QCDscale", rebin)
-    return getVariationHists(hists, name, hist_name, lambda x: x[-1], lambda x: x[1])
+    return getVariationHists(hists, name, hist_name, lambda x: x[-1], lambda x: x[1], central)
 
-def getVariationHists(hists, process_name, histUp_name, up_action, down_action):
-    histUp = hists[0].Clone(histUp_name)
+def getVariationHists(hists, process_name, histUp_name, up_action, down_action, central=0):
+    histUp = hists[central].Clone(histUp_name)
     histDown = histUp.Clone(histUp_name.replace("Up", "Down"))
     
-    histCentral = hists[0]
+    histCentral = hists.pop(central)
     # Include overflow
-    for i in range(0, hists[0].GetNbinsX()+2):
+    for i in range(0, histCentral.GetNbinsX()+2):
         vals = []
-        for hist in hists[1:]:
+        for hist in hists:
             vals.append(hist.GetBinContent(i))
         vals.sort()
         vals.insert(0, histCentral.GetBinContent(i))
