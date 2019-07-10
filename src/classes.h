@@ -24,7 +24,6 @@ namespace{
     ZZGenSelector pZZGenSelector;
     WGenSelector pWGenSelector;
     ZGenSelector pZGenSelector;
-    TTTSelector pTTTSelector;
     WZBackgroundSelector pWZBackgroundSelector;
     ScaleFactor pScaleFactor;
     disambiguateFinalStates pDisambiguator;

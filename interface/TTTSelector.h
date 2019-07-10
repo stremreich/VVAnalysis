@@ -50,7 +50,13 @@ class TTTSelector : public SelectorBase {
   Float_t Electron_mass[N_KEEP_MU_E_];
   Int_t Electron_cutBased[N_KEEP_MU_E_];
   Int_t Electron_charge[N_KEEP_MU_E_];
+  Float_t Electron_MVA[N_KEEP_MU_E_];
+  Float_t Electron_miniPFRelIso_all[N_KEEP_MU_E_];
+  Float_t Electron_dxy[N_KEEP_MU_E_];
+  Float_t Electron_dz[N_KEEP_MU_E_];
+  Float_t Electron_sip3d[N_KEEP_MU_E_];
 
+  
   UInt_t nMuon;
   Float_t Muon_pt[N_KEEP_MU_E_];
   Float_t Muon_eta[N_KEEP_MU_E_];
@@ -74,7 +80,7 @@ class TTTSelector : public SelectorBase {
   Float_t Jet_mass[N_KEEP_JET_];
   Float_t Jet_neHEF[N_KEEP_JET_];
   Float_t Jet_neEmEF[N_KEEP_JET_];
-  Float_t Jet_nConstituents[N_KEEP_JET_];
+  Int_t Jet_nConstituents[N_KEEP_JET_];
   Float_t Jet_chHEF[N_KEEP_JET_];  
   Float_t Jet_chEmEF[N_KEEP_JET_]; 
 
@@ -108,6 +114,10 @@ class TTTSelector : public SelectorBase {
 
   bool isLooseJetId(size_t);
   bool isTightJetId(size_t);
+  bool IsGoodMVAElectron2016(size_t);
+  bool IsGoodMVAElectron2017(size_t);
+
+  bool passFullIso(TLorentzVector&, int, int);
   
   int getSRBin();
   double HT;

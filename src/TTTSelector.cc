@@ -60,9 +60,23 @@ void TTTSelector::SetBranchesNanoAOD() {
   b.SetBranch("Electron_pt", Electron_pt);
   b.SetBranch("Electron_eta", Electron_eta);
   b.SetBranch("Electron_phi", Electron_phi);
-  b.SetBranch("Electron_cutBased", Electron_cutBased);
   b.SetBranch("Electron_charge", Electron_charge);
   b.SetBranch("Electron_mass", Electron_mass);
+  b.SetBranch("Electron_mass", Electron_miniPFRelIso_all);
+  b.SetBranch("Electron_miniPFRelIso_all", Electron_miniPFRelIso_all);
+  // b.SetBranch("Electron_dxy", Electron_dxy);
+  // b.SetBranch("Electron_dz", Electron_dz);
+  // b.SetBranch("Electron_sip3d", Electron_sip3d);
+  if(year_ == yr2018) {
+    b.SetBranch("Electron_mvaFall17V2noIso", Electron_MVA);
+    b.SetBranch("Electron_cutBased", Electron_cutBased);
+  } else if(year_ == yr2017) {
+    b.SetBranch("Electron_mvaFall17V1noIso", Electron_MVA);
+    b.SetBranch("Electron_cutBased_Fall17_V1", Electron_cutBased);
+  } else if(year_ == yr2016 || year_ == yrdefault) {
+    b.SetBranch("Electron_mvaSpring16GP", Electron_MVA);
+    b.SetBranch("Electron_cutBased_Sum16", Electron_cutBased);
+  }
 
   b.SetBranch("nMuon", nMuon);
   b.SetBranch("Muon_pt", Muon_pt);
@@ -113,7 +127,6 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   HT = 0;
   nTightJet = 0;
   nBJets = 0;
-
   
   b.SetEntry(entry);
   goodParts.clear();
@@ -130,9 +143,7 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
 
   // cut-based ID Fall17 V2 (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
   int nCBVIDTightElec = 0;
-  int nCBVIDVetoElec = std::count(Electron_cutBased, Electron_cutBased+nElectron, 1);
   int nTightIdMuon = 0;
-  int nLooseIdMuon = 0;
   
   
   /////////////////////
@@ -140,12 +151,20 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   /////////////////////
     
   for (size_t i = 0; i < nElectron; i++) {
-    if(IsGoodElectron(i)) {
+    // if(IsGoodMVAElectron2016(i)) {
+       if(IsGoodElectron(i)) {
+	 // // Extra Iso requirement
+      // TLorentzVector lep;
+      // lep.SetPtEtaPhiM(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
+      // if(!passFullIso(lep, 0.8, 7.2)) continue;
+      // Setup goodPart
+      //      if(Electron_dxy[i] > 0.05) std::cout << "here" << std::endl;
       nCBVIDTightElec++;
       goodParts.push_back(GoodPart());
       goodParts.back().SetTVector(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
       goodParts.back().SetpType(pType::Electron);
       goodParts.back().SetCharge(Electron_charge[i]);
+
     }
   }
 
@@ -154,8 +173,12 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   /////////////////
   
   for (size_t i = 0; i < nMuon; i++) {
-    nLooseIdMuon += (Muon_pt[i] > 20 && abs(Muon_eta[i]) < 2.4);
     if(IsGoodMuon(i)) {
+      // // Extra Iso requirement
+      // TLorentzVector lep;
+      // lep.SetPtEtaPhiM(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
+      // if(!passFullIso(lep, 0.76, 7.2)) continue;
+      // Setup goodPart
       nTightIdMuon++;
       goodParts.push_back(GoodPart());
       goodParts.back().SetTVector(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
@@ -206,7 +229,7 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
 
   //// need veto stuff
 
-  passesLeptonVeto = (nLooseIdMuon + nCBVIDVetoElec) == 2;
+  //  passesLeptonVeto = (nLooseIdMuon + nCBVIDVetoElec) == 2;
 }
 
 
@@ -230,21 +253,37 @@ bool TTTSelector::IsGoodMuon(size_t index) {
 bool TTTSelector::IsGoodElectron(size_t index) {
   return ((Electron_pt[index] > 20) &&
 	  (abs(Electron_eta[index]) < 2.5) &&
+	  (Electron_miniPFRelIso_all[index] < 0.12) &&
 	  (Electron_cutBased[index] == 4));
 }
 
-bool TTTSelector::IsGoodMVAElectron(size_t index) {
+bool TTTSelector::IsGoodMVAElectron2016(size_t index) {
   bool mvaRec = false;
   if(abs(Electron_eta[index]) < 0.8)
-    mvaRec = max(0.52, 0.77-0.025*(Electron_pt[i]-15));
+    mvaRec = Electron_MVA[index] > std::max(0.52, 0.77-0.025*(Electron_pt[index]-15));
   else if(abs(Electron_eta[index]) < 1.479)
-    mvaRec = max(0.11, 0.56-0.045*(Electron_pt[i]-15));
+    mvaRec = Electron_MVA[index] > std::max(0.11, 0.56-0.045*(Electron_pt[index]-15));
   else if(abs(Electron_eta[index]) < 2.5)
-    mvaRec = max(-0.01, 0.48-0.049*(Electron_pt[i]-15));
+    mvaRec = Electron_MVA[index] > std::max(-0.01, 0.48-0.049*(Electron_pt[index]-15));
+
+  return ((Electron_pt[index] > 20) &&
+	  (Electron_miniPFRelIso_all[index] < 0.12) &&
+	  mvaRec);
+}
+
+bool TTTSelector::IsGoodMVAElectron2017(size_t index) {
+  bool mvaRec = false;
+  if(abs(Electron_eta[index]) < 0.8)
+    mvaRec = std::max(0.52, 0.77-0.025*(Electron_pt[index]-15));
+  else if(abs(Electron_eta[index]) < 1.479)
+    mvaRec = std::max(0.11, 0.56-0.045*(Electron_pt[index]-15));
+  else if(abs(Electron_eta[index]) < 2.5)
+    mvaRec = std::max(-0.01, 0.48-0.049*(Electron_pt[index]-15));
 
   return ((Electron_pt[index] > 20) &&
 	  mvaRec);
 }
+
 
 bool TTTSelector::IsGoodJet(size_t index) {
   return ((Jet_pt[index] > 40.0) &&
@@ -257,6 +296,7 @@ bool TTTSelector::IsGoodBJet(size_t index) {
   return ((Jet_pt[index] > 25.0) &&
 	  (abs(Jet_eta[index]) < 2.4) &&
 	  (Jet_btagCSVV2[index] > 0.8484) &&
+	  //(Jet_btagDeepB[index] > 0.6324) &&
 	  IsOverlap(index)
 	  );
 }
@@ -275,6 +315,21 @@ bool TTTSelector::isTightJetId(size_t index) {
 	  Jet_neEmEF[index] < 0.9 &&
 	  Jet_nConstituents[index] > 1 &&
 	  Jet_chHEF[index] > 0
+	  );
+}
+
+bool TTTSelector::passFullIso(TLorentzVector& lep, int I2, int I3) {
+  TLorentzVector jet, closeJet;
+  double minDR = 10;
+  for(size_t index = 0; index < nJet; index++) {
+    jet.SetPtEtaPhiM(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);
+    if(minDR > lep.DeltaR(jet)) {
+      closeJet = jet;
+      minDR = lep.DeltaR(jet);
+    }
+  }
+  return ((lep.Pt()/closeJet.Pt() > I2 ) ||
+	  (lep.Pt()*std::sin(lep.Angle(closeJet.Vect())) > I3)
 	  );
 }
 
@@ -358,12 +413,29 @@ int TTTSelector::getSRBin() {
     else if(nTightJet >= 8) return 3;
   } else if(nBJets == 3) {
     if(nTightJet == 5)      return 4;
-    else if(nTightJet == 6) return 5;
-    else if(nTightJet == 7) return 6;
-    else if(nTightJet >= 8) return 7;
+    else if(nTightJet == 6) return 4;
+    else if(nTightJet == 7) return 5;
+    else if(nTightJet >= 8) return 5;
   } else if(nBJets >= 4) {
-    if(nTightJet >= 5)     return 8;
+    if(nTightJet >= 5)     return 6;
   }
   return -1;
+
+  // if(nBJets == 2) {
+  //   if(nTightJet <= 5)      return 0;
+  //   if(nTightJet == 6)      return 1;
+  //   else if(nTightJet == 7) return 2;
+  //   else if(nTightJet >= 8) return 3;
+  // } else if(nBJets == 3) {
+  //   if(nTightJet == 5)      return 4;
+  //   else if(nTightJet == 6) return 5;
+  //   else if(nTightJet == 7) return 6;
+  //   else if(nTightJet >= 8) return 7;
+  // } else if(nBJets >= 4) {
+  //   if(nTightJet >= 5)     return 8;
+  // }
+  // return -1;
+
+  
 }
 
