@@ -1,7 +1,7 @@
 #!/bin/bash
 
 dataset_manager=$(./Utilities/scripts/getConfigValue.py dataset_manager_path)/AnalysisDatasetManager
-pushd $CMSSW_BASE/src/Analysis/VVAnalysis/Cuts
+pushd $CMSSW_BASE/src/Analysis/WZAnalysis/Cuts
 
 echo "INFO: Linking alias files"
 for folder in $(ls -d */); do

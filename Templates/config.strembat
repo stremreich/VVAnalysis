@@ -1,0 +1,8 @@
+[Setup]
+user = strembat
+analysis = VV
+dataset_manager_path = /afs/cern.ch/work/s/strembat/WZ/CMSSW_9_4_8/src/
+output_path = /afs/cern.ch/work/s/strembat/WZ/dataOutput
+fakeRate_output = %(output_path)s/FakesRates
+hist_output = %(output_path)s/HistFiles
+combine_output = %(output_path)s/CombineData
