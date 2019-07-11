@@ -122,14 +122,20 @@ void TTTSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::st
   return;
 }
 
-void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) { 
+/// Make to seperate fuctionality
+void TTTSelector::clearValues() {
   weight = 1;
   HT = 0;
   nTightJet = 0;
   nBJets = 0;
-  
-  b.SetEntry(entry);
   goodParts.clear();
+}
+
+void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) { 
+  clearValues();
+  b.SetEntry(entry);
+
+  
   if (nElectron > N_KEEP_MU_E_ || nMuon > N_KEEP_MU_E_) {
     std::string message = "Found more electrons or muons than max read number.\n    Found ";
     message += std::to_string(nElectron);
@@ -141,25 +147,19 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
     throw std::domain_error(message);
   }
 
-  // cut-based ID Fall17 V2 (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
-  int nCBVIDTightElec = 0;
-  int nTightIdMuon = 0;
-  
-  
   /////////////////////
   // Setup Electrons //
   /////////////////////
     
   for (size_t i = 0; i < nElectron; i++) {
     // if(IsGoodMVAElectron2016(i)) {
-       if(IsGoodElectron(i)) {
-	 // // Extra Iso requirement
+    if(IsGoodElectron(i)) {
+      // // Extra Iso requirement
       // TLorentzVector lep;
       // lep.SetPtEtaPhiM(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
       // if(!passFullIso(lep, 0.8, 7.2)) continue;
       // Setup goodPart
       //      if(Electron_dxy[i] > 0.05) std::cout << "here" << std::endl;
-      nCBVIDTightElec++;
       goodParts.push_back(GoodPart());
       goodParts.back().SetTVector(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
       goodParts.back().SetpType(pType::Electron);
@@ -179,57 +179,55 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
       // lep.SetPtEtaPhiM(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
       // if(!passFullIso(lep, 0.76, 7.2)) continue;
       // Setup goodPart
-      nTightIdMuon++;
       goodParts.push_back(GoodPart());
       goodParts.back().SetTVector(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
       goodParts.back().SetpType(pType::Muon);
       goodParts.back().SetCharge(Muon_charge[i]);
     }
   }
-
+  
   ////////////////
   // Setup Jets //
   ////////////////
+  
   for(size_t i = 0; i < nJet; i++) {
     if(goodParts.size() != 2) break;
+
+    //common to both jets, may put more here
     if(!isLooseJetId(i)) continue;
+
     // regular jets
     if(IsGoodJet(i)) {
       nTightJet++;
       HT += Jet_pt[i];
     }
+
     // bjet 
-    if(IsGoodBJet(i)) {
-      nBJets++;
-    }
+    if(IsGoodBJet(i)) nBJets++;
   }
   
   channel_ = channelMap_[channelName_];
-  if (nTightIdMuon == 2) {
+  if(goodParts.size() == 2) {
+    channel_ = Unknown;
+    channelName_ = "Unknown";
+  } else if(goodParts[0].ptype == pType::Muon && goodParts[1].ptype == pType::Muon) {
     channel_ = mm;
     channelName_ = "mm";
-  } else if (nCBVIDTightElec == 2) {
+  } else if(goodParts[0].ptype == pType::Electron && goodParts[1].ptype == pType::Electron) {
     channel_ = ee;
     channelName_ = "ee";
-  } else if((nTightIdMuon + nCBVIDTightElec) == 2) {
+  } else {
     channel_ = em;
     channelName_ ="em";
     /// fix order of leptons by pt
     if(goodParts[0].v.Pt() < goodParts[1].v.Pt()) {
       std::swap(goodParts[0], goodParts[1]);
     }
-  } else {
-    channel_ = Unknown;
-    channelName_ = "Unknown";
   }
 
   if (isMC_) {
     ApplyScaleFactors();
   }
-
-  //// need veto stuff
-
-  //  passesLeptonVeto = (nLooseIdMuon + nCBVIDVetoElec) == 2;
 }
 
 
@@ -241,16 +239,19 @@ void TTTSelector::ApplyScaleFactors() {
   //// to add!!
 }
 
-// Meant to be a wrapper for the tight ID just in case it changes
-// To be a function of multiple variables
+////////////////////////////////////////////////////
+// Functions for defining particles: used in main //
+// loop of leptons/jets for getting multiplicity  //
+////////////////////////////////////////////////////
+
 bool TTTSelector::IsGoodMuon(size_t index) {
   return ( (Muon_pt[index] > 20) &&
 	   (abs(Muon_eta[index]) < 2.4) &&
 	   Muon_mediumId[index] &&
 	   (Muon_miniPFRelIso_all[index] < 0.16) );
-}
+		       }
 
-bool TTTSelector::IsGoodElectron(size_t index) {
+bool TTTSelector::IsGoodCBElectron(size_t index) {
   return ((Electron_pt[index] > 20) &&
 	  (abs(Electron_eta[index]) < 2.5) &&
 	  (Electron_miniPFRelIso_all[index] < 0.12) &&
@@ -288,16 +289,17 @@ bool TTTSelector::IsGoodMVAElectron2017(size_t index) {
 bool TTTSelector::IsGoodJet(size_t index) {
   return ((Jet_pt[index] > 40.0) &&
 	  (abs(Jet_eta[index]) < 2.4) &&
-	  IsOverlap(index)
+	  isOverlap(index)
 	  );
 }
 
+/// TODO: add toggle for different btag stuff
 bool TTTSelector::IsGoodBJet(size_t index) {
   return ((Jet_pt[index] > 25.0) &&
 	  (abs(Jet_eta[index]) < 2.4) &&
-	  (Jet_btagCSVV2[index] > 0.8484) &&
+	  (Jet_btagCSVV2[index] > 0.8484) &&  
 	  //(Jet_btagDeepB[index] > 0.6324) &&
-	  IsOverlap(index)
+	  isOverlap(index)
 	  );
 }
 
@@ -333,7 +335,7 @@ bool TTTSelector::passFullIso(TLorentzVector& lep, int I2, int I3) {
 	  );
 }
 
-bool TTTSelector::IsOverlap(size_t index) {
+bool TTTSelector::isOverlap(size_t index) {
   TLorentzVector tmp;
   double dR = 0.4;
   tmp.SetPtEtaPhiM(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);

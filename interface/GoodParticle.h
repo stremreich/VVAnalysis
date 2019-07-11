@@ -1,5 +1,8 @@
 #include <TLorentzVector.h>
 
+// Wrapper for lepton objects so to ignore problems with
+// accessing data if particle is muon vs electron
+
 enum class pType {Muon, Electron};
 
 struct GoodPart {

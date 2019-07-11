@@ -20,6 +20,13 @@
 
 class TTTSelector : public SelectorBase {
  public :
+  /*****************************************/
+  /* ____  ____   ___  __  __   ___ __  __ */
+  /* || )) || \\ // \\ ||\ ||  //   ||  || */
+  /* ||=)  ||_// ||=|| ||\\|| ((    ||==|| */
+  /* ||_)) || \\ || || || \||  \\__ ||  || */
+  /*****************************************/
+  
   ScaleFactor* pileupSF_;
   ScaleFactor* muonSF_;
   ScaleFactor* eIdSF_ ;
@@ -27,15 +34,8 @@ class TTTSelector : public SelectorBase {
   ScaleFactor* mIdSF_;
   ScaleFactor* mIsoSF_;
 
-  // Derived variables
-  bool isVBS_;
-  bool passesLeptonVeto;
-  Float_t weight;
-
   // Common variables
   Float_t genWeight;
-  Float_t ZMass;
-  Float_t Mass;
   Float_t MET;
   Float_t type1_pfMETPhi;
 
@@ -84,57 +84,60 @@ class TTTSelector : public SelectorBase {
   Float_t Jet_chHEF[N_KEEP_JET_];  
   Float_t Jet_chEmEF[N_KEEP_JET_]; 
 
-  std::vector<GoodPart> goodParts;
-  
-  
-  // Readers to access the data (delete the ones you do not need).
-  //virtual void    SetScaleFactors() override;
-  virtual void    SlaveBegin(TTree *tree) override;
-  virtual void    Init(TTree *tree) override;
-
   ClassDefOverride(TTTSelector,0);
 
- protected:
-  std::vector<std::string> nonprompt3l_ = {
-    "tt-lep", "st-schan", "st-tchan-t", "st-tchan-tbar",
-    "st-tw", "st-tbarw", "DYm50", "DYm50-1j",
-    "DYm50-2j","DYm50-3j","DYm50-4j", "DYm50__LO",
-  };
+  /*******************************************************/
+  /* __ __  ___  ____  __  ___  ____  __     ____  __    */
+  /* || || // \\ || \\ || // \\ || )) ||    ||    (( \   */
+  /* \\ // ||=|| ||_// || ||=|| ||=)  ||    ||==   \\    */
+  /*  \V/  || || || \\ || || || ||_)) ||__| ||___ \_))   */
+  /*******************************************************/
+  
+  Float_t weight;
+  BranchManager b;
+  std::vector<GoodPart> goodParts;
+  double HT;
+  int nTightJet, nBJets;
 
-  bool isNonpromptEstimate_;
-  bool isNonpromptMC_;
-  bool isZgamma_;
-  const float FR_MAX_PT_ = 50;
-  const float FR_MAX_ETA_ = 2.5;
+  /************************************************************/
+  /* _____ __ __ __  __   ___ ______ __   ___   __  __  __    */
+  /* ||    || || ||\ ||  //   | || | ||  // \\  ||\ || (( \   */
+  /* ||==  || || ||\\|| ((      ||   || ((   )) ||\\||  \\    */
+  /* ||    \\_// || \||  \\__   ||   ||  \\_//  || \|| \_))   */
+  /************************************************************/
+  
+  /// Captial I for particle definition
   bool IsGoodMuon(size_t);
   bool IsGoodElectron(size_t);
   bool IsGoodJet(size_t);
   bool IsGoodBJet(size_t);
-  bool IsOverlap(size_t);
-
-  bool isLooseJetId(size_t);
-  bool isTightJetId(size_t);
   bool IsGoodMVAElectron2016(size_t);
   bool IsGoodMVAElectron2017(size_t);
 
+  // lowercase I for helper function (kinda shitty convention, may change)
+  bool isLooseJetId(size_t);
+  bool isTightJetId(size_t);
+  bool isOverlap(size_t);
   bool passFullIso(TLorentzVector&, int, int);
-  
+
+  //// General Functions
   int getSRBin();
-  double HT;
-  int nTightJet, nBJets;
-  
-  virtual std::string GetNameFromFile() override;
-  virtual void    SetBranchesNanoAOD() override;
-  virtual void    SetBranchesUWVV() override;
-  void LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) override;
-  void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+  void clearValues();
   void ApplyScaleFactors();
-  void SetShiftedMasses();
+
+  // Overloaded or necesary functions
+  virtual void    SetBranchesNanoAOD() override;
+  void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
   void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
   virtual void    SetupNewDirectory() override;
+  virtual std::string GetNameFromFile() override;
+  // Readers to access the data (delete the ones you do not need).
+  virtual void    SlaveBegin(TTree *tree) override;
+  virtual void    Init(TTree *tree) override;
 
-  BranchManager b;
-  
+  ///ignore
+  void LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+  virtual void    SetBranchesUWVV() override;
 };
 
 #endif
