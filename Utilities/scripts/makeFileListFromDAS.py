@@ -11,13 +11,11 @@ import random
 def getComLineArgs():
     parser = UserInput.getDefaultParser(False)
     parser.add_argument("-o", "--output_file", type=str,
-                        required=True, help="Name of file containing file"
-                        " to be created (containing list of files)")
+                        required=True, help="Name of output text file")
     return vars(parser.parse_args())
 
 def getDASFilesWithName(name, das_path):
     files = subprocess.check_output(["dasgoclient", "--query=file dataset=%s" % das_path])
-    print "Num files for path %s is %s" % (das_path, len(files))
     if files:
         files = filter(lambda x: "/store" in x[:7], files.split("\n"))
         files = ["@".join([name, f.strip()+'\n']) for f in files]
@@ -38,9 +36,12 @@ def makeFileListFromDAS(filenames, output_file, analysis, selection):
     with open(output_file, "w") as outfile:
         outfile.writelines(files)
 
+    return len(files)
+
 def main():
     args = getComLineArgs()
     makeFileListFromDAS(args['filenames'], args['output_file'], args['analysis'], args['selection'])
+
 if __name__ == "__main__":
     main()
 

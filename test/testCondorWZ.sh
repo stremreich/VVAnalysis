@@ -177,7 +177,7 @@ fi
 cp /tmp/x509up_u$UID userproxy
 
 # TODO: These should actually be template files that get filled
-tar chzf ${condor_dir}/${analysis}_AnalysisCode.tgz Utilities data lib userproxy $manager_name $wrapper_name
+tar chzf ${condor_dir}/${analysis}_AnalysisCode.tgz Utilities data lib userproxy $manager_name 
 sed "s/FILELIST_REPLACE/${filelist_name%.*}/" Templates/CondorSubmit/submit_testWZ.jdl > $condor_dir/submit_testWZ.jdl 
 sed -i "s/NUMJOBS_REPLACE/${numjobs}/" $condor_dir/submit_testWZ.jdl 
 cp Templates/CondorSubmit/wrapRunSelector.sh $condor_dir
