@@ -18,6 +18,8 @@
 #include "Analysis/VVAnalysis/interface/BranchManager.h"
 #include "Analysis/VVAnalysis/interface/GoodParticle.h"
 
+typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
+
 class TTTSelector : public SelectorBase {
  public :
   /*****************************************/
@@ -108,7 +110,7 @@ class TTTSelector : public SelectorBase {
   
   /// Captial I for particle definition
   bool IsGoodMuon(size_t);
-  bool IsGoodElectron(size_t);
+  bool IsGoodCBElectron(size_t);
   bool IsGoodJet(size_t);
   bool IsGoodBJet(size_t);
   bool IsGoodMVAElectron2016(size_t);
@@ -118,7 +120,7 @@ class TTTSelector : public SelectorBase {
   bool isLooseJetId(size_t);
   bool isTightJetId(size_t);
   bool isOverlap(size_t);
-  bool passFullIso(TLorentzVector&, int, int);
+  bool passFullIso(LorentzVector&, int, int);
 
   //// General Functions
   int getSRBin();

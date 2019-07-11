@@ -1,10 +1,15 @@
 #include "Analysis/VVAnalysis/interface/TTTSelector.h"
-#include "TLorentzVector.h"
+
 #include <TStyle.h>
 #include <regex>
 #include "TParameter.h"
 
 #define Fill1D(NAME, VALUE_) HistFullFill(histMap1D_, NAME, variation.second, VALUE_, weight);
+#define Fill2D(NAME, VALUE1_, VALUE2_) HistFullFill(histMap2D_, NAME, variation.second, VALUE1_, VALUE2_, weight);
+
+enum Lepton {Muon=13, Electron=11};
+
+typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
 
 // This is very WZ specific and should really be improved or likely removed
 std::string TTTSelector::GetNameFromFile() {
@@ -47,7 +52,8 @@ void TTTSelector::Init(TTree *tree)
   
   allChannels_ = {"ee", "mm", "em", "all"};
   hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR", "bjetpt", "jetpt", "nbjet", "njet"};
-
+  //  hists2D_ = {"bJetvsJets"};
+  
   SelectorBase::Init(tree);
   
 }
@@ -135,7 +141,6 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   clearValues();
   b.SetEntry(entry);
 
-  
   if (nElectron > N_KEEP_MU_E_ || nMuon > N_KEEP_MU_E_) {
     std::string message = "Found more electrons or muons than max read number.\n    Found ";
     message += std::to_string(nElectron);
@@ -150,21 +155,17 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   /////////////////////
   // Setup Electrons //
   /////////////////////
-    
+
   for (size_t i = 0; i < nElectron; i++) {
     // if(IsGoodMVAElectron2016(i)) {
-    if(IsGoodElectron(i)) {
+    if(IsGoodCBElectron(i)) {
       // // Extra Iso requirement
-      // TLorentzVector lep;
-      // lep.SetPtEtaPhiM(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
+      // LorentzVector lep(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
       // if(!passFullIso(lep, 0.8, 7.2)) continue;
-      // Setup goodPart
-      //      if(Electron_dxy[i] > 0.05) std::cout << "here" << std::endl;
-      goodParts.push_back(GoodPart());
-      goodParts.back().SetTVector(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
-      goodParts.back().SetpType(pType::Electron);
-      goodParts.back().SetCharge(Electron_charge[i]);
 
+      // Setup goodPart
+      goodParts.push_back(GoodPart(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]));
+      goodParts.back().SetPdgId(Electron*Electron_charge[i]);
     }
   }
 
@@ -175,14 +176,12 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   for (size_t i = 0; i < nMuon; i++) {
     if(IsGoodMuon(i)) {
       // // Extra Iso requirement
-      // TLorentzVector lep;
-      // lep.SetPtEtaPhiM(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
+      // LorentzVector lep(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
       // if(!passFullIso(lep, 0.76, 7.2)) continue;
+
       // Setup goodPart
-      goodParts.push_back(GoodPart());
-      goodParts.back().SetTVector(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]);
-      goodParts.back().SetpType(pType::Muon);
-      goodParts.back().SetCharge(Muon_charge[i]);
+      goodParts.push_back(GoodPart(Muon_pt[i], Muon_eta[i], Muon_phi[i], Muon_mass[i]));
+      goodParts.back().SetPdgId(Muon*Muon_charge[i]);
     }
   }
   
@@ -205,22 +204,22 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
     // bjet 
     if(IsGoodBJet(i)) nBJets++;
   }
-  
+
   channel_ = channelMap_[channelName_];
-  if(goodParts.size() == 2) {
+  if(goodParts.size() != 2) {
     channel_ = Unknown;
     channelName_ = "Unknown";
-  } else if(goodParts[0].ptype == pType::Muon && goodParts[1].ptype == pType::Muon) {
+  } else if(goodParts[0].Id() == Muon && goodParts[1].Id() == Muon) {
     channel_ = mm;
     channelName_ = "mm";
-  } else if(goodParts[0].ptype == pType::Electron && goodParts[1].ptype == pType::Electron) {
+  } else if(goodParts[0].Id() == Electron && goodParts[1].Id() == Electron) {
     channel_ = ee;
     channelName_ = "ee";
   } else {
     channel_ = em;
     channelName_ ="em";
     /// fix order of leptons by pt
-    if(goodParts[0].v.Pt() < goodParts[1].v.Pt()) {
+    if(goodParts[0].Pt() < goodParts[1].Pt()) {
       std::swap(goodParts[0], goodParts[1]);
     }
   }
@@ -298,7 +297,7 @@ bool TTTSelector::IsGoodBJet(size_t index) {
   return ((Jet_pt[index] > 25.0) &&
 	  (abs(Jet_eta[index]) < 2.4) &&
 	  (Jet_btagCSVV2[index] > 0.8484) &&  
-	  //(Jet_btagDeepB[index] > 0.6324) &&
+	  // (Jet_btagDeepB[index] > 0.6324) &&
 	  isOverlap(index)
 	  );
 }
@@ -320,27 +319,30 @@ bool TTTSelector::isTightJetId(size_t index) {
 	  );
 }
 
-bool TTTSelector::passFullIso(TLorentzVector& lep, int I2, int I3) {
-  TLorentzVector jet, closeJet;
+bool TTTSelector::passFullIso(LorentzVector& lep, int I2, int I3) {
+  LorentzVector closeJet;
   double minDR = 10;
   for(size_t index = 0; index < nJet; index++) {
-    jet.SetPtEtaPhiM(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);
-    if(minDR > lep.DeltaR(jet)) {
+    LorentzVector jet(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);
+    double dr = reco::deltaR(jet, lep);
+    if(minDR > dr) {
       closeJet = jet;
-      minDR = lep.DeltaR(jet);
+      minDR = dr;
     }
   }
-  return ((lep.Pt()/closeJet.Pt() > I2 ) ||
-	  (lep.Pt()*std::sin(lep.Angle(closeJet.Vect())) > I3)
-	  );
+  
+  if(lep.Pt()/closeJet.Pt() > I2 ) return true;
+  
+  auto diff = closeJet.Vect() - lep.Vect();
+  auto cross = diff.Cross(lep.Vect());
+  return (cross.Mag2()/diff.Mag2() > I3*I3);
 }
 
 bool TTTSelector::isOverlap(size_t index) {
-  TLorentzVector tmp;
+  LorentzVector tmp(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);
   double dR = 0.4;
-  tmp.SetPtEtaPhiM(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);
-  return ((tmp.DeltaR(goodParts[0].v) > dR) &&
-	  (tmp.DeltaR(goodParts[1].v) > dR));
+  return ((reco::deltaR(tmp, goodParts[0].v) > dR) &&
+  	  (reco::deltaR(tmp, goodParts[1].v) > dR));
 }
 
 void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
@@ -352,11 +354,11 @@ void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::stri
   Fill1D("CutFlow", ++step);
 
   // first lep requirement
-  if(goodParts[0].v.Pt() < 25) return;
+  if(goodParts[0].Pt() < 25) return;
   Fill1D("CutFlow", ++step);
   
   // same sign requirement
-  if(goodParts[0].charge * goodParts[1].charge != 1) return;
+  if(goodParts[0].Charge() * goodParts[1].Charge() <= 0) return;
   Fill1D("CutFlow", ++step);
 
   // met cut
@@ -372,8 +374,8 @@ void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::stri
   Fill1D("CutFlow", ++step);
   
   // bjet cut
-  if(nBJets < 2) return;
-  Fill1D("CutFlow", ++step);
+  // if(nBJets < 2) return;
+  // Fill1D("CutFlow", ++step);
   
   // // veto cut
   // if(!passesLeptonVeto)
@@ -389,6 +391,8 @@ void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::stri
   Fill1D("SR", getSRBin());
   Fill1D("njet", nTightJet);
   Fill1D("nbjet", nBJets);
+  //  Fill2D("bJetvsJets", nTightJet, nBJets);
+
   
   for(size_t i = 0; i < nJet; i++) {
     if(IsGoodJet(i)) {
