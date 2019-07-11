@@ -22,6 +22,7 @@ namespace{
     WZSelector pWZSelector;
     NanoGenSelectorBase pNanoGenSelectorBase;
     ZZGenSelector pZZGenSelector;
+    TTTSelector pTTTSelector;
     WGenSelector pWGenSelector;
     ZGenSelector pZGenSelector;
     WZBackgroundSelector pWZBackgroundSelector;
