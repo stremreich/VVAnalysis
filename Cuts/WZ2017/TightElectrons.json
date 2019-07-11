@@ -1,0 +1,22 @@
+{
+    "Object" : {
+        "e" : [ 
+            "{object_name}IsCBVIDTight > 0.5"
+        ],
+        "m" : [
+        ]
+    },
+    "State" : {
+        "eee" : [
+        ],
+        "mmm" : [
+        ],
+        "eem" : [
+        ],
+        "emm" : [
+        ]
+    },
+    "Event" : [
+    ]
+}
+

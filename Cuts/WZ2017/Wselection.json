@@ -1,0 +1,27 @@
+{
+    "Object" : {
+        "e" : [ 
+        ],
+        "m" : [
+        ]
+    },
+    "State" : {
+        "eee" : [
+            "e1_e3_Mass > 4 && e2_e3_Mass > 4"
+        ],
+        "mmm" : [
+            "m1_m3_Mass > 4 && m2_m3_Mass > 4"
+        ],
+        "eem" : [
+            "e1_m_Mass > 4 && e2_m_Mass > 4"
+        ],
+        "emm" : [
+            "e_m1_Mass > 4 && e_m2_Mass > 4"
+        ]
+    },
+    "Event" : [
+        "Wlep_Pt > 20",
+        "Max$(jetCSVv2) < 0.9535",
+        "type1_pfMETEt > 30"
+    ]
+}
