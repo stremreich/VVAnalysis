@@ -19,7 +19,6 @@ class SelectorDriver(object):
             "Zstudy_2016" : "ZSelector",
             "Zstudy_2017" : "ZSelector",
             "ZZGen" : "ZZGenSelector",
-            "TTT" : "TTTSelector",
             "WGen" : "WGenSelector",
             "ZGen" : "ZGenSelector",
             "TTT" : "TTTSelector",
@@ -160,7 +159,6 @@ class SelectorDriver(object):
             sumweights_hist.SetDirectory(ROOT.gROOT)
         self.processLocalFiles(select, file_path, addSumweights, chan)
         output_list = select.GetOutputList()
-
         name = self.inputs.FindObject("name").GetTitle()
         dataset_list = output_list.FindObject(name)
         if not dataset_list or dataset_list.ClassName() != "TList":
@@ -234,8 +232,8 @@ class SelectorDriver(object):
         filenames = []
         for entry in file_path:
             filenames.extend(self.getFileNames(entry))
-            for i, filename in enumerate(filenames):
-                self.processFile(selector, filename, addSumweights, chan, i+1)
+        for i, filename in enumerate(filenames):
+            self.processFile(selector, filename, addSumweights, chan, i+1)
                 
     def processFile(self, selector, filename, addSumweights, chan, filenum=1):
         logging.debug("Processing file: %s" % filename)

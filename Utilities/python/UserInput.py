@@ -92,7 +92,6 @@ def getHistInfo(analysis, input_hists, noConfig=False):
     ConfigHistTools = imp.load_source("ConfigHistTools", 
         "/".join([manager_path, "AnalysisDatasetManager/Utilities/python/ConfigHistTools.py"]))
     # For histograms produced with some postprocessing on the hist file
-
     excludedHistPatterns = ["wCR", "unrolled", "YieldByChannel"]
     config_hists = ConfigHistTools.getAllHistNames(manager_path, analysis) \
         if "all" in input_hists else input_hists
