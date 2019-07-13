@@ -27,7 +27,7 @@ public :
     LorentzVector genMet;
 
     unsigned int nLeptons_ = 1;
-    static const unsigned int N_KEEP_GEN_ = 150;
+    static const unsigned int N_KEEP_GEN_ = 300;
     static const unsigned int N_KEEP_JET_ = 30;
     static const unsigned int N_LHESCALE_WEIGHTS_ = 10;
     static const unsigned int N_LHEPDF_WEIGHTS_ = 100;
