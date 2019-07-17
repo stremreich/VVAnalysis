@@ -157,7 +157,7 @@ void TTTSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std:
   /////////////////////
 
   for (size_t i = 0; i < nElectron; i++) {
-    // if(IsGoodMVAElectron2016(i)) {
+    //if(IsGoodMVAElectron2016(i)) {
     if(IsGoodCBElectron(i)) {
       // // Extra Iso requirement
       // LorentzVector lep(Electron_pt[i], Electron_eta[i], Electron_phi[i], Electron_mass[i]);
@@ -374,8 +374,8 @@ void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::stri
   Fill1D("CutFlow", ++step);
   
   // bjet cut
-  // if(nBJets < 2) return;
-  // Fill1D("CutFlow", ++step);
+  if(nBJets < 2) return;
+  Fill1D("CutFlow", ++step);
   
   // // veto cut
   // if(!passesLeptonVeto)
@@ -383,8 +383,8 @@ void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::stri
   // in SR stuff
 
   // met cut
-  if (MET < 50) return;
-  SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+  // if (MET < 50) return;
+  //SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
   Fill1D("ptl1", goodParts[0].Pt());
   Fill1D("ptl2", goodParts[1].Pt());
