@@ -1,5 +1,5 @@
-#ifndef TTTSelector_h
-#define TTTSelector_h
+#ifndef ThreeLepSelector_h
+#define ThreeLepSelector_h
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -20,7 +20,7 @@
 
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
 
-class TTTSelector : public SelectorBase {
+class ThreeLepSelector : public SelectorBase {
  public :
   /*****************************************/
   /* ____  ____   ___  __  __   ___ __  __ */
@@ -57,7 +57,8 @@ class TTTSelector : public SelectorBase {
   Float_t Electron_dxy[N_KEEP_MU_E_];
   Float_t Electron_dz[N_KEEP_MU_E_];
   Float_t Electron_sip3d[N_KEEP_MU_E_];
-
+  Bool_t Electron_convVeto[N_KEEP_MU_E_];
+  UChar_t Electron_lostHits[N_KEEP_MU_E_];
   
   UInt_t nMuon;
   Float_t Muon_pt[N_KEEP_MU_E_];
@@ -73,7 +74,10 @@ class TTTSelector : public SelectorBase {
   Float_t Muon_dxy[N_KEEP_MU_E_];
   Float_t Muon_dz[N_KEEP_MU_E_];
   Float_t Muon_sip3d[N_KEEP_MU_E_];
-
+  Bool_t Muon_isGlobal[N_KEEP_MU_E_];
+  Bool_t Muon_isPFcand[N_KEEP_MU_E_];
+  Int_t Muon_tightCharge[N_KEEP_MU_E_];
+  
   Int_t numPU;
 
   UInt_t nJet;
@@ -89,7 +93,7 @@ class TTTSelector : public SelectorBase {
   Float_t Jet_chHEF[N_KEEP_JET_];  
   Float_t Jet_chEmEF[N_KEEP_JET_]; 
 
-  ClassDefOverride(TTTSelector,0);
+  ClassDefOverride(ThreeLepSelector,0);
 
   /*******************************************************/
   /* __ __  ___  ____  __  ___  ____  __     ____  __    */
@@ -101,9 +105,12 @@ class TTTSelector : public SelectorBase {
   Float_t weight;
   BranchManager b;
   std::vector<GoodPart> goodParts;
+  std::vector<GoodPart> looseMuons;
+  std::vector<GoodPart> looseElectrons;
   double HT;
   int nTightJet, nBJets;
-
+  bool passZVeto;
+  
   /************************************************************/
   /* _____ __ __ __  __   ___ ______ __   ___   __  __  __    */
   /* ||    || || ||\ ||  //   | || | ||  // \\  ||\ || (( \   */
@@ -112,21 +119,25 @@ class TTTSelector : public SelectorBase {
   /************************************************************/
   
   /// Captial I for particle definition
-  bool IsGoodMuon(size_t);
-  bool IsGoodCBElectron(size_t);
-  bool IsGoodJet(size_t);
-  bool IsGoodBJet(size_t);
-  bool IsGoodMVAElectron2016(size_t);
-  bool IsGoodMVAElectron2017(size_t);
-
+  bool isGoodMuon(size_t);
+  bool isGoodCBElectron(size_t);
+  bool isGoodJet(size_t);
+  bool isGoodBJet(size_t);
+  bool isGoodMVAElectron2016(size_t);
+  bool isGoodMVAElectron2017(size_t);
+  bool isLooseMuon(size_t);
+  bool isLooseElectron(size_t);
+  bool isLooseMVAElectron(size_t);
+  
   // lowercase I for helper function (kinda shitty convention, may change)
   bool isLooseJetId(size_t);
   bool isTightJetId(size_t);
-  bool isOverlap(size_t);
+  bool doesNotOverlap(size_t);
   bool passFullIso(LorentzVector&, int, int);
-
+  bool doesPassZVeto(GoodPart&, std::vector<GoodPart>&);
+  
   //// General Functions
-  int getSRBin();
+  int getSRBin() const;
   void clearValues();
   void ApplyScaleFactors();
 

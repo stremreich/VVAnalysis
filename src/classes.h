@@ -7,6 +7,7 @@
 #include "Analysis/VVAnalysis/interface/NanoGenSelectorBase.h"
 #include "Analysis/VVAnalysis/interface/WZSelector.h"
 #include "Analysis/VVAnalysis/interface/TTTSelector.h"
+#include "Analysis/VVAnalysis/interface/ThreeLepSelector.h"
 #include "Analysis/VVAnalysis/interface/WZSelectorBase.h"
 #include "Analysis/VVAnalysis/interface/WZBackgroundSelector.h"
 #include "Analysis/VVAnalysis/interface/ScaleFactor.h"
@@ -23,6 +24,7 @@ namespace{
     NanoGenSelectorBase pNanoGenSelectorBase;
     ZZGenSelector pZZGenSelector;
     TTTSelector pTTTSelector;
+    ThreeLepSelector pThreeLepSelector;
     WGenSelector pWGenSelector;
     ZGenSelector pZGenSelector;
     WZBackgroundSelector pWZBackgroundSelector;

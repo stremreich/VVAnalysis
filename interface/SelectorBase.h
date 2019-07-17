@@ -29,6 +29,7 @@ public :
 
     std::vector<std::string> allChannels_ = {};
     std::vector<std::string> hists1D_ = {};
+    std::vector<std::string> hists2D_ = {};
 
     enum Channel {
         e,
@@ -199,7 +200,7 @@ protected:
     // Maps to the histogram pointers themselves
     std::map<std::string, TH1D*> histMap1D_ = {};
     //TODO change the name to map and don't break things
-    std::map<std::string, TH2D*> hists2D_ = {};
+    std::map<std::string, TH2D*> histMap2D_ = {};
     std::map<std::string, TH2D*> weighthists_ = {};
     std::map<std::string, TH3D*> weighthists2D_ {};
 
