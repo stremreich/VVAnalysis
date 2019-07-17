@@ -47,7 +47,7 @@ void ThreeLepSelector::SlaveBegin(TTree * /*tree*/) {
 void ThreeLepSelector::Init(TTree *tree) {
   b.SetTree(tree);
   
-  allChannels_ = {"all", "unknown"};
+  allChannels_ = {"mm", "ee", "em", "all", "lll"};
   hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR", "bjetpt", "jetpt", "nbjet", "njet", "nleps"};
   hists2D_ = {"bJetvsJets"};
   
@@ -208,7 +208,7 @@ void ThreeLepSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic,
   ////////////////
   
   for(size_t i = 0; i < nJet; i++) {
-    if(goodParts.size() < 3) break;
+    if(goodParts.size() < 2) break;
     //common to both jets, may put more here
     if(!isLooseJetId(i)) continue;
 
@@ -222,19 +222,32 @@ void ThreeLepSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic,
   }
 
   channel_ = channelMap_[channelName_];
-  if(goodParts.size() < 3) {
+  if(goodParts.size() > 2) {
+    channel_ = lll;
+    channelName_ = "lll";
+  } else if(goodParts.size() != 2) {
     channel_ = Unknown;
-    channelName_ = "unknown";
+    channelName_ = "Unknown";
+  } else if(goodParts[0].Id() == Muon && goodParts[1].Id() == Muon) {
+    channel_ = mm;
+    channelName_ = "mm";
+  } else if(goodParts[0].Id() == Electron && goodParts[1].Id() == Electron) {
+    channel_ = ee;
+    channelName_ = "ee";
   } else {
-    channel_ = Unknown;
-    channelName_ = "unknown";
+    channel_ = em;
+    channelName_ ="em";
+    /// fix order of leptons by pt
+    if(goodParts[0].Pt() < goodParts[1].Pt()) {
+      std::swap(goodParts[0], goodParts[1]);
+    }
   }
 
   if (isMC_) {
     ApplyScaleFactors();
   }
 
-  if(looseMuons.size() + looseElectrons.size() >= 3) {
+  if(goodParts.size() >= 2 && looseMuons.size() + looseElectrons.size() >= 3) {
     for(auto lep : goodParts) {
       if(lep.Id() == Muon) 
 	passZVeto = doesPassZVeto(lep, looseMuons);
@@ -444,10 +457,8 @@ bool ThreeLepSelector::passFullIso(LorentzVector& lep, int I2, int I3) {
 bool ThreeLepSelector::doesNotOverlap(size_t index) {
   LorentzVector tmp(Jet_pt[index], Jet_eta[index], Jet_phi[index], Jet_mass[index]);
   double dR = 0.4;
-  bool passOverlap = true;
   for(auto lep: goodParts) {
-    if(!passOverlap) return false;
-    passOverlap = (reco::deltaR(tmp, lep.v) > dR);
+    if(reco::deltaR(tmp, lep.v) < dR) return false;
   }
   return true;
 }
@@ -457,16 +468,16 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
   Fill1D("CutFlow", 0);
   
   /// 2 good leptons
-  if(goodParts.size() < 3) return;
+  if(goodParts.size() < 2) return;
   Fill1D("CutFlow", ++step);
 
   // first lep requirement
   if(goodParts[0].Pt() < 25) return;
   Fill1D("CutFlow", ++step);
   
-  // // same sign requirement
-  // if(goodParts[0].Charge() * goodParts[1].Charge() <= 0) return;
-  // Fill1D("CutFlow", ++step);
+  // same sign requirement
+  if(goodParts.size() == 2 && goodParts[0].Charge() * goodParts[1].Charge() <= 0) return;
+  Fill1D("CutFlow", ++step);
 
   // met cut
   if (MET < 50) return;
@@ -488,7 +499,7 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
   // if(!passZVeto) return;
   // Fill1D("CutFlow", ++step);
   Fill1D("SR", getSRBin());
-  if((getSRBin() != 7) && (getSRBin() != 8)) {
+  if((getSRBin() <= 0) || (getSRBin() >= 9)) {
     return;
   }
 
@@ -516,26 +527,28 @@ void ThreeLepSelector::SetupNewDirectory() {
 }
 
 int ThreeLepSelector::getSRBin() const {
-  if(!passZVeto)                         return 9;
-  else if(nBJets == 2 && nTightJet >= 5)   return 7;
-  else if(nBJets >= 3 && nTightJet >= 4)    return 8;
-  else return -1;
+  if(goodParts.size() == 2) {
+    if(nBJets == 2) {
 
-  // if(nBJets == 2) {
-  //   if(nTightJet <= 5)      return 0;
-  //   if(nTightJet == 6)      return 1;
-  //   else if(nTightJet == 7) return 2;
-  //   else if(nTightJet >= 8) return 3;
-  // } else if(nBJets == 3) {
-  //   if(nTightJet == 5)      return 4;
-  //   else if(nTightJet == 6) return 5;
-  //   else if(nTightJet == 7) return 6;
-  //   else if(nTightJet >= 8) return 7;
-  // } else if(nBJets >= 4) {
-  //   if(nTightJet >= 5)     return 8;
-  // }
-  // return -1;
-
-  
+      if(nTightJet <= 5)   return 0;  // WCR
+      else if(!passZVeto)      return -1;
+      else if(nTightJet == 6)  return 1;
+      else if(nTightJet == 7)  return 2;
+      else if(nTightJet >= 8)   return 3;
+    } else if(nBJets == 3) {
+      if(nTightJet == 5)       return 4;
+      else if(nTightJet == 6)  return 4;
+      else if(nTightJet >= 7)   return 5;
+    } else if(nBJets >= 4) {
+      if(nTightJet >= 5)         return 6;
+    }
+  } else {
+    if(!passZVeto)                         return 9;  /// ZCR
+    else if(nBJets == 2 && nTightJet >= 5)   return 7;
+    else if(nBJets >= 3 && nTightJet >= 4)    return 8;
+  }
+  return -1;    
 }
+
+
 

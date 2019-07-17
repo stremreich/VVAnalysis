@@ -47,6 +47,7 @@ public :
         mmmm,
         Inclusive,
         Unknown,
+	lll,
     }; 
     enum Selection {
         tightleptons,
@@ -116,6 +117,7 @@ public :
 	{"ee", ee},
         {"em", em},
 	{"mm", mm},
+	{"lll", lll},
         {"eee", eee},
         {"eem", eem},
         {"emm", emm},
