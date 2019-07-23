@@ -34,17 +34,17 @@ void SelectorBase::Init(TTree *tree)
 	TNamed* year = (TNamed *) GetInputList()->FindObject("year");
 
 	if (ntupleType != nullptr) {
-	    std::string ntupleName = ntupleType->GetTitle();
-	    if (ntupleName == "NanoAOD")
-		ntupleType_ = NanoAOD;
-	    else if (ntupleName  == "UWVV")
-		ntupleType_ = UWVV;
-	    else
-		throw std::invalid_argument("Unsupported ntuple type!");
+	  std::string ntupleName = ntupleType->GetTitle();
+	  if (ntupleName == "NanoAOD")
+	    ntupleType_ = NanoAOD;
+	  else if (ntupleName  == "UWVV")
+	    ntupleType_ = UWVV;
+	  else
+	    throw std::invalid_argument("Unsupported ntuple type!");
 	}
 	else {
-	    std::cerr << "INFO: Assuming NanoAOD ntuples" << std::endl;
-	    ntupleType_ = NanoAOD;
+	  std::cerr << "INFO: Assuming NanoAOD ntuples" << std::endl;
+	  ntupleType_ = NanoAOD;
 	}
 
         if (name != nullptr) {
@@ -72,7 +72,7 @@ void SelectorBase::Init(TTree *tree)
     }
 
     if (selectionMap_.find(selectionName_) != selectionMap_.end()) {
-        selection_ = selectionMap_[selectionName_];
+      selection_ = selectionMap_[selectionName_];
     }
     else
         throw std::invalid_argument("Invalid selection!");
@@ -85,7 +85,7 @@ void SelectorBase::Init(TTree *tree)
         variations_.insert(systematics_.begin(), systematics_.end());
 
     currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(name_.c_str()));
-
+    
     if (channelMap_.find(channelName_) != channelMap_.end())
         channel_ = channelMap_[channelName_];
     else {
@@ -98,18 +98,18 @@ void SelectorBase::Init(TTree *tree)
     }
     
     if ( currentHistDir_ == nullptr ) {
-        currentHistDir_ = new TList();
-        currentHistDir_->SetName(name_.c_str());
-        fOutput->Add(currentHistDir_);
-        // Watch for something that I hope never happens,
-        size_t existingObjectPtrsSize = allObjects_.size();
-        SetupNewDirectory();
-        if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
-            std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
-        }
+      currentHistDir_ = new TList();
+      currentHistDir_->SetName(name_.c_str());
+      fOutput->Add(currentHistDir_);
+      // Watch for something that I hope never happens,
+      size_t existingObjectPtrsSize = allObjects_.size();
+      SetupNewDirectory();
+      if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
+	std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
+      }
     }
     UpdateDirectory();
-
+    
     SetBranches();
 }
 
@@ -179,16 +179,16 @@ void SelectorBase::InitializeHistogramsFromConfig() {
         throw std::domain_error("Can't initialize histograms without passing histogram information to TSelector");
 
     for (auto& label : hists1D_) {
-        if (channel_ != Inclusive) {
-            auto histName = getHistName(label, "", channelName_);
-            histMap1D_[histName] = {};
-        }
-        else {
-            for (auto& chan : allChannels_) {
-                auto histName = getHistName(label, "", chan);
-                histMap1D_[histName] = {};
-            }
-        }
+      if (channel_ != Inclusive) {
+	auto histName = getHistName(label, "", channelName_);
+	histMap1D_[histName] = {};
+      }
+      else {
+	for (auto& chan : allChannels_) {
+	  auto histName = getHistName(label, "", chan);
+	  histMap1D_[histName] = {};
+	}
+      }
     }
 
     for (auto& label : hists2D_) {
@@ -208,10 +208,10 @@ void SelectorBase::InitializeHistogramsFromConfig() {
         TNamed* currentHistInfo = dynamic_cast<TNamed*>(entry);
         std::string name = currentHistInfo->GetName();
         std::vector<std::string> histData = ReadHistDataFromConfig(currentHistInfo->GetTitle());
-        
-        std::vector<std::string> channels = {channelName_};
+
+	std::vector<std::string> channels = {channelName_};
         if (channel_ == Inclusive) {
-            channels = allChannels_;
+	  channels = allChannels_;
         }
 
         for (auto& chan : channels) {

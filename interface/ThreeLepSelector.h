@@ -17,18 +17,19 @@
 #include "Analysis/VVAnalysis/interface/SelectorBase.h"
 #include "Analysis/VVAnalysis/interface/BranchManager.h"
 #include "Analysis/VVAnalysis/interface/GoodParticle.h"
-
+#include "CondFormats/BTauObjects/interface/BTagCalibration.h"
+#include "CondTools/BTau/interface/BTagCalibrationReader.h"
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
 
 class ThreeLepSelector : public SelectorBase {
- public :
+public :
   /*****************************************/
   /* ____  ____   ___  __  __   ___ __  __ */
   /* || )) || \\ // \\ ||\ ||  //   ||  || */
   /* ||=)  ||_// ||=|| ||\\|| ((    ||==|| */
   /* ||_)) || \\ || || || \||  \\__ ||  || */
   /*****************************************/
-  
+
   ScaleFactor* pileupSF_;
   ScaleFactor* muonSF_;
   ScaleFactor* eIdSF_ ;
@@ -91,8 +92,9 @@ class ThreeLepSelector : public SelectorBase {
   Float_t Jet_neEmEF[N_KEEP_JET_];
   Int_t Jet_nConstituents[N_KEEP_JET_];
   Float_t Jet_chHEF[N_KEEP_JET_];  
-  Float_t Jet_chEmEF[N_KEEP_JET_]; 
-
+  Float_t Jet_chEmEF[N_KEEP_JET_];
+  Int_t   Jet_jetId[N_KEEP_JET_];
+  
   ClassDefOverride(ThreeLepSelector,0);
 
   /*******************************************************/
@@ -104,13 +106,16 @@ class ThreeLepSelector : public SelectorBase {
   
   Float_t weight;
   BranchManager b;
-  std::vector<GoodPart> goodParts;
+  std::vector<GoodPart> goodLeptons;
   std::vector<GoodPart> looseMuons;
   std::vector<GoodPart> looseElectrons;
+  std::vector<GoodPart> goodBJets;
   double HT;
-  int nTightJet, nBJets;
+  int nJets, nBJets;
   bool passZVeto;
-  
+  BTagCalibration calib;
+  BTagCalibrationReader btag_reader; // central sys type
+                                
   /************************************************************/
   /* _____ __ __ __  __   ___ ______ __   ___   __  __  __    */
   /* ||    || || ||\ ||  //   | || | ||  // \\  ||\ || (( \   */
@@ -118,20 +123,14 @@ class ThreeLepSelector : public SelectorBase {
   /* ||    \\_// || \||  \\__   ||   ||  \\_//  || \|| \_))   */
   /************************************************************/
   
-  /// Captial I for particle definition
   bool isGoodMuon(size_t);
-  bool isGoodCBElectron(size_t);
+  bool isLooseMuon(size_t);
   bool isGoodJet(size_t);
   bool isGoodBJet(size_t);
-  bool isGoodMVAElectron2016(size_t);
-  bool isGoodMVAElectron2017(size_t);
-  bool isLooseMuon(size_t);
+  bool isGoodElectron(size_t);
   bool isLooseElectron(size_t);
   bool isLooseMVAElectron(size_t);
   
-  // lowercase I for helper function (kinda shitty convention, may change)
-  bool isLooseJetId(size_t);
-  bool isTightJetId(size_t);
   bool doesNotOverlap(size_t);
   bool passFullIso(LorentzVector&, int, int);
   bool doesPassZVeto(GoodPart&, std::vector<GoodPart>&);
@@ -142,13 +141,13 @@ class ThreeLepSelector : public SelectorBase {
   void ApplyScaleFactors();
 
   // Overloaded or necesary functions
-  virtual void    SetBranchesNanoAOD() override;
   void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
   void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+  virtual void    SetBranchesNanoAOD() override;
   virtual void    SetupNewDirectory() override;
   virtual std::string GetNameFromFile() override;
   // Readers to access the data (delete the ones you do not need).
-  virtual void    SlaveBegin(TTree *tree) override;
+  virtual void    SetScaleFactors() override;
   virtual void    Init(TTree *tree) override;
 
   ///ignore
