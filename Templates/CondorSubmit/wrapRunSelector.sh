@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Following implementation by N. Smith, Fermilabl
+# Following implementation by N. Smith, Fermilab
 # https://gitlab.cern.ch/ncsmith/monoZ/tree/master/selector 
 
 # TODO: should be filled in from a template
