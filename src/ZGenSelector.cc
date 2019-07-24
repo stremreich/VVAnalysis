@@ -10,10 +10,10 @@ void ZGenSelector::Init(TTree *tree)
     histMap1D_["CutFlow_Unknown"] = {};
     hists1D_ = {"CutFlow", "ZMass", "yZ", "ptZ", "ptl1", "etal1", "phil1", "ptl2", "etal2", "phil2", 
         "ptj1", "ptj2", "ptj3", "etaj1", "etaj2", "etaj3", "phij1", "phij2", "phij3", "nJets",
-        "MET",};
+        "MET", "HT",};
     weighthists1D_ = {"ZMass", "yZ", "ptZ", "ptl1", "etal1", "phil1", "ptl2", "etal2", "phil2", 
         "ptj1", "ptj2", "ptj3", "etaj1", "etaj2", "etaj3", "phij1", "phij2", "phij3", "nJets",
-        "MET",};
+        "MET", "HT", };
     nLeptons_ = 2;
 
     NanoGenSelectorBase::Init(tree);
@@ -82,6 +82,12 @@ void ZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
     SafeHistFill(histMap1D_, getHistName("phil2", variation.second), lep2.phi(), weight);
     SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jets.size(), weight);
     SafeHistFill(histMap1D_, getHistName("MET", variation.second), genMet.pt(), weight);
+    if (histMap1D_[getHistName("HT", variation.second)] != nullptr) {
+        float ht = 0;
+        for (auto& jet : jets)
+            ht += jet.pt();
+        SafeHistFill(histMap1D_, getHistName("HT", variation.second), genMet.pt(), weight);
+    }
     for (size_t i = 1; i <= 3; i++) {
         if (jets.size() >= i ) {
             const auto& jet = jets.at(i-1);
