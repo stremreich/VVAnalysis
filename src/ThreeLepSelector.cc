@@ -30,18 +30,16 @@ void ThreeLepSelector::SetScaleFactors() {
 
   pileupSF_ = (ScaleFactor *) GetInputList()->FindObject("pileupSF");
   if (pileupSF_ == nullptr )
-    std::cout  << "missing Pileup SF" << std::endl;
-  
+    std::cout << "missing Pileup SF" << std::endl;
+
   // eIdSF_ = (ScaleFactor *) GetInputList()->FindObject("electronTightIdSF");
   // if (eIdSF_ == nullptr ) 
   //   std::cout  << "missing Electron ID SF" << std::endl;
-  // // Abort("Must pass electron ID SF");
-
+  
   // eGsfSF_ = (ScaleFactor *) GetInputList()->FindObject("electronGsfSF");
   // if (eGsfSF_ == nullptr )
   //   std::cout  << "missing Electron Gsf SF" << std::endl;
-  // //    Abort("Must pass electron GSF SF");
-
+  
   mIdSF_ = (ScaleFactor *) GetInputList()->FindObject("muonTightIdSF");
   if (mIdSF_ == nullptr )
     std::cout  << "missing Muon Id SF" << std::endl;
@@ -174,81 +172,13 @@ void ThreeLepSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic,
     throw std::domain_error(message);
   }
 
-  /////////////////////
-  // Setup Electrons //
-  /////////////////////
+  /// basic setups
+  setupElectrons();
+  setupMuons();
+  setupJets();
+  setupChannel();
 
-  for (size_t i = 0; i < nElectron; i++) {
-    if( isGoodElectron(i)) {
-      goodLeptons.push_back(GoodPart(SetupPtEtaPhiM(Electron, i)));
-      goodLeptons.back().SetPdgId(PID_ELECTRON * Electron_charge[i]);
-      if(!passFullIso(goodLeptons.back().v, 0.8, 7.2)) {   // Extra Iso requirement
-	goodLeptons.pop_back(); 
-      } else {
-	looseElectrons.push_back(goodLeptons.back());
-	continue; 
-      }
-    }
-    if(isLooseElectron(i)) {
-      looseElectrons.push_back(GoodPart(SetupPtEtaPhiM(Electron, i)));
-      looseElectrons.back().SetPdgId(PID_ELECTRON * Electron_charge[i]);
-    }
-  }
-  
-  /////////////////
-  // Setup Muons 
-  /////////////////
-  
-  for (size_t i = 0; i < nMuon; i++) {
-    if(isGoodMuon(i)) {
-      goodLeptons.push_back(GoodPart(SetupPtEtaPhiM(Muon, i)));
-      goodLeptons.back().SetPdgId(PID_MUON * Muon_charge[i]);
-      if(!passFullIso(goodLeptons.back().v, 0.76, 7.2)) {    // Extra Iso requirement
-	goodLeptons.pop_back(); 
-      } else {                                        // Add to Loose if pass tight
-	looseMuons.push_back(goodLeptons.back());
-	continue; 
-      } 
-    }
-    if(isLooseMuon(i)) {
-      looseMuons.push_back(GoodPart(SetupPtEtaPhiM(Muon, i)));
-      looseMuons.back().SetPdgId(PID_MUON * Muon_charge[i]);
-    }
-  }
-  
-  ////////////////
-  // Setup Jets //
-  ////////////////
-  
-  for(size_t i = 0; i < nJet; i++) {
-    if(goodLeptons.size() < 2) break;  // only try to find jets if have leptons
-    /// jet
-    if(isGoodJet(i)) {
-      nJets++;
-      HT += Jet_pt[i];
-    }
-    // bjet 
-    if(isGoodBJet(i)) {
-      nBJets++;
-      goodBJets.push_back(GoodPart(SetupPtEtaPhiM(Jet, i))); 
-    }
-  }
-  
-  
-  if(goodLeptons.size() >= 3)
-    channelName_ = "lll";
-  else if(goodLeptons.size() != 2)
-    channelName_ = "Unknown";
-  else if(goodLeptons[0].Id() == PID_MUON && goodLeptons[1].Id() == PID_MUON)
-    channelName_ = "mm";
-  else if(goodLeptons[0].Id() == PID_ELECTRON && goodLeptons[1].Id() == PID_ELECTRON)
-    channelName_ = "ee";
-  else
-    channelName_ = "em";
-
-  channel_ = channelMap_[channelName_];
-
-  // swap to have highest pt first
+  // correct goodLeptons vector to order of SS leps first in order of pt
   if(goodLeptons.size() == 3) {
     /// Put same charge leps first
     if(goodLeptons[1].Charge() * goodLeptons[2].Charge() > 0) {
@@ -286,6 +216,77 @@ void ThreeLepSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic,
   // }
 }
 
+void ThreeLepSelector::setupMuons() {
+  for (size_t i = 0; i < nMuon; ++i) {
+    if(isGoodMuon(i)) {
+      goodLeptons.push_back(GoodPart(SetupPtEtaPhiM(Muon, i)));
+      goodLeptons.back().SetPdgId(PID_MUON * Muon_charge[i]);
+      if(!passFullIso(goodLeptons.back().v, 0.76, 7.2)) {    // Extra Iso requirement
+	goodLeptons.pop_back(); 
+      } else {                                        // Add to Loose if pass tight
+	looseMuons.push_back(goodLeptons.back());
+	continue; 
+      } 
+    }
+    if(isLooseMuon(i)) {
+      looseMuons.push_back(GoodPart(SetupPtEtaPhiM(Muon, i)));
+      looseMuons.back().SetPdgId(PID_MUON * Muon_charge[i]);
+    }
+  }
+}
+
+void ThreeLepSelector::setupElectrons() {
+  for (size_t i = 0; i < nElectron; ++i) {
+    if( isGoodElectron(i)) {
+      goodLeptons.push_back(GoodPart(SetupPtEtaPhiM(Electron, i)));
+      goodLeptons.back().SetPdgId(PID_ELECTRON * Electron_charge[i]);
+      if(!passFullIso(goodLeptons.back().v, 0.8, 7.2)) {   // Extra Iso requirement
+	goodLeptons.pop_back(); 
+      } else {
+	looseElectrons.push_back(goodLeptons.back());
+	continue; 
+      }
+    }
+    if(isLooseElectron(i)) {
+      looseElectrons.push_back(GoodPart(SetupPtEtaPhiM(Electron, i)));
+      looseElectrons.back().SetPdgId(PID_ELECTRON * Electron_charge[i]);
+    }
+  }
+}
+
+void ThreeLepSelector::setupJets() {
+  for(size_t i = 0; i < nJet; ++i) {
+    if(goodLeptons.size() < 2) break;  // only try to find jets if have leptons
+    /// jet
+    if(isGoodJet(i)) {
+      nJets++;
+      HT += Jet_pt[i];
+    }
+    // bjet 
+    if(isGoodBJet(i)) {
+      nBJets++;
+      goodBJets.push_back(GoodPart(SetupPtEtaPhiM(Jet, i))); 
+    }
+  }
+}
+
+void ThreeLepSelector::setupChannel() {
+  if(goodLeptons.size() >= 3)
+    channelName_ = "lll";
+  else if(goodLeptons.size() != 2)
+    channelName_ = "Unknown";
+  else if(goodLeptons[0].Id() == PID_MUON && goodLeptons[1].Id() == PID_MUON)
+    channelName_ = "mm";
+  else if(goodLeptons[0].Id() == PID_ELECTRON && goodLeptons[1].Id() == PID_ELECTRON)
+    channelName_ = "ee";
+  else
+    channelName_ = "em";
+
+  channel_ = channelMap_[channelName_];
+}
+
+
+
 bool ThreeLepSelector::doesPassZVeto(GoodPart& lep, std::vector<GoodPart>& looseList) {
   for (auto lLep : looseList) {
     if((lep.Charge()*lLep.Charge() < 0) &&
@@ -322,19 +323,14 @@ void ThreeLepSelector::ApplyScaleFactors() {
   
 }
 
-/////////////////////////////////////////////////////
-// Functions for defining particles: used in main //
-// loop of leptons/jets for getting multiplicity  //
-////////////////////////////////////////////////////
-
 bool ThreeLepSelector::isGoodMuon(size_t index) {
-  return ( (Muon_pt[index] > 20) &&
-	   (Muon_tightCharge[index] == 2) &&
-	   (abs(Muon_eta[index]) < 2.4) &&
-	   Muon_mediumId[index] &&
+  return ( (Muon_pt[index] > 20)                 &&
+	   (Muon_tightCharge[index] == 2)        &&
+	   (abs(Muon_eta[index]) < 2.4)          &&
+	   (Muon_mediumId[index])                &&
 	   (Muon_miniPFRelIso_all[index] < 0.16) &&
-	   (Muon_dz[index] < 0.1) &&
-	   (Muon_dxy[index] < 0.05) &&
+	   (Muon_dz[index] < 0.1)                &&
+	   (Muon_dxy[index] < 0.05)              &&
 	   (Muon_sip3d[index] < 4) 
 	   );
 }
@@ -349,9 +345,12 @@ bool ThreeLepSelector::isGoodElectron(size_t index) {
     else if(abs(Electron_eta[index]) < 2.5)   caseIndex = 2;
 
     if(year_ == yr2016 || year_ == yrdefault) {
-      if(caseIndex == 0)        passId = Electron_MVA[index] > std::max(0.52, 0.77 - 0.025 * (Electron_pt[index] - 15));     
-      else if(caseIndex == 1)   passId = Electron_MVA[index] > std::max(0.11, 0.56 - 0.045 * (Electron_pt[index] - 15));
-      else if(caseIndex == 2)   passId = Electron_MVA[index] > std::max(-0.01, 0.48 - 0.049 * (Electron_pt[index] - 15));
+      if(caseIndex == 0)
+	passId = Electron_MVA[index] > std::max(0.52, 0.77 - 0.025 * (Electron_pt[index] - 15));     
+      else if(caseIndex == 1)
+	passId = Electron_MVA[index] > std::max(0.11, 0.56 - 0.045 * (Electron_pt[index] - 15));
+      else if(caseIndex == 2)
+	passId = Electron_MVA[index] > std::max(-0.01, 0.48 - 0.049 * (Electron_pt[index] - 15));
     }
     else if(year_ == yr2017) {
       // if(caseIndex == 0)        passId = std::max(0.52, 0.77 - 0.025 * (Electron_pt[index] - 15));
@@ -362,23 +361,23 @@ bool ThreeLepSelector::isGoodElectron(size_t index) {
     passId = (Electron_cutBased[index] == CBID_TIGHT);
   }
 
-  return ((Electron_pt[index] > 20) &&
+  return ((Electron_pt[index] > 20)                 &&
 	  (Electron_miniPFRelIso_all[index] < 0.12) &&
-	  (passId) &&
-	  (Electron_convVeto[index]) &&
-	  (Electron_lostHits[index] == 0) && 
-	  (Electron_dz[index] < 0.1) &&
-	  (Electron_dxy[index] < 0.05) &&
+	  (passId)                                  &&
+	  (Electron_convVeto[index])                &&
+	  (Electron_lostHits[index] == 0)           && 
+	  (Electron_dz[index] < 0.1)                &&
+	  (Electron_dxy[index] < 0.05)              &&
 	  (Electron_sip3d[index] < 4) 
 	  );
 }
 
 
 bool ThreeLepSelector::isLooseMuon(size_t index) {
-  return (Muon_isGlobal[index] && 
-	  Muon_isPFcand[index] &&
-	  Muon_miniPFRelIso_all[index] < 0.4 &&
-	  (Muon_dz[index] < 0.1) &&
+  return ((Muon_isGlobal[index])               && 
+	  (Muon_isPFcand[index])               &&
+	  (Muon_miniPFRelIso_all[index] < 0.4) &&
+	  (Muon_dz[index] < 0.1)               &&
 	  (Muon_dxy[index] < 0.05) 
 	  );
 }
@@ -401,7 +400,7 @@ bool ThreeLepSelector::isLooseElectron(size_t index) {
     /// MVA numbers. May generalize.
     if(caseIndex == 0)  	      passId = Electron_MVA[index] > -0.46;
     else if(caseIndex == 1)     passId = Electron_MVA[index] > -0.48;
-    else if(caseIndex == 2)     passId = Electron_MVA[index] > -0.48  - 0.037*(Electron_pt[index]-15);
+    else if(caseIndex == 2)     passId = Electron_MVA[index] > -0.48 - 0.037*(Electron_pt[index]-15);
     else if(caseIndex == 3)     passId = Electron_MVA[index] > -0.85;
     else if(caseIndex == 4)     passId = Electron_MVA[index] > -0.03;
     else if(caseIndex == 5)     passId = Electron_MVA[index] > -0.67;
@@ -425,28 +424,28 @@ bool ThreeLepSelector::isLooseElectron(size_t index) {
 }
 
 bool ThreeLepSelector::isGoodJet(size_t index) {
-  return ((Jet_pt[index] > 40.0) &&
+  return ((Jet_pt[index] > 40.0)      &&
 	  (abs(Jet_eta[index]) < 2.4) &&
-	  (Jet_jetId[index] >= 1) &&
-	  doesNotOverlap(index)
+	  (Jet_jetId[index] >= 1)      &&
+	  (doesNotOverlap(index))
 	  );
 }
 
 /// TODO: add toggle for different btag stuff
 bool ThreeLepSelector::isGoodBJet(size_t index) {
-  return ((Jet_pt[index] > 25.0) &&
-	  (abs(Jet_eta[index]) < 2.4) &&
-	  (Jet_jetId[index] >= 1) &&
+  return ((Jet_pt[index] > 25.0)          &&
+	  (abs(Jet_eta[index]) < 2.4)     &&
+	  (Jet_jetId[index] >= 1)          &&
 	  // (Jet_btagCSVV2[index] > 0.8484) &&  
 	  (Jet_btagDeepB[index] > 0.6324) &&
-	  doesNotOverlap(index)
+	  (doesNotOverlap(index))
 	  );
 }
 
 bool ThreeLepSelector::passFullIso(LorentzVector& lep, int I2, int I3) {
   LorentzVector closeJet;
   double minDR = 10;
-  for(size_t index = 0; index < nJet; index++) {
+  for(size_t index = 0; index < nJet; ++index) {
     LorentzVector jet(SetupPtEtaPhiM(Jet, index));
     double dr = reco::deltaR(jet, lep);
     if(minDR > dr) {
@@ -484,8 +483,9 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
   Fill1D("CutFlow", ++step);
   
   // same sign requirement
-  if(goodLeptons.size() == 2 && goodLeptons[0].Charge() * goodLeptons[1].Charge() < 0) return;
-  else if(goodLeptons.size() == 3 && goodLeptons[0].Charge() * goodLeptons[2].Charge() > 0) return;
+  if((goodLeptons.size() == 2 && goodLeptons[0].Charge() * goodLeptons[1].Charge() < 0) ||
+     (goodLeptons.size() == 3 && goodLeptons[0].Charge() * goodLeptons[2].Charge() > 0))
+    return;
   Fill1D("CutFlow", ++step);
 
   // met cut
@@ -508,14 +508,16 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
   // if(!passZVeto) return;
   // Fill1D("CutFlow", ++step);
   Fill1D("SR", getSRBin());
-  
-  if(getSRBin() == 0) {
+
+  if(getSRBin() == -1) {
+    return;
+  }
+  else if(getSRBin() == 0) {
     Fill1D("CRW_njet", nJets);
     Fill1D("CRW_nbjet", nBJets);
     return;
-  } else if(getSRBin() == -1) {
-    return;
-  } else if(getSRBin() == 9) {
+  }
+  else if(getSRBin() == 9) {
     Fill1D("CRZ_njet", nJets);
     Fill1D("CRZ_nbjet", nBJets);
     return;
@@ -531,7 +533,7 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
   Fill2D("bJetvsJets", nJets, nBJets);
   Fill1D("nleps", goodLeptons.size());
   
-  for(size_t i = 0; i < nJet; i++) {
+  for(size_t i = 0; i < nJet; ++i) {
     if(isGoodJet(i)) {
       Fill1D("jetpt", Jet_pt[i]);
     }

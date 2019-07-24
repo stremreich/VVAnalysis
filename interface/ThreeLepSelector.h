@@ -122,6 +122,11 @@ public :
   /* ||==  || || ||\\|| ((      ||   || ((   )) ||\\||  \\    */
   /* ||    \\_// || \||  \\__   ||   ||  \\_//  || \|| \_))   */
   /************************************************************/
+
+  void setupMuons();
+  void setupElectrons();
+  void setupJets();
+  void setupChannel();
   
   bool isGoodMuon(size_t);
   bool isLooseMuon(size_t);
