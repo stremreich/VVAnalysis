@@ -8,7 +8,7 @@
 #define Fill2D(NAME, VALUE1_, VALUE2_) HistFullFill(histMap2D_, NAME, variation.second, VALUE1_, VALUE2_, weight);
 #define SetupPtEtaPhiM(PART, INDEX) PART##_pt[INDEX], PART##_eta[INDEX], PART##_phi[INDEX], PART##_mass[INDEX]
 
-enum PID {PID_MUON=13, PID_ELECTRON=11, eBJet=5};
+enum PID {PID_MUON = 13, PID_ELECTRON = 11, PID_BJET = 5};
 enum ElectronCBID {CBID_VETO=1, CBID_LOOSE=2, CBID_MEDIUM=3, CBID_TIGHT=4};
 
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
@@ -17,21 +17,29 @@ typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector
 std::string ThreeLepSelector::GetNameFromFile() {
   std::regex expr = std::regex("201[0-9]-[0-9][0-9]-[0-9][0-9]-(.*)-WZxsec2016");
   std::smatch matches;
-  std::string fileName = fChain->GetTree()->GetDirectory()->GetFile()->GetName(); 
+  std::string fileName = fChain->GetTree()->GetDirectory()->GetFile()->GetName();
 
   std::regex_search(fileName, matches, expr);
   return std::string(matches.str(1));
 }
 
 void ThreeLepSelector::SetScaleFactors() {
+  
   calib = BTagCalibration("deepcsv", "data/btag_scales.csv");
   btag_reader = BTagCalibrationReader(BTagEntry::OP_MEDIUM, "central");
   btag_reader.load(calib, BTagEntry::FLAV_B, "comb");
+  btag_reader.load(calib, BTagEntry::FLAV_UDSG, "incl");
 
   pileupSF_ = (ScaleFactor *) GetInputList()->FindObject("pileupSF");
   if (pileupSF_ == nullptr )
     std::cout << "missing Pileup SF" << std::endl;
 
+  TFile* bFile = (TFile*) GetInputList()->FindObject("BScales");
+  name_ = GetInputList()->FindObject("name")->GetTitle();
+  
+  Beff_j = (TH2D*) bFile->Get((name_ + "/Beff_j").c_str());
+  Beff_b = (TH2D*) bFile->Get((name_ + "/Beff_b").c_str());
+  
   // eIdSF_ = (ScaleFactor *) GetInputList()->FindObject("electronTightIdSF");
   // if (eIdSF_ == nullptr ) 
   //   std::cout  << "missing Electron ID SF" << std::endl;
@@ -44,11 +52,10 @@ void ThreeLepSelector::SetScaleFactors() {
   if (mIdSF_ == nullptr )
     std::cout  << "missing Muon Id SF" << std::endl;
   
-  
   mIsoSF_ = (ScaleFactor *) GetInputList()->FindObject("muonIsoSF");
   if (mIsoSF_ == nullptr ) 
-   std::cout  << "missing Muon Iso SF" << std::endl;
- //  Abort("Must pass muon Iso SF");
+    std::cout  << "missing Muon Iso SF" << std::endl;
+  
 
   // prefireEff_ = (TEfficiency*) GetInputList()->FindObject("prefireEfficiencyMap");
   // if (prefireEff_ == nullptr ) 
@@ -60,16 +67,13 @@ void ThreeLepSelector::Init(TTree *tree) {
   
   allChannels_ = {"mm", "ee", "em", "all", "lll"};
 
-  // if(selection_ == TightWithLooseVeto) {
   hists1D_ = {
     "CutFlow",      "ZMass",       "ptl1",     "etal1",    "ptl2",     "etal2",        "SR",
     "bjetpt",       "jetpt",       "nbjet",    "njet",     "nleps",    "CRW_nbjet",    "CRW_njet",
-    "CRZ_nbjet",    "CRZ_njet",    "Met",      "HT",       "weight"
+    "CRZ_nbjet",    "CRZ_njet",    "Met",      "HT",       "weight", 
   };
-  hists2D_ = {"bJetvsJets"};  
-  // } else if(selection_ == FourTopPlots) {
-  //  }
-  
+  hists2D_ = {"bJetvsJets",    "Beff_b_btag", "Beff_j_btag", "Beff_b", "Beff_j"};  
+    
   SelectorBase::Init(tree);
   
 }
@@ -116,14 +120,15 @@ void ThreeLepSelector::SetBranchesNanoAOD() {
   b.SetBranch("Muon_isPFcand",          Muon_isPFcand);
   b.SetBranch("Muon_tightCharge",       Muon_tightCharge);
   
-  b.SetBranch("nJet",            nJet);
-  b.SetBranch("Jet_btagCSVV2",   Jet_btagCSVV2);
-  b.SetBranch("Jet_btagDeepB",   Jet_btagDeepB);
-  b.SetBranch("Jet_eta",         Jet_eta);
-  b.SetBranch("Jet_phi",         Jet_phi);
-  b.SetBranch("Jet_pt",          Jet_pt);
-  b.SetBranch("Jet_mass",        Jet_mass);
-  b.SetBranch("Jet_jetId",       Jet_jetId);
+  b.SetBranch("nJet",               nJet);
+  b.SetBranch("Jet_btagCSVV2",      Jet_btagCSVV2);
+  b.SetBranch("Jet_btagDeepB",      Jet_btagDeepB);
+  b.SetBranch("Jet_eta",            Jet_eta);
+  b.SetBranch("Jet_phi",            Jet_phi);
+  b.SetBranch("Jet_pt",             Jet_pt);
+  b.SetBranch("Jet_mass",           Jet_mass);
+  b.SetBranch("Jet_jetId",          Jet_jetId);
+  b.SetBranch("Jet_hadronFlavour",  Jet_hadronFlavour);
   
   b.SetBranch("MET_pt",     MET);
   b.SetBranch("MET_phi",    type1_pfMETPhi);
@@ -131,8 +136,7 @@ void ThreeLepSelector::SetBranchesNanoAOD() {
   if (isMC_) {
     b.SetBranch("genWeight",    genWeight);
     b.SetBranch("Pileup_nPU",   numPU);
-  }
-  
+  } 
 }
 
 void ThreeLepSelector::SetBranchesUWVV() {
@@ -153,7 +157,7 @@ void ThreeLepSelector::clearValues() {
   goodLeptons.clear();
   looseMuons.clear();
   looseElectrons.clear();
-  goodBJets.clear();
+  goodJets.clear();
 }
 
 void ThreeLepSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) { 
@@ -208,9 +212,9 @@ void ThreeLepSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic,
   // if(goodLeptons.size() >= 2 && looseMuons.size() + looseElectrons.size() >= 3) {
   //   for(auto lep : goodLeptons) {
   //     if(lep.Id() == PID_MUON) 
-  // 	passZVeto = doesPassZVeto(lep, looseMuons);
+  //    passZVeto = doesPassZVeto(lep, looseMuons);
   //     else
-  // 	passZVeto = doesPassZVeto(lep, looseElectrons);
+  //    passZVeto = doesPassZVeto(lep, looseElectrons);
   //     if(!passZVeto) break;
   //   }
   // }
@@ -222,10 +226,10 @@ void ThreeLepSelector::setupMuons() {
       goodLeptons.push_back(GoodPart(SetupPtEtaPhiM(Muon, i)));
       goodLeptons.back().SetPdgId(PID_MUON * Muon_charge[i]);
       if(!passFullIso(goodLeptons.back().v, 0.76, 7.2)) {    // Extra Iso requirement
-	goodLeptons.pop_back(); 
+        goodLeptons.pop_back(); 
       } else {                                        // Add to Loose if pass tight
-	looseMuons.push_back(goodLeptons.back());
-	continue; 
+        looseMuons.push_back(goodLeptons.back());
+        continue; 
       } 
     }
     if(isLooseMuon(i)) {
@@ -241,10 +245,10 @@ void ThreeLepSelector::setupElectrons() {
       goodLeptons.push_back(GoodPart(SetupPtEtaPhiM(Electron, i)));
       goodLeptons.back().SetPdgId(PID_ELECTRON * Electron_charge[i]);
       if(!passFullIso(goodLeptons.back().v, 0.8, 7.2)) {   // Extra Iso requirement
-	goodLeptons.pop_back(); 
+        goodLeptons.pop_back(); 
       } else {
-	looseElectrons.push_back(goodLeptons.back());
-	continue; 
+        looseElectrons.push_back(goodLeptons.back());
+        continue; 
       }
     }
     if(isLooseElectron(i)) {
@@ -261,11 +265,16 @@ void ThreeLepSelector::setupJets() {
     if(isGoodJet(i)) {
       nJets++;
       HT += Jet_pt[i];
+      goodJets.push_back(GoodPart(SetupPtEtaPhiM(Jet, i)));
+      goodJets.back().SetPdgId(Jet_hadronFlavour[i]);
+      goodJets.back().isBTagged = false;
     }
     // bjet 
     if(isGoodBJet(i)) {
       nBJets++;
-      goodBJets.push_back(GoodPart(SetupPtEtaPhiM(Jet, i))); 
+      goodJets.push_back(GoodPart(SetupPtEtaPhiM(Jet, i)));
+      goodJets.back().SetPdgId(Jet_hadronFlavour[i]);
+      goodJets.back().isBTagged = true;
     }
   }
 }
@@ -297,8 +306,9 @@ bool ThreeLepSelector::doesPassZVeto(GoodPart& lep, std::vector<GoodPart>& loose
   return true;
 }
 
-
 void ThreeLepSelector::ApplyScaleFactors() {
+  if(selection_ == BEfficiency) return;
+  
   weight *= (genWeight > 0) ? 1.0 : -1.0;
   
   for(auto lep : goodLeptons) {
@@ -314,25 +324,39 @@ void ThreeLepSelector::ApplyScaleFactors() {
   if (pileupSF_ != nullptr) {
     weight *= pileupSF_->Evaluate1D(numPU);
   }
-  // for(auto jet : goodBJets) {
-  //   weight *= btag_reader.eval_auto_bounds("central",  BTagEntry::FLAV_B, 
-  // 					   jet.Eta(), jet.Pt());
-  // } 
   
-  return;
-  
+  for(auto jet : goodJets) {
+    BTagEntry::JetFlavor flav = (jet.Id() == PID_BJET) ? BTagEntry::FLAV_B : BTagEntry::FLAV_UDSG;
+    
+    double bSF = btag_reader.eval_auto_bounds("central",  flav, jet.Eta(), jet.Pt());
+    
+    if( jet.isBTagged ) {
+      weight *= bSF;
+    } else {
+      double eff;
+      if(jet.Id() == PID_BJET) {
+        int bin = Beff_b->FindBin(jet.Pt(), jet.Eta());
+        eff = Beff_b->GetBinContent(bin);
+      } else {
+        bin = Beff_j->FindBin(jet.Pt(), jet.Eta());
+        eff = Beff_j->GetBinContent(bin);
+      }
+      weight *= (1 - bSF * eff) / (1 - eff);
+    } 
+  } 
+  return; 
 }
 
 bool ThreeLepSelector::isGoodMuon(size_t index) {
   return ( (Muon_pt[index] > 20)                 &&
-	   (Muon_tightCharge[index] == 2)        &&
-	   (abs(Muon_eta[index]) < 2.4)          &&
-	   (Muon_mediumId[index])                &&
-	   (Muon_miniPFRelIso_all[index] < 0.16) &&
-	   (Muon_dz[index] < 0.1)                &&
-	   (Muon_dxy[index] < 0.05)              &&
-	   (Muon_sip3d[index] < 4) 
-	   );
+           (Muon_tightCharge[index] == 2)        &&
+           (abs(Muon_eta[index]) < 2.4)          &&
+           (Muon_mediumId[index])                &&
+           (Muon_miniPFRelIso_all[index] < 0.16) &&
+           (Muon_dz[index] < 0.1)                &&
+           (Muon_dxy[index] < 0.05)              &&
+           (Muon_sip3d[index] < 4) 
+           );
 }
 
 bool ThreeLepSelector::isGoodElectron(size_t index) {
@@ -346,11 +370,11 @@ bool ThreeLepSelector::isGoodElectron(size_t index) {
 
     if(year_ == yr2016 || year_ == yrdefault) {
       if(caseIndex == 0)
-	passId = Electron_MVA[index] > std::max(0.52, 0.77 - 0.025 * (Electron_pt[index] - 15));     
+        passId = Electron_MVA[index] > std::max(0.52, 0.77 - 0.025 * (Electron_pt[index] - 15));     
       else if(caseIndex == 1)
-	passId = Electron_MVA[index] > std::max(0.11, 0.56 - 0.045 * (Electron_pt[index] - 15));
+        passId = Electron_MVA[index] > std::max(0.11, 0.56 - 0.045 * (Electron_pt[index] - 15));
       else if(caseIndex == 2)
-	passId = Electron_MVA[index] > std::max(-0.01, 0.48 - 0.049 * (Electron_pt[index] - 15));
+        passId = Electron_MVA[index] > std::max(-0.01, 0.48 - 0.049 * (Electron_pt[index] - 15));
     }
     else if(year_ == yr2017) {
       // if(caseIndex == 0)        passId = std::max(0.52, 0.77 - 0.025 * (Electron_pt[index] - 15));
@@ -362,24 +386,24 @@ bool ThreeLepSelector::isGoodElectron(size_t index) {
   }
 
   return ((Electron_pt[index] > 20)                 &&
-	  (Electron_miniPFRelIso_all[index] < 0.12) &&
-	  (passId)                                  &&
-	  (Electron_convVeto[index])                &&
-	  (Electron_lostHits[index] == 0)           && 
-	  (Electron_dz[index] < 0.1)                &&
-	  (Electron_dxy[index] < 0.05)              &&
-	  (Electron_sip3d[index] < 4) 
-	  );
+          (Electron_miniPFRelIso_all[index] < 0.12) &&
+          (passId)                                  &&
+          (Electron_convVeto[index])                &&
+          (Electron_lostHits[index] == 0)           && 
+          (Electron_dz[index] < 0.1)                &&
+          (Electron_dxy[index] < 0.05)              &&
+          (Electron_sip3d[index] < 4) 
+          );
 }
 
 
 bool ThreeLepSelector::isLooseMuon(size_t index) {
   return ((Muon_isGlobal[index])               && 
-	  (Muon_isPFcand[index])               &&
-	  (Muon_miniPFRelIso_all[index] < 0.4) &&
-	  (Muon_dz[index] < 0.1)               &&
-	  (Muon_dxy[index] < 0.05) 
-	  );
+          (Muon_isPFcand[index])               &&
+          (Muon_miniPFRelIso_all[index] < 0.4) &&
+          (Muon_dz[index] < 0.1)               &&
+          (Muon_dxy[index] < 0.05) 
+          );
 }
 
 bool ThreeLepSelector::isLooseElectron(size_t index) {
@@ -398,7 +422,7 @@ bool ThreeLepSelector::isLooseElectron(size_t index) {
     else if(abs(Electron_eta[index]) < 1.479) caseIndex += 4;
     else if(abs(Electron_eta[index]) < 2.5)   caseIndex += 8;
     /// MVA numbers. May generalize.
-    if(caseIndex == 0)  	      passId = Electron_MVA[index] > -0.46;
+    if(caseIndex == 0)                passId = Electron_MVA[index] > -0.46;
     else if(caseIndex == 1)     passId = Electron_MVA[index] > -0.48;
     else if(caseIndex == 2)     passId = Electron_MVA[index] > -0.48 - 0.037*(Electron_pt[index]-15);
     else if(caseIndex == 3)     passId = Electron_MVA[index] > -0.85;
@@ -415,31 +439,31 @@ bool ThreeLepSelector::isLooseElectron(size_t index) {
     passId = (Electron_cutBased[index] >= CBID_LOOSE);
   }
   return ((passId) &&
-	  (Electron_convVeto[index]) &&
-	  (Electron_lostHits[index] <= 1) && 
-	  (Electron_miniPFRelIso_all[index] < 0.4) &&
-	  (Electron_dz[index] < 0.1) &&
-	  (Electron_dxy[index] < 0.05) 
-	  );
+          (Electron_convVeto[index]) &&
+          (Electron_lostHits[index] <= 1) && 
+          (Electron_miniPFRelIso_all[index] < 0.4) &&
+          (Electron_dz[index] < 0.1) &&
+          (Electron_dxy[index] < 0.05) 
+          );
 }
 
 bool ThreeLepSelector::isGoodJet(size_t index) {
   return ((Jet_pt[index] > 40.0)      &&
-	  (abs(Jet_eta[index]) < 2.4) &&
-	  (Jet_jetId[index] >= 1)      &&
-	  (doesNotOverlap(index))
-	  );
+          (abs(Jet_eta[index]) < 2.4) &&
+          (Jet_jetId[index] >= 1)      &&
+          (doesNotOverlap(index))
+          );
 }
 
 /// TODO: add toggle for different btag stuff
 bool ThreeLepSelector::isGoodBJet(size_t index) {
   return ((Jet_pt[index] > 25.0)          &&
-	  (abs(Jet_eta[index]) < 2.4)     &&
-	  (Jet_jetId[index] >= 1)          &&
-	  // (Jet_btagCSVV2[index] > 0.8484) &&  
-	  (Jet_btagDeepB[index] > 0.6324) &&
-	  (doesNotOverlap(index))
-	  );
+          (abs(Jet_eta[index]) < 2.4)     &&
+          (Jet_jetId[index] >= 1)          &&
+          // (Jet_btagCSVV2[index] > 0.8484) &&  
+          (Jet_btagDeepB[index] > 0.6324) &&
+          (doesNotOverlap(index))
+          );
 }
 
 bool ThreeLepSelector::passFullIso(LorentzVector& lep, int I2, int I3) {
@@ -493,8 +517,28 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
   Fill1D("CutFlow", ++step);
 
   // ht cut
-  if(HT < 300 ) return;
+  if(HT < 300) return;
   Fill1D("CutFlow", ++step);
+
+  if(selection_ == BEfficiency) {
+    for(auto jet : goodJets) {
+      if(jet.isBTagged) {
+        if(jet.Id() == PID_BJET) {
+          Fill2D("Beff_b_btag", jet.Pt(), jet.Eta());
+        } else {
+          Fill2D("Beff_j_btag", jet.Pt(), jet.Eta());
+        }
+      }
+      
+      if(jet.Id() == PID_BJET) {
+        Fill2D("Beff_b", jet.Pt(), jet.Eta());
+      } else {
+        Fill2D("Beff_j", jet.Pt(), jet.Eta());
+      } 
+    }
+    return;
+  } 
+  
   
   // jet cut
   if(nJets < 2) return;
@@ -567,7 +611,7 @@ int ThreeLepSelector::getSRBin() const {
       if(nJets >= 5)         return 6;
     }
   } else {
-    if(!passZVeto)                         return 9;  /// ZCR
+    if(!passZVeto)                     return 9;  /// ZCR
     else if(nBJets == 2 && nJets >= 5)   return 7;
     else if(nBJets >= 3 && nJets >= 4)    return 8;
   }

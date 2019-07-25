@@ -54,6 +54,7 @@ pileupSF.Set1DHist(pileupFile.Get('pileup'), pileupFileUp.Get('pileup'), pileupF
 fScales.cd()
 pileupSF.Write()
 
+
 electronTightIdSF = ROOT.ScaleFactor("electronTightIdSF", "Moriond '17 Electron Tight WP ID SF, x=Eta, y=Pt")
 eidFile = ROOT.TFile.Open('data/moriond17ElectronTightSF.root')
 electronTightIdSF.Set2DHist(float2double(eidFile.Get('EGamma_SF2D')))

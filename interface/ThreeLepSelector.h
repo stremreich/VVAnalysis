@@ -46,54 +46,55 @@ public :
   static const unsigned int N_KEEP_MU_E_ = 15;
   static const unsigned int N_KEEP_JET_ = 35;
 
-  UInt_t nElectron;
-  Float_t Electron_pt[N_KEEP_MU_E_];
-  Float_t Electron_eta[N_KEEP_MU_E_];
-  Float_t Electron_phi[N_KEEP_MU_E_];
-  Float_t Electron_mass[N_KEEP_MU_E_];
-  Int_t Electron_cutBased[N_KEEP_MU_E_];
-  Int_t Electron_charge[N_KEEP_MU_E_];
-  Float_t Electron_MVA[N_KEEP_MU_E_];
-  Float_t Electron_miniPFRelIso_all[N_KEEP_MU_E_];
-  Float_t Electron_dxy[N_KEEP_MU_E_];
-  Float_t Electron_dz[N_KEEP_MU_E_];
-  Float_t Electron_sip3d[N_KEEP_MU_E_];
-  Bool_t Electron_convVeto[N_KEEP_MU_E_];
-  UChar_t Electron_lostHits[N_KEEP_MU_E_];
+  UInt_t    nElectron;
+  Float_t   Electron_pt[N_KEEP_MU_E_];
+  Float_t   Electron_eta[N_KEEP_MU_E_];
+  Float_t   Electron_phi[N_KEEP_MU_E_];
+  Float_t   Electron_mass[N_KEEP_MU_E_];
+  Int_t     Electron_cutBased[N_KEEP_MU_E_];
+  Int_t     Electron_charge[N_KEEP_MU_E_];
+  Float_t   Electron_MVA[N_KEEP_MU_E_];
+  Float_t   Electron_miniPFRelIso_all[N_KEEP_MU_E_];
+  Float_t   Electron_dxy[N_KEEP_MU_E_];
+  Float_t   Electron_dz[N_KEEP_MU_E_];
+  Float_t   Electron_sip3d[N_KEEP_MU_E_];
+  Bool_t    Electron_convVeto[N_KEEP_MU_E_];
+  UChar_t   Electron_lostHits[N_KEEP_MU_E_];
   
-  UInt_t nMuon;
-  Float_t Muon_pt[N_KEEP_MU_E_];
-  Float_t Muon_eta[N_KEEP_MU_E_];
-  Float_t Muon_phi[N_KEEP_MU_E_];
-  Float_t Muon_mass[N_KEEP_MU_E_];
-  Int_t Muon_charge[N_KEEP_MU_E_];
-  Bool_t Muon_tightId[N_KEEP_MU_E_];
-  Bool_t Muon_mediumId[N_KEEP_MU_E_];
-  UChar_t Muon_tkIsoId[N_KEEP_MU_E_];
-  Float_t Muon_pfRelIso04_all[N_KEEP_MU_E_];
-  Float_t Muon_miniPFRelIso_all[N_KEEP_MU_E_];
-  Float_t Muon_dxy[N_KEEP_MU_E_];
-  Float_t Muon_dz[N_KEEP_MU_E_];
-  Float_t Muon_sip3d[N_KEEP_MU_E_];
-  Bool_t Muon_isGlobal[N_KEEP_MU_E_];
-  Bool_t Muon_isPFcand[N_KEEP_MU_E_];
-  Int_t Muon_tightCharge[N_KEEP_MU_E_];
+  UInt_t    nMuon;
+  Float_t   Muon_pt[N_KEEP_MU_E_];
+  Float_t   Muon_eta[N_KEEP_MU_E_];
+  Float_t   Muon_phi[N_KEEP_MU_E_];
+  Float_t   Muon_mass[N_KEEP_MU_E_];
+  Int_t     Muon_charge[N_KEEP_MU_E_];
+  Bool_t    Muon_tightId[N_KEEP_MU_E_];
+  Bool_t    Muon_mediumId[N_KEEP_MU_E_];
+  UChar_t   Muon_tkIsoId[N_KEEP_MU_E_];
+  Float_t   Muon_pfRelIso04_all[N_KEEP_MU_E_];
+  Float_t   Muon_miniPFRelIso_all[N_KEEP_MU_E_];
+  Float_t   Muon_dxy[N_KEEP_MU_E_];
+  Float_t   Muon_dz[N_KEEP_MU_E_];
+  Float_t   Muon_sip3d[N_KEEP_MU_E_];
+  Bool_t    Muon_isGlobal[N_KEEP_MU_E_];
+  Bool_t    Muon_isPFcand[N_KEEP_MU_E_];
+  Int_t     Muon_tightCharge[N_KEEP_MU_E_];
   
-  Int_t numPU;
+  Int_t     numPU;
 
-  UInt_t nJet;
-  Float_t Jet_btagCSVV2[N_KEEP_JET_];
-  Float_t Jet_btagDeepB[N_KEEP_JET_];
-  Float_t Jet_eta[N_KEEP_JET_];
-  Float_t Jet_phi[N_KEEP_JET_];
-  Float_t Jet_pt[N_KEEP_JET_];
-  Float_t Jet_mass[N_KEEP_JET_];
-  Float_t Jet_neHEF[N_KEEP_JET_];
-  Float_t Jet_neEmEF[N_KEEP_JET_];
-  Int_t Jet_nConstituents[N_KEEP_JET_];
-  Float_t Jet_chHEF[N_KEEP_JET_];  
-  Float_t Jet_chEmEF[N_KEEP_JET_];
-  Int_t   Jet_jetId[N_KEEP_JET_];
+  UInt_t    nJet;
+  Float_t   Jet_btagCSVV2[N_KEEP_JET_];
+  Float_t   Jet_btagDeepB[N_KEEP_JET_];
+  Float_t   Jet_eta[N_KEEP_JET_];
+  Float_t   Jet_phi[N_KEEP_JET_];
+  Float_t   Jet_pt[N_KEEP_JET_];
+  Float_t   Jet_mass[N_KEEP_JET_];
+  Float_t   Jet_neHEF[N_KEEP_JET_];
+  Float_t   Jet_neEmEF[N_KEEP_JET_];
+  Int_t     Jet_nConstituents[N_KEEP_JET_];
+  Float_t   Jet_chHEF[N_KEEP_JET_];  
+  Float_t   Jet_chEmEF[N_KEEP_JET_];
+  Int_t     Jet_jetId[N_KEEP_JET_];
+  Int_t     Jet_hadronFlavour[N_KEEP_JET_];
   
   ClassDefOverride(ThreeLepSelector,0);
 
@@ -109,13 +110,15 @@ public :
   std::vector<GoodPart> goodLeptons;
   std::vector<GoodPart> looseMuons;
   std::vector<GoodPart> looseElectrons;
-  std::vector<GoodPart> goodBJets;
+  std::vector<GoodPart> goodJets;
   double HT;
   int nJets, nBJets;
   bool passZVeto;
   BTagCalibration calib;
   BTagCalibrationReader btag_reader; // central sys type
-                                
+  TH2D* Beff_b;
+  TH2D* Beff_j;
+  
   /************************************************************/
   /* _____ __ __ __  __   ___ ______ __   ___   __  __  __    */
   /* ||    || || ||\ ||  //   | || | ||  // \\  ||\ || (( \   */

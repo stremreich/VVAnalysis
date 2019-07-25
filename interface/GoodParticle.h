@@ -6,23 +6,23 @@
 // accessing data if particle is muon vs electron
 
 struct GoodPart {
-  LorentzVector v;
-  int pdgId;
-  
-  GoodPart(double pt, double eta, double phi, double m ) : v(pt, eta, phi, m) {
-  
-  }
+    LorentzVector v;
+    int pdgId;
+    bool isBTagged;
+    
+    GoodPart(double pt, double eta, double phi, double m ) : v(pt, eta, phi, m) {}
 
-  void SetPdgId(int pdg) {
-    pdgId = pdg;
-  }
+    void SetPdgId(int pdg) {
+	pdgId = pdg;
+    }
+    
+    
+    double Pt() {return v.Pt();}
+    double Eta() {return v.Eta();}
+    double Phi() {return v.Phi();}
 
-  double Pt() {return v.Pt();}
-  double Eta() {return v.Eta();}
-  double Phi() {return v.Phi();}
-
-  int Charge() {return pdgId;}
-  int Id() {return std::abs(pdgId);}
+    int Charge() {return pdgId;}
+    int Id() {return std::abs(pdgId);}
 };
 
 #endif

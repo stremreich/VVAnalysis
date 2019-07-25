@@ -73,14 +73,17 @@ def makeHistFile(args):
         electronTightIdSF = fScales.Get('electronTightIdSF')
         electronGsfSF = fScales.Get('electronGsfSF')
         pileupSF = fScales.Get('pileupSF')
-
+        
         #fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_JetHT_Run2016B-H.root')
         #fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_SingleMuon_Run2016B-H.root')
-        #prefireEff = fPrefireEfficiency.Get('prefireEfficiencyMap')
+        # prefireEff = fPrefireEfficiency.Get('prefireEfficiencyMap')
 
+        bScales = ROOT.TFile('data/BEff.root')
+        bScales.SetName("BScales")
+        
 #        fr_inputs = [eCBTightFakeRate, mCBTightFakeRate,]
         fr_inputs = []
-        sf_inputs = [electronTightIdSF, electronGsfSF, muonIsoSF, muonIdSF, pileupSF]#, prefireEff]
+        sf_inputs = [electronTightIdSF, electronGsfSF, muonIsoSF, muonIdSF, pileupSF, bScales]
         sf_inputs.append(ROOT.TParameter(bool)("applyScaleFacs", True))
     else:
         sf_inputs = [ROOT.TParameter(bool)("applyScaleFacs", args['scaleFactor'])]    

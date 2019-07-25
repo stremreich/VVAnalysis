@@ -235,7 +235,8 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
         exit(1);
     }
     std::string histName = getHistName(name, "", channel);
-    
+
+
     int nbins = std::stoi(histData[1]);
     float xmin = std::stof(histData[2]);
     float xmax = std::stof(histData[3]);
@@ -247,7 +248,7 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
                 std::string syst_histName = getHistName(name, syst.second, channel);
                 histMap1D_[syst_histName] = {};
                 AddObject<TH1D>(histMap1D_[syst_histName], syst_histName.c_str(), 
-                    histData[0].c_str(),nbins, xmin, xmax);
+				histData[0].c_str(),nbins, xmin, xmax);
                 // TODO: Cleaner way to determine if you want to store systematics for weighted entries
                 //if (isaQGC_ && doaQGC_ && (weighthists_.find(name) != weighthists_.end())) { 
                 //    std::string weightsyst_histName = name+"_lheWeights_"+syst.second;
@@ -260,8 +261,8 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
         // Weight hists must be subset of 1D hists!
         if (isMC_ && (weighthists_.find(histName) != weighthists_.end())) { 
             AddObject<TH2D>(weighthists_[histName], 
-                (name+"_lheWeights_"+channel).c_str(), histData[0].c_str(),
-                nbins, xmin, xmax, 1000, 0, 1000);
+			    (name+"_lheWeights_"+channel).c_str(), histData[0].c_str(),
+			    nbins, xmin, xmax, 1000, 0, 1000);
         }
     }
     else {
