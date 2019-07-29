@@ -86,7 +86,7 @@ void ZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
         float ht = 0;
         for (auto& jet : jets)
             ht += jet.pt();
-        SafeHistFill(histMap1D_, getHistName("HT", variation.second), genMet.pt(), weight);
+        SafeHistFill(histMap1D_, getHistName("HT", variation.second), ht, weight);
     }
     for (size_t i = 1; i <= 3; i++) {
         if (jets.size() >= i ) {
