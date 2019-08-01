@@ -44,7 +44,6 @@ def readPythonOrJson(file_path):
     elif not os.path.isfile(file_path):
         raise ValueError("Configuration file %s not found!" % file_path)
     return file_path
-
 def readAllInfo(file_path):
     info = {}
     for info_file in glob.glob(file_path):
@@ -92,15 +91,16 @@ def getHistInfo(analysis, input_hists, noConfig=False):
     ConfigHistTools = imp.load_source("ConfigHistTools", 
         "/".join([manager_path, "AnalysisDatasetManager/Utilities/python/ConfigHistTools.py"]))
     # For histograms produced with some postprocessing on the hist file
+    # changed from config_hists = Conf.... to config_hist
     excludedHistPatterns = ["wCR", "unrolled", "YieldByChannel"]
-    config_hists = ConfigHistTools.getAllHistNames(manager_path, analysis) \
+    config_hist = ConfigHistTools.getAllHistNames(manager_path, analysis) \
         if "all" in input_hists else input_hists
 
-    hists = filter(lambda x : all(y not in x for y in excludedHistPatterns), config_hists)
+    hists = filter(lambda x : all(y not in x for y in excludedHistPatterns), config_hist)
     hist_inputs = [getHistExpr(hists, analysis)]
 
     return hists, hist_inputs
-
+ 
 def getHistExpr(hist_names, selection):
     manager_path = ConfigureJobs.getManagerPath()
     ConfigHistTools = imp.load_source("ConfigHistTools", 

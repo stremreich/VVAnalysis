@@ -101,6 +101,7 @@ class TTTSelector : public SelectorBase {
   Float_t weight;
   BranchManager b;
   std::vector<GoodPart> goodParts;
+  std::vector<int> charge;
   double HT;
   int nTightJet, nBJets;
 
