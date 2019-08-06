@@ -11,7 +11,9 @@ import logging
 
 class SelectorDriver(object):
     def __init__(self, analysis, selection, input_tier, year):
-        logging.basicConfig(level=logging.DEBUG)
+        # TODO: Make this a configurable argument
+        #logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.WARNING)
 
         selector_map = {
             "WZxsec2016" : "WZSelector",
@@ -21,6 +23,7 @@ class SelectorDriver(object):
             "ZZGen" : "ZZGenSelector",
             "WGen" : "WGenSelector",
             "ZGen" : "ZGenSelector",
+            "ThreeLep" : "ThreeLepSelector",
         }
 
         self.analysis = analysis
@@ -114,13 +117,16 @@ class SelectorDriver(object):
     def setDatasets(self, datalist):
         datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier)
         for dataset in datasets:
-            try:
-                file_path = [ConfigureJobs.getInputFilesPath(dataset, 
-                    self.input_tier, self.analysis)]
-            except ValueError as e:
-                print e
-                continue
-            self.datasets[dataset] = file_path
+            if "@" in dataset:
+                dataset, file_path = [f.strip() for f in dataset.split("@")]
+            else:
+                try:
+                    file_path = ConfigureJobs.getInputFilesPath(dataset, 
+                        self.input_tier, self.analysis)
+                except ValueError as e:
+                    logging.warning(e)
+                    continue
+            self.datasets[dataset] = [file_path]
 
     def applySelector(self):
         for chan in self.channels:
@@ -198,7 +204,7 @@ class SelectorDriver(object):
     def getTreeName(self, chan):
         # TODO: Fix this! This is an extremely ineffient way to separate the eemm and mmee
         # since it involves reading the file an extra time
-        channel = chan if chan != "mmee" else "eemm"
+        channel = chan if "mmee" not in chan else chan.replace("mmee", "eemm")
         return "Events" if self.ntupleType == "NanoAOD" else ("%s/ntuple" % channel)
 
     def combineParallelFiles(self, tempfiles, chan):

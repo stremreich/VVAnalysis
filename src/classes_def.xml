@@ -12,4 +12,5 @@
   <class name="ScaleFactor"/>
   <class name="disambiguateFinalStates"/>
   <class name="disambiguateFinalStatesZZ"/>
+  <class name="ThreeLepSelector"/>
 </lcgdict>

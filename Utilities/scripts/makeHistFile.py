@@ -6,6 +6,7 @@ from python import OutputTools
 from python import ConfigureJobs
 from python import HistTools
 import os
+import logging
 import sys
 
 def getComLineArgs():
@@ -115,7 +116,7 @@ def makeHistFile(args):
 
     selector.setNtupeType("UWVV" if args['uwvv'] else "NanoAOD")
     if args['uwvv']:
-        print "Channels", args['channels']
+        logging.debug("Processing channels " % args['channels'])
         selector.setChannels(args['channels'])
     selector.setNumCores(args['numCores'])
 
