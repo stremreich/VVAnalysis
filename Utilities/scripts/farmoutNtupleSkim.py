@@ -20,6 +20,9 @@ def getComLineArgs():
                         help="Extra arguments to pass to skimNtuples script")
     parser.add_argument("--noSubmit", action='store_true',
                         help="Create submit scripts but don't call farmout")
+    parser.add_argument("-v", "--version", type=str,
+                        required=False, default="1",
+                        help="Version number, appended to name")
     return vars(parser.parse_args())
 
 def getFilesPerJob(path_to_files):
