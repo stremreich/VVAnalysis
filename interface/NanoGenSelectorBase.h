@@ -54,6 +54,7 @@ public :
     Float_t GenJet_mass[N_KEEP_GEN_];
     Float_t GenMET_pt;
     Float_t GenMET_phi;
+    float ht;
     
     BranchManager b;
     
