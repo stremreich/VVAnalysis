@@ -246,6 +246,10 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
     composite = ROOT.TList()
     composite.SetName(name)
     for directory in [str(i) for i in members.keys()]:
+        #TODO: Remove this, it's very WZ specific
+        dirname = directory
+        directory = directory.replace("_", "-")
+        directory = directory.replace("--", "__")
         # For aQGC, the different plot groups should already be in their own files
         if "aqgc" in directory:
             directory = name
@@ -272,7 +276,7 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
             if hist:
                 sumhist = composite.FindObject(hist.GetName())
                 if sumweights:
-                    hist.Scale(members[directory.split("__")[0]]*1000*lumi/sumweights)
+                    hist.Scale(members[dirname.split("__")[0]]*1000*lumi/sumweights)
                 addOverflowAndUnderflow(hist, underflow, overflow)
             else:
                 raise RuntimeError("hist %s was not produced for "

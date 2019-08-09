@@ -2,6 +2,8 @@ import ROOT
 
 def writeOutputListItem(item, directory):
     if item.ClassName() == "TList":
+        print item
+        print directory
         d = directory.Get(item.GetName())
         if not d:
             d = directory.mkdir(item.GetName())
