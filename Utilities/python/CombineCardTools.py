@@ -1,10 +1,9 @@
 import logging
+from Utilities.python import ConfigureJobs
 import HistTools
 import OutputTools
-import ConfigureJobs
 from prettytable import PrettyTable
 import ROOT
-import sys
 
 class CombineCardTools(object):
     def __init__(self):
@@ -12,15 +11,28 @@ class CombineCardTools(object):
         self.processes = []
         self.yields = {}
         self.histData = {}
-        self.managerPath = ""
+        self.crossSectionMap = {}
         self.outputFile = ""
+        self.templateName = ""
         self.channels = []
         self.variations = {}
         self.rebin = None
         self.isMC = True
         self.isUnrolledFit = False
         self.lumi = 1
+        self.year = ""
+        self.outputFolder = "."
 
+    def setPlotGroups(self, xsecMap):
+        self.crossSectionMap = xsecMap
+
+    def setCrosSectionMap(self, xsecMap):
+        self.crossSectionMap = xsecMap
+
+    def setYear(self, year):
+        self.year = year
+
+    # Map of plot groups and members (individual processes)
     def setProcesses(self, processes):
         self.processes = processes
 
@@ -66,6 +78,9 @@ class CombineCardTools(object):
                 return ROOT.TFile.Open(rtfile)
         return rtfile
 
+    def setTemplateFileName(self, templateName):
+        self.templateName = templateName
+
     def setOutputFile(self, outputFile):
         self.outputFile = self.getRootFile(outputFile, "RECREATE")
 
@@ -108,31 +123,19 @@ class CombineCardTools(object):
             plots += [self.weightHistName(c) for c in self.channels]
         return plots
 
-    # processName needs to match a PlotGroup defined in AnalysisDatasetManager
+    # processName needs to match a PlotGroup 
     def loadHistsForProcess(self, processName, addTheory, scaleNorm=1):
         plotsToRead = self.listOfPlotsByProcess(processName, addTheory)
 
-        manager_path = ConfigureJobs.getManagerPath() 
-        sys.path.append("/".join([manager_path, "AnalysisDatasetManager",
-            "Utilities/python"]))
-
-        from ConfigHistFactory import ConfigHistFactory
-        config_factory = ConfigHistFactory(
-            "%s/AnalysisDatasetManager" % manager_path,
-            "WZxsec2016/VBSselection",
-        )
-
         group = HistTools.makeCompositeHists(self.inputFile, processName, 
-                    ConfigureJobs.getListOfFilesWithXSec(
-                        config_factory.getPlotGroupMembers(processName), manager_path), 
-                self.lumi, plotsToRead, rebin=self.rebin)
+                    {proc : self.crossSectionMap[proc] for proc in self.processes[processName]}, 
+                    self.lumi, plotsToRead, rebin=self.rebin)
 
         #TODO:Make optional
         for chan in self.channels:
             histName = "_".join([self.fitVariable, chan]) if chan != "all" else self.fitVariable
             hist = group.FindObject(histName)
-            print "Bonjour", histName, hist
-            self.yields[chan] = round(hist.Integral(), 4) if hist.Integral() > 0 else 0.0001
+            self.yields[chan] = {processName : round(hist.Integral(), 4) if hist.Integral() > 0 else 0.0001}
             if addTheory:
                 weightHist = group.FindObject(self.weightHistName(chan))
                 if not weightHist:
@@ -153,8 +156,17 @@ class CombineCardTools(object):
         if processName not in self.histData.keys() or not self.histData[processName]:
             raise ValueError("Hists for process %s not found" % processName)
         processHists = self.histData[processName]
-        print "processHists are", processHists
         OutputTools.writeOutputListItem(processHists, self.outputFile)
         processHists.Delete()
         
-    #def writeCards()
+    def writeCards(self, chan, nuisances, extraArgs=None):
+        chan_dict = self.yields[chan].copy()
+        chan_dict.update(extraArgs)
+        chan_dict["nuisances"] = nuisances
+        chan_dict["fit_variable"] = self.fitVariable
+        chan_dict["output_file"] = self.outputFile
+        ConfigureJobs.fillTemplatedFile(self.templateName.format(channel=chan, year=self.year),
+            "/".join([self.outputFolder, self.templateName.replace("template", "")]),
+            chan_dict
+        )
+
