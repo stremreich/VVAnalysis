@@ -177,7 +177,7 @@ def getListOfFiles(filelist, selection, manager_path="", analysis=""):
         else:
             if name.split("__")[0] not in valid_names:
                 print "%s is not a valid name" % name
-                print "Valid names are", valid_names
+                print "Valid names must be defined in AnalysisDatasetManager/FileInfo/(data/montecarlo)*"
                 continue
             names += [name]
     return [str(i) for i in names]
@@ -206,7 +206,7 @@ def getListOfFilesWithXSec(filelist, manager_path=""):
     mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
     info = {}
     for file_name in files:
-        if "data" in file_name:
+        if "data" in file_name.lower():
             info.update({file_name : 1})
         else:
             file_info = mc_info[file_name.split("__")[0]]

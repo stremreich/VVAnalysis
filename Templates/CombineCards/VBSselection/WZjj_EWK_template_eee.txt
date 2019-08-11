@@ -3,10 +3,10 @@ jmax 5  number of backgrounds
 kmax ${nuisances} number of nuisance parameters (sources of systematical uncertainties)
 ------------
 
-shapes EW-WZjj   * ${output_file} ${signal_name}/${fit_variable}_$$CHANNEL  ${signal_name}/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
-shapes QCD-WZjj  * ${output_file} QCD-WZjj/${fit_variable}_$$CHANNEL        QCD-WZjj/${fit_variable}_$$SYSTEMATIC_$$CHANNEL 
+shapes EW_WZjj   * ${output_file} EW_WZjj/${fit_variable}_$$CHANNEL         EW_WZjj/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes QCD_WZjj  * ${output_file} QCD_WZjj/${fit_variable}_$$CHANNEL        QCD_WZjj/${fit_variable}_$$SYSTEMATIC_$$CHANNEL 
 shapes vv        * ${output_file} vv/${fit_variable}_$$CHANNEL              vv/${fit_variable}_$$SYSTEMATIC_$$CHANNEL 
-shapes top-ewk   * ${output_file} top-ewk/${fit_variable}_$$CHANNEL         top-ewk/${fit_variable}_$$SYSTEMATIC_$$CHANNEL 
+shapes top_ewk   * ${output_file} top_ewk/${fit_variable}_$$CHANNEL         top_ewk/${fit_variable}_$$SYSTEMATIC_$$CHANNEL 
 shapes zg        * ${output_file} zg/${fit_variable}_$$CHANNEL              zg/${fit_variable}_$$SYSTEMATIC_$$CHANNEL 
 
 shapes nonprompt * ${output_file} DataEWKCorrected/${fit_variable}_Fakes_$$CHANNEL DataEWKCorrected/${fit_variable}_Fakes_$$SYSTEMATIC_$$CHANNEL
@@ -21,12 +21,12 @@ observation  -1.0
 # then we list the independent sources of uncertainties, and give their effect (syst. error)
 # on each process and bin
 bin                             eee             eee             eee         eee             eee         eee         
-process                         EW-WZjj         QCD-WZjj        vv          top-ewk         zg          nonprompt   
+process                         EW_WZjj         QCD_WZjj        vv          top_ewk         zg          nonprompt   
 process                         0               1               2           3               4           5           
-rate                            ${signal_yield} ${QCD_WZjj}     ${vv}       ${top_ewk}      ${zg}       ${nonprompt} 
+rate                            ${EW_WZjj}      ${QCD_WZjj}     ${vv}       ${top_ewk}      ${zg}       ${nonprompt} 
 ------------                                                                                                                                                                                                                 
 lumi2016_13TeV          lnN     1.025           1.025           1.025       1.025           1.025       -          
-CMS_norm_QCD-WZjj       lnN     -               1.10            -           -               -           -          
+CMS_norm_QCD_WZjj       lnN     -               1.10            -           -               -           -          
 CMS_norm_nonprompt_eee  lnN     -               -               -           -               -           1.4
 CMS_norm_nonprompt_eem  lnN     -               -               -           -               -           -
 CMS_norm_nonprompt_emm  lnN     -               -               -           -               -           -
@@ -37,15 +37,15 @@ CMS_scale_m             shape   1               1               1           1   
 CMS_scale_unclEnergy    shape   1               1               1           1               1           0
 CMS_eff_e               shape   1               1               1           1               0           0
 CMS_eff_m               shape   1               1               1           1               0           0
-QCDscale_${signal_name}       shape   1               -               -           -               -           -
-QCDscale_QCD-WZjj       shape   -               1               -           -               -           -
+QCDscale_EW_WZjj        shape   1               -               -           -               -           -
+QCDscale_QCD_WZjj       shape   -               1               -           -               -           -
 QCDscale_vv             shape   -               -               1           -               -           -
-QCDscale_top-ewk        shape   -               -               -           1               -           -
+QCDscale_top_ewk        shape   -               -               -           1               -           -
 QCDscale_zg             lnN     -               -               1           -               1.1         -
-pdf_${signal_name}            shape   1               -               -           -               -           -
-pdf_QCD-WZjj            shape   -               1               -           -               -           -
+pdf_EW_WZjj             shape   1               -               -           -               -           -
+pdf_QCD_WZjj            shape   -               1               -           -               -           -
 pdf_vv                  shape   -               -               1           -               -           -
-pdf_top-ewk             shape   -               -               -           1               -           -
+pdf_top_ewk             shape   -               -               -           1               -           -
 pdf_zg                  lnN     -               -               -           -               1.05           -
 CMS_scale_j             shape   1               1               1           1               0           1
 CMS_res_j               shape   1               1               1           1               0           1

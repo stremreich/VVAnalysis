@@ -20,7 +20,6 @@ class CombineCardTools(object):
         self.isMC = True
         self.isUnrolledFit = False
         self.lumi = 1
-        self.year = ""
         self.outputFolder = "."
 
     def setPlotGroups(self, xsecMap):
@@ -29,9 +28,6 @@ class CombineCardTools(object):
     def setCrosSectionMap(self, xsecMap):
         self.crossSectionMap = xsecMap
 
-    def setYear(self, year):
-        self.year = year
-
     # Map of plot groups and members (individual processes)
     def setProcesses(self, processes):
         self.processes = processes
@@ -39,10 +35,10 @@ class CombineCardTools(object):
     def setFitVariable(self, variable):
         self.fitVariable = variable
 
-    def setVariations(self, variations):
+    def setVariations(self, variations, exclude=[]):
         if not self.processes:
             raise ValueError("No processes defined, can't set variations")
-        for process in self.processes:
+        for process in filter(lambda x: x not in exclude, self.processes.keys()):
             self.setVariationsByProcess(process, variations)
 
     def getVariations(self):
@@ -89,6 +85,8 @@ class CombineCardTools(object):
 
     def setChannels(self, channels):
         self.channels = channels
+        for chan in self.channels:
+            self.yields[chan] = {}
 
     def processHists(self, processName):
         return self.histData[processName] 
@@ -113,7 +111,7 @@ class CombineCardTools(object):
                 chan_hist = group.FindObject(name + "_" + chan)
             hist.Add(chan_hist)
 
-    def listOfPlotsByProcess(self, processName, addTheory):
+    def listOfHistsByProcess(self, processName, addTheory):
         if self.fitVariable == "":
             raise ValueError("Must define variable name before defining plots")
         plots = ["_".join([self.fitVariable, chan]) for chan in self.channels]
@@ -125,7 +123,7 @@ class CombineCardTools(object):
 
     # processName needs to match a PlotGroup 
     def loadHistsForProcess(self, processName, addTheory, scaleNorm=1):
-        plotsToRead = self.listOfPlotsByProcess(processName, addTheory)
+        plotsToRead = self.listOfHistsByProcess(processName, addTheory)
 
         group = HistTools.makeCompositeHists(self.inputFile, processName, 
                     {proc : self.crossSectionMap[proc] for proc in self.processes[processName]}, 
@@ -135,7 +133,7 @@ class CombineCardTools(object):
         for chan in self.channels:
             histName = "_".join([self.fitVariable, chan]) if chan != "all" else self.fitVariable
             hist = group.FindObject(histName)
-            self.yields[chan] = {processName : round(hist.Integral(), 4) if hist.Integral() > 0 else 0.0001}
+            self.yields[chan].update({processName : round(hist.Integral(), 4) if hist.Integral() > 0 else 0.0001})
             if addTheory:
                 weightHist = group.FindObject(self.weightHistName(chan))
                 if not weightHist:
@@ -159,14 +157,17 @@ class CombineCardTools(object):
         OutputTools.writeOutputListItem(processHists, self.outputFile)
         processHists.Delete()
         
-    def writeCards(self, chan, nuisances, extraArgs=None):
+    def writeCards(self, chan, nuisances, year="", extraArgs={}):
         chan_dict = self.yields[chan].copy()
         chan_dict.update(extraArgs)
         chan_dict["nuisances"] = nuisances
         chan_dict["fit_variable"] = self.fitVariable
-        chan_dict["output_file"] = self.outputFile
-        ConfigureJobs.fillTemplatedFile(self.templateName.format(channel=chan, year=self.year),
-            "/".join([self.outputFolder, self.templateName.replace("template", "")]),
+        chan_dict["output_file"] = self.outputFile.GetName()
+        print "Filling with chan dict", chan_dict
+        outputCard = self.templateName.split("/")[-1].format(channel=chan, year=year) 
+        outputCard = outputCard.replace("__", "_")
+        ConfigureJobs.fillTemplatedFile(self.templateName.format(channel=chan, year=year),
+            "/".join([self.outputFolder, outputCard]),
             chan_dict
         )
 

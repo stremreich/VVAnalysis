@@ -15,7 +15,8 @@ config_factory = ConfigHistFactory(
     "%s/AnalysisDatasetManager" % manager_path,
     "WZxsec2016/VBSselection",
 )
-plot_groups = ["wz_powheg", "dy_lo", "vv_powheg"]
+
+plot_groups = ["EW_WZjj", "QCD_WZjj", "vv", "top_ewk", "zg", "nonprompt"]
 plotGroupsMap = {name : config_factory.getPlotGroupMembers(name) for name in plot_groups}
 
 xsecs  = ConfigureJobs.getListOfFilesWithXSec([f for files in plotGroupsMap.values() for f in files])
@@ -28,12 +29,14 @@ cardtool.setInputFile("/eos/home-k/kelong/WZAnalysisData/HistFiles/VBSselection_
 cardtool.setOutputFile("test.root")
 cardtool.setProcesses(plotGroupsMap)
 cardtool.setCrosSectionMap(xsecs)
-cardtool.setVariations(["CMS_scale_j", "CMS_res_j", "CMS_eff_m", "CMS_scale_m", "CMS_eff_e", "CMS_scale_e", "CMS_pileup"])
-print "All variations", cardtool.getVariations()
-print "For WZ", cardtool.listOfPlotsByProcess("wz_powheg", True)
-cardtool.loadHistsForProcess("wz_powheg", True, 1)
-cardtool.writeProcessHistsToOutput("wz_powheg")
+cardtool.setVariations(["CMS_scale_j", "CMS_res_j", "CMS_eff_m", "CMS_scale_m", "CMS_eff_e", "CMS_scale_e", "CMS_pileup"],
+                        exclude=["nonprompt"])
+cardtool.setVariationsByProcess("nonprompt", ["CMS_scale_j", "CMS_res_j",])
+for process in plot_groups:
+    addTheory = process not in ["nonprompt", "zg"]
+    print "Plots from process %s are %s" % (process, cardtool.listOfHistsByProcess(process, addTheory))
+    cardtool.loadHistsForProcess(process, addTheory)
+    cardtool.writeProcessHistsToOutput(process)
 
-cardtool.setTemplateFileName("Templates/CombineCards/VBSselection/WZjj_aQGC_template_eee.txt")
-cardtool.writeCards("eee", 10,
-    extraArgs={ "signal_name" : "test", "signal_yield" : 10})
+cardtool.setTemplateFileName("Templates/CombineCards/VBSselection/WZjj_EWK_template_{channel}.txt")
+cardtool.writeCards("eee", 10, year="2016")
