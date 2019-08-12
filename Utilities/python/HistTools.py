@@ -230,6 +230,9 @@ def addControlRegionToFitHist(control_hist, input_hist, base_name="unrolled"):
     ROOT.SetOwnership(hist, False)
     return hist
 
+def addOverflow(hist):
+    addOverflowAndUnderflow(hist, underflow=False, overflow=True)
+
 def addOverflowAndUnderflow(hist, underflow=True, overflow=True):
     if not "TH1" in hist.ClassName():
         return

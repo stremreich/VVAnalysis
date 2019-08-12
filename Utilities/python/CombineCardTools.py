@@ -1,5 +1,5 @@
 import logging
-from Utilities.python import ConfigureJobs
+import ConfigureJobs
 import HistTools
 import OutputTools
 from prettytable import PrettyTable
@@ -8,6 +8,7 @@ import ROOT
 class CombineCardTools(object):
     def __init__(self):
         self.fitVariable = ""
+        self.fitVariableAppend = {}
         self.processes = []
         self.yields = {}
         self.histData = {}
@@ -32,13 +33,19 @@ class CombineCardTools(object):
     def setProcesses(self, processes):
         self.processes = processes
 
+    def setFitVariableAppend(self, process, append):
+        self.fitVariableAppend[process] = append
+
     def setFitVariable(self, variable):
         self.fitVariable = variable
 
     def setVariations(self, variations, exclude=[]):
         if not self.processes:
             raise ValueError("No processes defined, can't set variations")
-        for process in filter(lambda x: x not in exclude, self.processes.keys()):
+        for process in self.processes.keys():
+            if process in exclude:
+                self.setVariationsByProcess(process, [])
+                continue
             self.setVariationsByProcess(process, variations)
 
     def getVariations(self):
@@ -50,14 +57,13 @@ class CombineCardTools(object):
         return self.variations[process]
 
     def setVariationsByProcess(self, process, variations):
-        if process not in self.processes:
-            self.processes.append(process)
         if "Up" not in variations and "Down" not in variations:
             variations = [x+y for x in variations for y in ["Up", "Down"]]
         self.variations[process] = variations
 
-    def weightHistName(self, channel):
-        variable = self.fitVarible.replace("unrolled", "2D") if self.isUnrolledFit else self.fitVariable
+    def weightHistName(self, channel, process):
+        fitVariable = self.getFitVariable(process)
+        variable = fitVariable.replace("unrolled", "2D") if self.isUnrolledFit else fitVariable
         return "_".join([variable, "lheWeights", channel])
 
     def setLumi(self, lumi):
@@ -78,27 +84,32 @@ class CombineCardTools(object):
         self.templateName = templateName
 
     def setOutputFile(self, outputFile):
-        self.outputFile = self.getRootFile(outputFile, "RECREATE")
+        self.outputFile = self.getRootFile("/".join([self.outputFolder, outputFile]), "RECREATE")
 
     def setInputFile(self, inputFile):
         self.inputFile = self.getRootFile(inputFile)
 
     def setChannels(self, channels):
         self.channels = channels
-        for chan in self.channels:
+        for chan in self.channels + ["all"]:
             self.yields[chan] = {}
 
     def processHists(self, processName):
         return self.histData[processName] 
 
+    def getFitVariable(self, process):
+        if process not in self.fitVariableAppend:
+            return self.fitVariable 
+        return "_".join([self.fitVariable, self.fitVariableAppend[process]])
+
     def combineChannels(self, group, central=True):
         variations = self.variations[group.GetName()][:]
+        fitVariable = self.getFitVariable(group.GetName())
         if central:
             variations.append("")
         for var in variations:
-            varname =self.fitVariable.replace("_", "-")
-            varname = varname.replace("--", "__")
-            name = varname if var is "" else "_".join([self.fitVariable, var])
+            # TODO: Remove these two replace statements, it's WZ/ZZ specific
+            name = fitVariable if var is "" else "_".join([fitVariable, var])
             hist_name = name + "_" + self.channels[0]
             hist = group.FindObject(hist_name)
             if not hist:
@@ -109,16 +120,17 @@ class CombineCardTools(object):
             group.Add(hist) 
             for chan in self.channels[1:]:
                 chan_hist = group.FindObject(name + "_" + chan)
-            hist.Add(chan_hist)
+                hist.Add(chan_hist)
 
     def listOfHistsByProcess(self, processName, addTheory):
         if self.fitVariable == "":
-            raise ValueError("Must define variable name before defining plots")
-        plots = ["_".join([self.fitVariable, chan]) for chan in self.channels]
+            raise ValueError("Must declare fit variable before defining plots")
+        fitVariable = self.getFitVariable(processName)
+        plots = ["_".join([fitVariable, chan]) for chan in self.channels]
         variations = self.getVariationsForProcess(processName)
-        plots += ["_".join([self.fitVariable, var, c]) for var in variations for c in self.channels]
+        plots += ["_".join([fitVariable, var, c]) for var in variations for c in self.channels]
         if addTheory:
-            plots += [self.weightHistName(c) for c in self.channels]
+            plots += [self.weightHistName(c, processName) for c in self.channels]
         return plots
 
     # processName needs to match a PlotGroup 
@@ -129,23 +141,32 @@ class CombineCardTools(object):
                     {proc : self.crossSectionMap[proc] for proc in self.processes[processName]}, 
                     self.lumi, plotsToRead, rebin=self.rebin)
 
+        fitVariable = self.getFitVariable(processName)
         #TODO:Make optional
         for chan in self.channels:
-            histName = "_".join([self.fitVariable, chan]) if chan != "all" else self.fitVariable
+            histName = "_".join([fitVariable, chan]) if chan != "all" else fitVariable
             hist = group.FindObject(histName)
+            #TODO: Make optional
+            HistTools.removeZeros(hist)
             self.yields[chan].update({processName : round(hist.Integral(), 4) if hist.Integral() > 0 else 0.0001})
+
+            if chan == self.channels[0]:
+                self.yields["all"][processName] = self.yields[chan][processName]
+            else:
+                self.yields["all"][processName] += self.yields[chan][processName]
+
             if addTheory:
-                weightHist = group.FindObject(self.weightHistName(chan))
+                weightHist = group.FindObject(self.weightHistName(chan, processName))
                 if not weightHist:
-                    logging.warning("Failed to find %s. Skipping" % self.weightHistName(chan))
+                    logging.warning("Failed to find %s. Skipping" % self.weightHistName(chan, processName))
                     continue
                 scaleHists = HistTools.getScaleHists(weightHist, processName, self.rebin)
                 group.extend(scaleHists)
-            #TODO: Make optional
-            #for hist in group:
-            #    HistTools.addOverflowAndUnderflow(hist,underflow=False)
+        #TODO: You may want to combine channels before removing zeros
         self.combineChannels(group)
+        #TODO: Make optional
         map(HistTools.removeZeros, group)
+        map(HistTools.addOverflow, group)
         self.histData[processName] = group
 
     # It's best to call this function for process, otherwise you can end up
@@ -163,8 +184,8 @@ class CombineCardTools(object):
         chan_dict["nuisances"] = nuisances
         chan_dict["fit_variable"] = self.fitVariable
         chan_dict["output_file"] = self.outputFile.GetName()
-        print "Filling with chan dict", chan_dict
         outputCard = self.templateName.split("/")[-1].format(channel=chan, year=year) 
+        outputCard = outputCard.replace("template", "")
         outputCard = outputCard.replace("__", "_")
         ConfigureJobs.fillTemplatedFile(self.templateName.format(channel=chan, year=year),
             "/".join([self.outputFolder, outputCard]),

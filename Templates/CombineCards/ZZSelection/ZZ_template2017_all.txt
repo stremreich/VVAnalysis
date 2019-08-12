@@ -21,7 +21,7 @@ observation  ${AllData}
 # then we list the independent sources of uncertainties, and give their effect (syst. error)
 # on each process and bin
 bin                                all              all                 all        all       all         
-process                         HZZ-signal        qqZZ-powheg           ggZZ       VVV       nonprompt  
+process                         HZZ_signal        qqZZ_powheg           ggZZ       VVV       nonprompt  
 process                             -2                -1                  0         1          2
 rate                           ${HZZ_signal}       ${zz4l_powheg}       ${ggZZ}    ${VVV}   ${nonprompt}
 --------------------------------------------------------------------------------------------------------                                                                                                                                                                                                                    

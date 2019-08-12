@@ -3,16 +3,16 @@ jmax 4  number of backgrounds plus signals minus 1
 kmax ${nuisances} number of nuisance parameters (sources of systematical uncertainties)
 ------------
 
-shapes HZZ-signal * ${output_file} HZZ-signal/${fit_variable}_$$CHANNEL       HZZ-signal/${fit_variable}_$$SYSTEMATIC_$$CHANNEL 
-shapes qqZZ-powheg * ${output_file} qqZZ-powheg/${fit_variable}_$$CHANNEL     qqZZ-powheg/${fit_variable}_$$SYSTEMATIC_$$CHANNEL 
-shapes ggZZ * ${output_file} ggZZ/${fit_variable}_$$CHANNEL                   ggZZ/${fit_variable}_$$SYSTEMATIC_$$CHANNEL 
-shapes VVV  * ${output_file} VVV/${fit_variable}_$$CHANNEL                    VVV/${fit_variable}_$$SYSTEMATIC_$$CHANNEL 
+shapes HZZ_signal * ${output_file} HZZ_signal/${fit_variable}       HZZ_signal/${fit_variable}_$$SYSTEMATIC 
+shapes qqZZ_powheg * ${output_file} qqZZ_powheg/${fit_variable}     qqZZ_powheg/${fit_variable}_$$SYSTEMATIC 
+shapes ggZZ * ${output_file} ggZZ/${fit_variable}                   ggZZ/${fit_variable}_$$SYSTEMATIC 
+shapes VVV  * ${output_file} VVV/${fit_variable}                    VVV/${fit_variable}_$$SYSTEMATIC 
 
-shapes nonprompt * ${output_file} DataEWKCorrected/${fit_variable}_Fakes_$$CHANNEL DataEWKCorrected/${fit_variable}_Fakes_$$SYSTEMATIC_$$CHANNEL
-shapes data_obs  * ${output_file} AllData/${fit_variable}_$$CHANNEL
+shapes nonprompt * ${output_file} nonprompt/${fit_variable}_Fakes nonprompt/${fit_variable}_Fakes_$$SYSTEMATIC
+shapes data_obs  * ${output_file} data/${fit_variable}
 
 bin          all   
-observation  ${AllData}
+observation  -1
 
 ------------
 #nonprompt is data-driven Z+X background
@@ -21,9 +21,9 @@ observation  ${AllData}
 # then we list the independent sources of uncertainties, and give their effect (syst. error)
 # on each process and bin
 bin                                all              all                 all        all       all         
-process                         HZZ-signal        qqZZ-powheg           ggZZ       VVV       nonprompt  
+process                         HZZ_signal        qqZZ_powheg           ggZZ       VVV       nonprompt  
 process                             -2                -1                  0         1          2
-rate                           ${HZZ_signal}       ${zz4l_powheg}       ${ggZZ}    ${VVV}   ${nonprompt}
+rate                           ${HZZ_signal}       ${qqZZ_powheg}       ${ggZZ}    ${VVV}   ${nonprompt}
 --------------------------------------------------------------------------------------------------------                                                                                                                                                                                                                    
 bkgStat                 lnN        -                  -                 -            -          1.4
 trigger                 lnN       1.020             1.020             1.020         1.020       -       
