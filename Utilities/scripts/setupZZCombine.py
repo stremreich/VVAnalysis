@@ -25,7 +25,7 @@ year = 2018
 channels = ["eeee", "eemm", "mmee", "mmmm"]
 nuissance_map = {"eeee" : 9, "eemm" : 10, "mmee" : 10, "mmmm" : 8, "all" : 6}
 
-cardtool.setLumi(41.5)
+cardtool.setLumi(59.74)
 cardtool.setFitVariable("ZZPt")
 cardtool.setFitVariableAppend("nonprompt", "Fakes")
 cardtool.setProcesses(plotGroupsMap)
