@@ -3,6 +3,7 @@ import ConfigureJobs
 import HistTools
 import OutputTools
 from prettytable import PrettyTable
+import os
 import ROOT
 
 class CombineCardTools(object):
@@ -25,6 +26,9 @@ class CombineCardTools(object):
 
     def setPlotGroups(self, xsecMap):
         self.crossSectionMap = xsecMap
+
+    def setRebin(self, rebin):
+        self.rebin = rebin
 
     def setCrosSectionMap(self, xsecMap):
         self.crossSectionMap = xsecMap
@@ -71,6 +75,8 @@ class CombineCardTools(object):
 
     def setOutputFolder(self, outputFolder):
         self.outputFolder = outputFolder
+        if not os.path.isdir(outputFolder):
+            os.makedirs(outputFolder)
 
     def getRootFile(self, rtfile, mode=None):
         if type(rtfile) == str:
@@ -143,11 +149,15 @@ class CombineCardTools(object):
 
         fitVariable = self.getFitVariable(processName)
         #TODO:Make optional
+        processedHists = []
         for chan in self.channels:
             histName = "_".join([fitVariable, chan]) if chan != "all" else fitVariable
             hist = group.FindObject(histName)
             #TODO: Make optional
-            HistTools.removeZeros(hist)
+            if "data" not in processName.lower():
+                HistTools.removeZeros(hist)
+            HistTools.addOverflow(hist)
+            processedHists.append(histName)
             self.yields[chan].update({processName : round(hist.Integral(), 4) if hist.Integral() > 0 else 0.0001})
 
             if chan == self.channels[0]:
@@ -165,8 +175,9 @@ class CombineCardTools(object):
         #TODO: You may want to combine channels before removing zeros
         self.combineChannels(group)
         #TODO: Make optional
-        map(HistTools.removeZeros, group)
-        map(HistTools.addOverflow, group)
+        map(HistTools.addOverflow, filter(lambda x: (x.GetName() not in processedHists), group))
+        if "data" not in group.GetName():
+            map(HistTools.removeZeros, filter(lambda x: (x.GetName() not in processedHists), group))
         self.histData[processName] = group
 
     # It's best to call this function for process, otherwise you can end up
