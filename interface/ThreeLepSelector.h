@@ -1,7 +1,7 @@
 #ifndef ThreeLepSelector_h
 #define ThreeLepSelector_h
 
-#include <TROOT.h>
+// #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
 #include <TSelector.h>
@@ -10,6 +10,8 @@
 #include <TEfficiency.h>
 #include <exception>
 #include <iostream>
+#include <map>
+#include <sstream>
 
 // Headers needed by this particular selector
 #include <vector>
@@ -60,6 +62,16 @@ public :
   Float_t   Electron_sip3d[N_KEEP_MU_E_];
   Bool_t    Electron_convVeto[N_KEEP_MU_E_];
   UChar_t   Electron_lostHits[N_KEEP_MU_E_];
+  Int_t     Electron_tightCharge[N_KEEP_MU_E_];
+  Float_t   Electron_sieie[N_KEEP_MU_E_];
+  Float_t   Electron_hoe[N_KEEP_MU_E_];
+  Float_t   Electron_deltaEtaSC[N_KEEP_MU_E_];
+  Float_t   Electron_eInvMinusPInv[N_KEEP_MU_E_];
+  Float_t   Electron_dr03EcalRecHitSumEt[N_KEEP_MU_E_];
+  Float_t   Electron_dr03HcalDepth1TowerSumEt[N_KEEP_MU_E_];
+  Float_t   Electron_dr03TkSumPt[N_KEEP_MU_E_];
+  Int_t     Electron_vidBitmap[N_KEEP_MU_E_];
+  Float_t   Electron_jetRelIso[N_KEEP_MU_E_];
   
   UInt_t    nMuon;
   Float_t   Muon_pt[N_KEEP_MU_E_];
@@ -76,8 +88,12 @@ public :
   Float_t   Muon_dz[N_KEEP_MU_E_];
   Float_t   Muon_sip3d[N_KEEP_MU_E_];
   Bool_t    Muon_isGlobal[N_KEEP_MU_E_];
+  Bool_t    Muon_isTracker[N_KEEP_MU_E_];
   Bool_t    Muon_isPFcand[N_KEEP_MU_E_];
   Int_t     Muon_tightCharge[N_KEEP_MU_E_];
+  Float_t   Muon_jetPtRelv2[N_KEEP_MU_E_];
+  Float_t   Muon_jetRelIso[N_KEEP_MU_E_];
+
   
   Int_t     numPU;
 
@@ -96,6 +112,8 @@ public :
   Int_t     Jet_jetId[N_KEEP_JET_];
   Int_t     Jet_hadronFlavour[N_KEEP_JET_];
   
+
+    
   ClassDefOverride(ThreeLepSelector,0);
 
   /*******************************************************/
@@ -118,6 +136,20 @@ public :
   BTagCalibrationReader btag_reader; // central sys type
   TH2D* Beff_b;
   TH2D* Beff_j;
+  ULong64_t event;
+  UInt_t lumi;
+
+  std::map<int, bool> eventVec;
+  std::map<int, std::string> info;
+
+  Bool_t HLT_DoubleMu8_Mass8_PFHT300;
+  Bool_t HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300;
+  Bool_t HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300;
+  Bool_t HLT_AK8PFJet450;
+
+  Float_t PV_x;
+  Float_t PV_y;
+  Float_t PV_z;
   
   /************************************************************/
   /* _____ __ __ __  __   ___ ______ __   ___   __  __  __    */
@@ -130,6 +162,7 @@ public :
   void setupElectrons();
   void setupJets();
   void setupChannel();
+  void printInfo();
   
   bool isGoodMuon(size_t);
   bool isLooseMuon(size_t);
@@ -138,13 +171,16 @@ public :
   bool isGoodElectron(size_t);
   bool isLooseElectron(size_t);
   bool isLooseMVAElectron(size_t);
-  
+
+  size_t getCloseJetIndex(LorentzVector&, double minDR=10);
   bool doesNotOverlap(size_t);
-  bool passFullIso(LorentzVector&, int, int);
+  bool passFullIso(LorentzVector&, double, double, double);
   bool doesPassZVeto(GoodPart&, std::vector<GoodPart>&);
+  bool passTriggerEmu(size_t);
+  double LepRelPt(LorentzVector&);
   
   //// General Functions
-  int getSRBin() const;
+    int getSRBin() const;
   void clearValues();
   void ApplyScaleFactors();
 
@@ -159,8 +195,8 @@ public :
   virtual void    Init(TTree *tree) override;
 
   ///ignore
-  void LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) override;
-  virtual void    SetBranchesUWVV() override;
+  void LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) override {return;}
+  virtual void    SetBranchesUWVV() override {return;}
 };
 
 #endif

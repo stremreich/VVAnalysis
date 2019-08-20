@@ -9,6 +9,7 @@ struct GoodPart {
     LorentzVector v;
     int pdgId;
     bool isBTagged;
+    int index;
     
     GoodPart(double pt, double eta, double phi, double m ) : v(pt, eta, phi, m) {}
 

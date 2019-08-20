@@ -69,7 +69,7 @@ def makeHistFile(args):
         #     eCBTightFakeRate.SetName("fakeRate_allE")
 
         muonIsoSF = fScales.Get('muonIsoSF')
-        muonIdSF = fScales.Get('muonTightIdSF')
+        muonIdSF = fScales.Get('muonMediumIdSF')
         electronTightIdSF = fScales.Get('electronTightIdSF')
         electronGsfSF = fScales.Get('electronGsfSF')
         pileupSF = fScales.Get('pileupSF')
@@ -87,7 +87,7 @@ def makeHistFile(args):
         sf_inputs.append(ROOT.TParameter(bool)("applyScaleFacs", True))
     else:
         sf_inputs = [ROOT.TParameter(bool)("applyScaleFacs", args['scaleFactor'])]    
-        
+
     if args['input_tier'] == '':
         args['input_tier'] = args['selection']
     selection = args['selection'].split("_")[0]

@@ -13,9 +13,10 @@ void SelectorBase::SlaveBegin(TTree * /*tree*/)
 {
     if (GetInputList() != nullptr) {
         TParameter<bool>* applyScaleFactors = (TParameter<bool>*) GetInputList()->FindObject("applyScaleFacs");
-        if (applyScaleFactors != nullptr && applyScaleFactors->GetVal()) {
-           SetScaleFactors();
-        }
+	applyScaleFactors_ = applyScaleFactors->GetVal();
+	if (applyScaleFactors != nullptr && applyScaleFactors->GetVal()) {
+	    SetScaleFactors();
+	}
     }
 }
 
