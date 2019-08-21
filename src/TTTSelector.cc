@@ -52,7 +52,7 @@ void TTTSelector::Init(TTree *tree){
   
   allChannels_ = {"ee", "mm", "em", "all"};
  
-  hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR", "bjetpt", "jetpt", "nbjet", "njet", "jetphi","bjetphi", "phil1", "phil2","HT","MET", "nelec", "nmuon", "lept_charge"};
+  hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR", "bjetpt", "jetpt", "nbjet", "njet", "jetphi","bjetphi", "phil1", "phil2","HT","MET", "nelec", "nmuon", "lept_charge", "before", "after"};
   hists2D_ = {"bJetvsJets"};
   
   SelectorBase::Init(tree);
@@ -370,8 +370,8 @@ bool TTTSelector::isOverlap(size_t index) {
   return true;
 }
 
-void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
- 
+void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) {
+  
   int step = 0;
   Fill1D("CutFlow", 0);
   
@@ -379,15 +379,23 @@ void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::stri
   if(goodParts.size() != 2) return;
   Fill1D("CutFlow", ++step);
 
+  
+  // std::cout<<"charge array : " <<charge[0]<<""<< charge[1]<<std::endl;
+  if(goodParts[0].Charge() * goodParts[1].Charge() >= 0) 
+    Fill1D("before", 0);
+   
+  if(goodParts[0].Charge() * goodParts[1].Charge() <= 0) 
+    Fill1D("before", 1);
+   
   // first lep requirement 
   if(goodParts[0].Pt() < 25) return;
   Fill1D("CutFlow", ++step);
   
   // same sign requirement
-  if(goodParts[0].Charge() * goodParts[1].Charge() <= 0) return;
+  // if(goodParts[0].Charge() * goodParts[1].Charge() <= 0) return;
   Fill1D("CutFlow", ++step);
 
-  // met cut
+  // met cut 50
   if (MET < 50) return;
   Fill1D("CutFlow", ++step);
 
@@ -396,18 +404,23 @@ void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::stri
   Fill1D("CutFlow", ++step);
   
   // jet cut 4
-  if(nTightJet < 0) return;
+  if(nTightJet < 4) return;
   Fill1D("CutFlow", ++step);
   
   // bjet cut 2
-  if(nBJets < 0) return;
+  if(nBJets < 2) return;
   Fill1D("CutFlow", ++step);
+
+  if(goodParts[0].Charge() * goodParts[1].Charge() >= 0)
+    Fill1D("after", 0);
+  if(goodParts[0].Charge() * goodParts[1].Charge() <=0)
+    Fill1D("after", 1);
  
   // // veto cut
   // if(!passesLeptonVeto)
   //   Fill1D("CutFlow", ++step);
   // in SR stuff
-
+  
   Fill1D("ptl1", goodParts[0].Pt());
   Fill1D("ptl2", goodParts[1].Pt());
   Fill1D("SR", getSRBin());

@@ -146,8 +146,10 @@ def getListOfFiles(filelist, selection, manager_path=""):
 #    data_info = UserInput.readAllInfo("/".join([data_path, "data/*"]))
 #    mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
 #    valid_names = data_info.keys() + mc_info.keys()
+
+### CHANGE DATA PATH IF GOING FROM EFF TO TTT !!!!!!!!!!!!!! ######################
     data_path = "%s/AnalysisDatasetManager/FileInfo/" % manager_path 
-    data_info = UserInput.readAllInfo("/".join([data_path, "TTT/*"]))
+    data_info = UserInput.readAllInfo("/".join([data_path, "Eff/*"]))
     valid_names = data_info.keys()
     names = []
     for name in filelist:
@@ -252,7 +254,8 @@ def getInputFilesPath(sample_name, selection, analysis, manager_path=""):
     if ".root" in sample_name:
         print "INFO: using simple file %s" % sample_name
         return sample_name
-    data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
+    # could this be where the extra / is ? took the / from between %s ADM
+    data_path = "%sAnalysisDatasetManager/FileInfo" % manager_path
     input_file_base_name = "/".join([data_path, analysis, selection])
     input_file_name = getConfigFileName(input_file_base_name)
     input_files = UserInput.readInfo(input_file_name)

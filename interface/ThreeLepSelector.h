@@ -41,8 +41,8 @@ class ThreeLepSelector : public SelectorBase {
   Float_t MET;
   Float_t type1_pfMETPhi;
 
-  //NanoAOD variables
-  static const unsigned int N_KEEP_MU_E_ = 15;
+  //NanoAOD variables n keep mu e was 15 -> now 35..?
+  static const unsigned int N_KEEP_MU_E_ = 35;
   static const unsigned int N_KEEP_JET_ = 35;
 
   UInt_t nElectron;
@@ -91,7 +91,20 @@ class ThreeLepSelector : public SelectorBase {
   Float_t Jet_neEmEF[N_KEEP_JET_];
   Int_t Jet_nConstituents[N_KEEP_JET_];
   Float_t Jet_chHEF[N_KEEP_JET_];  
-  Float_t Jet_chEmEF[N_KEEP_JET_]; 
+  Float_t Jet_chEmEF[N_KEEP_JET_];
+
+  /// gen 
+  Float_t GenJet_pt[N_KEEP_JET_];
+  UInt_t nGenJet;
+  Float_t GenMET_pt;
+
+  UInt_t nGenPart;
+  Float_t GenPart_pt[N_KEEP_MU_E_];
+  Int_t GenPart_pdgId[N_KEEP_MU_E_];
+  Float_t GenPart_eta[N_KEEP_MU_E_];
+  Float_t GenPart_phi[N_KEEP_MU_E_];
+  Float_t GenPart_mass[N_KEEP_MU_E_];
+  
 
   ClassDefOverride(ThreeLepSelector,0);
 

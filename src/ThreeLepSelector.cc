@@ -48,7 +48,7 @@ void ThreeLepSelector::Init(TTree *tree) {
   b.SetTree(tree);
   
   allChannels_ = {"mm", "ee", "em", "all", "lll"};
-  hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR", "bjetpt", "jetpt", "nbjet", "njet", "nleps"};
+  hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR", "bjetpt", "jetpt", "nbjet", "njet", "nleps", "GenElec", "GenMuon"};
   hists2D_ = {"bJetvsJets"};
   
   SelectorBase::Init(tree);
@@ -122,6 +122,18 @@ void ThreeLepSelector::SetBranchesNanoAOD() {
     b.SetBranch("genWeight", genWeight);
     b.SetBranch("Pileup_nPU", numPU);
   }
+
+  //// addition: gen branches
+  b.SetBranch("GenJet_pt", GenJet_pt);
+  b.SetBranch("nGenJet", nGenJet);
+  b.SetBranch("GenMET_pt", GenMET_pt);
+
+  b.SetBranch("nGenPart", nGenPart);
+  b.SetBranch("GenPart_pt", GenPart_pt);
+  b.SetBranch("GenPart_pdgId", GenPart_pdgId);
+  b.SetBranch("GenPart_phi", GenPart_phi);
+  b.SetBranch("GenPart_eta", GenPart_eta);
+  b.SetBranch("GenPart_mass", GenPart_mass);
   
 }
 

@@ -207,6 +207,7 @@ void SelectorBase::InitializeHistogramsFromConfig() {
     for (auto && entry : *histInfo) {  
         TNamed* currentHistInfo = dynamic_cast<TNamed*>(entry);
         std::string name = currentHistInfo->GetName();
+	std::cout<<name<<std::endl;
         std::vector<std::string> histData = ReadHistDataFromConfig(currentHistInfo->GetTitle());
         
         std::vector<std::string> channels = {channelName_};
