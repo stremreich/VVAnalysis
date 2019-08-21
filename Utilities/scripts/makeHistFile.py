@@ -26,6 +26,7 @@ def getComLineArgs():
         default="", help="Selection stage of input files")
     parser.add_argument("--year", type=str,
         default="default", help="Year of Analysis")
+    parser.add_argument("--scaleFactor", "-sf", action='store_true', help="Apply Scale Factors")
     parser.add_argument("-c", "--channels", 
                         type=lambda x : [i.strip() for i in x.split(',')],
                         default=["eee","eem","emm","mmm"], help="List of channels"
@@ -48,16 +49,10 @@ def makeHistFile(args):
     tmpFileName = args['output_file']
     fOut = ROOT.TFile(tmpFileName, "recreate")
 
-    addScaleFacs = False
-    if args['analysis'] == "WZxsec2016" or args['analysis'] == 'Zstudy_2016':
-        addScaleFacs = True
-    addScaleFacs=False
-    sf_inputs = [ROOT.TParameter(bool)("applyScaleFacs", False)]
-
-    if addScaleFacs:
+    if args['scaleFactor']:
         fScales = ROOT.TFile('data/scaleFactors.root')
-        mCBTightFakeRate = fScales.Get("mCBTightFakeRate")
-        eCBTightFakeRate = fScales.Get("eCBTightFakeRate")
+        # mCBTightFakeRate = fScales.Get("mCBTightFakeRate")
+        # eCBTightFakeRate = fScales.Get("eCBTightFakeRate")
         useSvenjasFRs = False
         useJakobsFRs = False
         if useSvenjasFRs:
@@ -66,26 +61,32 @@ def makeHistFile(args):
         elif useJakobsFRs:
             mCBTightFakeRate = fScales.Get("mCBTightFakeRate_Jakob")
             eCBTightFakeRate = fScales.Get("eCBTightFakeRate_Jakob")
-        # For medium muons
-        #mCBMedFakeRate.SetName("fakeRate_allMu")
-        if mCBTightFakeRate:
-            mCBTightFakeRate.SetName("fakeRate_allMu")
-        if eCBTightFakeRate:
-            eCBTightFakeRate.SetName("fakeRate_allE")
+        # # For medium muons
+        # #mCBMedFakeRate.SetName("fakeRate_allMu")
+        # if mCBTightFakeRate:
+        #     mCBTightFakeRate.SetName("fakeRate_allMu")
+        # if eCBTightFakeRate:
+        #     eCBTightFakeRate.SetName("fakeRate_allE")
 
         muonIsoSF = fScales.Get('muonIsoSF')
-        muonIdSF = fScales.Get('muonTightIdSF')
+        muonIdSF = fScales.Get('muonMediumIdSF')
         electronTightIdSF = fScales.Get('electronTightIdSF')
         electronGsfSF = fScales.Get('electronGsfSF')
         pileupSF = fScales.Get('pileupSF')
-
+        
         #fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_JetHT_Run2016B-H.root')
-        fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_SingleMuon_Run2016B-H.root')
-        prefireEff = fPrefireEfficiency.Get('prefireEfficiencyMap')
+        #fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_SingleMuon_Run2016B-H.root')
+        # prefireEff = fPrefireEfficiency.Get('prefireEfficiencyMap')
 
-        fr_inputs = [eCBTightFakeRate, mCBTightFakeRate,]
-        sf_inputs = [electronTightIdSF, electronGsfSF, muonIsoSF, muonIdSF, pileupSF, prefireEff]
+        bScales = ROOT.TFile('data/BEff.root')
+        bScales.SetName("BScales")
+        
+#        fr_inputs = [eCBTightFakeRate, mCBTightFakeRate,]
+        fr_inputs = []
+        sf_inputs = [electronTightIdSF, electronGsfSF, muonIsoSF, muonIdSF, pileupSF, bScales]
         sf_inputs.append(ROOT.TParameter(bool)("applyScaleFacs", True))
+    else:
+        sf_inputs = [ROOT.TParameter(bool)("applyScaleFacs", args['scaleFactor'])]    
 
     if args['input_tier'] == '':
         args['input_tier'] = args['selection']
@@ -96,18 +97,6 @@ def makeHistFile(args):
         print "Info: Using Wselection for hist defintions"
     analysis = "/".join([args['analysis'], selection])
     hists, hist_inputs = UserInput.getHistInfo(analysis, args['hist_names'], args['noHistConfig'])
-
-    #if "WZxsec2016" in analysis and "FakeRate" not in args['output_selection'] and not args['test']:
-    #    background = SelectorTools.applySelector(["WZxsec2016data"] +
-    #        ConfigureJobs.getListOfEWKFilenames() + ["wz3lnu-powheg"] +
-    #        ConfigureJobs.getListOfNonpromptFilenames(), 
-    #            "WZBackgroundSelector", args['selection'], fOut, 
-    #            extra_inputs=sf_inputs+fr_inputs+hist_inputs+tselection, 
-    #            channels=channels,
-    #            addSumweights=False,
-    #            nanoAOD=nanoAOD,
-    #            parallel=args['parallel'],
-    #            )
 
     selector = SelectorTools.SelectorDriver(args['analysis'], args['selection'], args['input_tier'], args['year'])
     selector.setOutputfile(fOut.GetName())

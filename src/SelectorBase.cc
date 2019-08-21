@@ -13,9 +13,10 @@ void SelectorBase::SlaveBegin(TTree * /*tree*/)
 {
     if (GetInputList() != nullptr) {
         TParameter<bool>* applyScaleFactors = (TParameter<bool>*) GetInputList()->FindObject("applyScaleFacs");
-        if (applyScaleFactors != nullptr && applyScaleFactors->GetVal()) {
-           SetScaleFactors();
-        }
+	applyScaleFactors_ = applyScaleFactors->GetVal();
+	if (applyScaleFactors != nullptr && applyScaleFactors->GetVal()) {
+	    SetScaleFactors();
+	}
     }
 }
 
@@ -34,17 +35,17 @@ void SelectorBase::Init(TTree *tree)
 	TNamed* year = (TNamed *) GetInputList()->FindObject("year");
 
 	if (ntupleType != nullptr) {
-	    std::string ntupleName = ntupleType->GetTitle();
-	    if (ntupleName == "NanoAOD")
-		ntupleType_ = NanoAOD;
-	    else if (ntupleName  == "UWVV")
-		ntupleType_ = UWVV;
-	    else
-		throw std::invalid_argument("Unsupported ntuple type!");
+	  std::string ntupleName = ntupleType->GetTitle();
+	  if (ntupleName == "NanoAOD")
+	    ntupleType_ = NanoAOD;
+	  else if (ntupleName  == "UWVV")
+	    ntupleType_ = UWVV;
+	  else
+	    throw std::invalid_argument("Unsupported ntuple type!");
 	}
 	else {
-	    std::cerr << "INFO: Assuming NanoAOD ntuples" << std::endl;
-	    ntupleType_ = NanoAOD;
+	  std::cerr << "INFO: Assuming NanoAOD ntuples" << std::endl;
+	  ntupleType_ = NanoAOD;
 	}
 
         if (name != nullptr) {
@@ -72,7 +73,7 @@ void SelectorBase::Init(TTree *tree)
     }
 
     if (selectionMap_.find(selectionName_) != selectionMap_.end()) {
-        selection_ = selectionMap_[selectionName_];
+      selection_ = selectionMap_[selectionName_];
     }
     else
         throw std::invalid_argument("Invalid selection!");
@@ -85,7 +86,7 @@ void SelectorBase::Init(TTree *tree)
         variations_.insert(systematics_.begin(), systematics_.end());
 
     currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(name_.c_str()));
-
+    
     if (channelMap_.find(channelName_) != channelMap_.end())
         channel_ = channelMap_[channelName_];
     else {
@@ -98,18 +99,18 @@ void SelectorBase::Init(TTree *tree)
     }
     
     if ( currentHistDir_ == nullptr ) {
-        currentHistDir_ = new TList();
-        currentHistDir_->SetName(name_.c_str());
-        fOutput->Add(currentHistDir_);
-        // Watch for something that I hope never happens,
-        size_t existingObjectPtrsSize = allObjects_.size();
-        SetupNewDirectory();
-        if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
-            std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
-        }
+      currentHistDir_ = new TList();
+      currentHistDir_->SetName(name_.c_str());
+      fOutput->Add(currentHistDir_);
+      // Watch for something that I hope never happens,
+      size_t existingObjectPtrsSize = allObjects_.size();
+      SetupNewDirectory();
+      if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
+	std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
+      }
     }
     UpdateDirectory();
-
+    
     SetBranches();
 }
 
@@ -179,16 +180,16 @@ void SelectorBase::InitializeHistogramsFromConfig() {
         throw std::domain_error("Can't initialize histograms without passing histogram information to TSelector");
 
     for (auto& label : hists1D_) {
-        if (channel_ != Inclusive) {
-            auto histName = getHistName(label, "", channelName_);
-            histMap1D_[histName] = {};
-        }
-        else {
-            for (auto& chan : allChannels_) {
-                auto histName = getHistName(label, "", chan);
-                histMap1D_[histName] = {};
-            }
-        }
+      if (channel_ != Inclusive) {
+	auto histName = getHistName(label, "", channelName_);
+	histMap1D_[histName] = {};
+      }
+      else {
+	for (auto& chan : allChannels_) {
+	  auto histName = getHistName(label, "", chan);
+	  histMap1D_[histName] = {};
+	}
+      }
     }
 
     for (auto& label : hists2D_) {
@@ -209,10 +210,10 @@ void SelectorBase::InitializeHistogramsFromConfig() {
         std::string name = currentHistInfo->GetName();
 	std::cout<<name<<std::endl;
         std::vector<std::string> histData = ReadHistDataFromConfig(currentHistInfo->GetTitle());
-        
-        std::vector<std::string> channels = {channelName_};
+
+	std::vector<std::string> channels = {channelName_};
         if (channel_ == Inclusive) {
-            channels = allChannels_;
+	  channels = allChannels_;
         }
 
         for (auto& chan : channels) {
@@ -236,7 +237,8 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
         exit(1);
     }
     std::string histName = getHistName(name, "", channel);
-    
+
+
     int nbins = std::stoi(histData[1]);
     float xmin = std::stof(histData[2]);
     float xmax = std::stof(histData[3]);
@@ -248,7 +250,7 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
                 std::string syst_histName = getHistName(name, syst.second, channel);
                 histMap1D_[syst_histName] = {};
                 AddObject<TH1D>(histMap1D_[syst_histName], syst_histName.c_str(), 
-                    histData[0].c_str(),nbins, xmin, xmax);
+				histData[0].c_str(),nbins, xmin, xmax);
                 // TODO: Cleaner way to determine if you want to store systematics for weighted entries
                 //if (isaQGC_ && doaQGC_ && (weighthists_.find(name) != weighthists_.end())) { 
                 //    std::string weightsyst_histName = name+"_lheWeights_"+syst.second;
@@ -261,8 +263,8 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
         // Weight hists must be subset of 1D hists!
         if (isMC_ && (weighthists_.find(histName) != weighthists_.end())) { 
             AddObject<TH2D>(weighthists_[histName], 
-                (name+"_lheWeights_"+channel).c_str(), histData[0].c_str(),
-                nbins, xmin, xmax, 1000, 0, 1000);
+			    (name+"_lheWeights_"+channel).c_str(), histData[0].c_str(),
+			    nbins, xmin, xmax, 1000, 0, 1000);
         }
     }
     else {

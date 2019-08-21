@@ -8,3 +8,5 @@ Utilities/Selectors/disambiguateFinalStates_*
 *~
 *#*#
 
+*.dat
+*.out
