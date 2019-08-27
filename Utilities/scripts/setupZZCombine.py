@@ -24,7 +24,7 @@ xsecs  = ConfigureJobs.getListOfFilesWithXSec([f for files in plotGroupsMap.valu
 
 lumiMap = {"2017" : 41.5, "2018" : 59.74}
 fileMap = { "2017" : "/eos/user/k/kelong/HistFiles/ZZ/Hists13Aug2019-ZZ4l2017Full.root",
-    "2018" : "/eos/user/k/kelong/HistFiles/ZZ/Hists12Aug2019-ZZ4l2018Full.root"
+    "2018" : "/eos/user/k/kelong/HistFiles/ZZ/Hists13Aug2019-ZZ4l2018Full.root"
     #"2018" : "/eos/user/k/kelong/HistFiles/ZZ/Hists16Mar2019-ZZ4l2018Full.root"
 }
 channels = ["eeee", "eemm", "mmee", "mmmm"]
@@ -41,11 +41,10 @@ cardtool.setChannels(channels)
 cardtool.setCrosSectionMap(xsecs)
 cardtool.setVariations(["CMS_eff_e", "CMS_RecoEff_e", "CMS_eff_m", "CMS_pileup"],
                         exclude=["nonprompt", "data"])
-#cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%s2017and2018Fit" % fitvar)
-cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%s2017Fit" % fitvar)
+cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%s2017and2018Fit" % fitvar)
+#cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%s2017Fit" % fitvar)
 
-#for year in fileMap.keys():
-for year in ["2017"]:
+for year in fileMap.keys():
     cardtool.setLumi(lumiMap[year])
     cardtool.setInputFile(fileMap[year])
     print fileMap[year], lumiMap[year] 
