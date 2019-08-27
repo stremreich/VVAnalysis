@@ -146,6 +146,7 @@ public :
   Bool_t HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300;
   Bool_t HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300;
   Bool_t HLT_AK8PFJet450;
+  Bool_t HLT_PFJet450;
 
   Float_t PV_x;
   Float_t PV_y;
@@ -180,7 +181,7 @@ public :
   double LepRelPt(LorentzVector&);
   
   //// General Functions
-    int getSRBin() const;
+  int getSRBin() const;
   void clearValues();
   void ApplyScaleFactors();
 

@@ -10,10 +10,9 @@
 #define GETMASK(index, size) (((1 << (size)) - 1) << (index))
 #define READFROM(data, index, size) (((data) & GETMASK((index), (size))) >> (index))
 
-// #define DEBUG
+#define DEBUG
 
 typedef std::bitset<sizeof(int)> IntBits;
-
 
 enum PID {PID_MUON = 13, PID_ELECTRON = 11, PID_BJET = 5};
 enum ElectronCBID {CBID_VETO=1, CBID_LOOSE=2, CBID_MEDIUM=3, CBID_TIGHT=4};
@@ -25,6 +24,7 @@ std::string boolStr(bool val) {
     if(val) return "true";
     else    return "false";
 }
+
 
 // This is very WZ specific and should really be improved or likely removed
 std::string ThreeLepSelector::GetNameFromFile() {
@@ -89,7 +89,8 @@ void ThreeLepSelector::Init(TTree *tree) {
 
     SelectorBase::Init(tree);
 
-    std::string filename = "onlyMyMM_0820.dat";
+    std::string filename = "onlyMyMM_0827.dat";
+    // std::string filename = "MM_ZCR_onlyTheir_0821.dat";
     // std::string filename = "onlyTheirMM.dat";
     std::ifstream infile;
     infile.open(filename);
@@ -116,7 +117,7 @@ void ThreeLepSelector::SetBranchesNanoAOD() {
     b.SetBranch("HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300", HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300);
     b.SetBranch("HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300", HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300);
     b.SetBranch("HLT_AK8PFJet450", HLT_AK8PFJet450);
-
+    b.SetBranch("HLT_PFJet450", HLT_PFJet450);
 
     b.SetBranch("nElectron",                  nElectron);
     b.SetBranch("Electron_pt",                Electron_pt);
@@ -268,7 +269,7 @@ void ThreeLepSelector::printInfo() {
 
 
     if(! eventVec[event]) return;
-    printf("Event %d\n", (int)event);
+    printf("Event %d, lumi %d\n", (int)event, (int)lumi);
     std::cout << info[event] << std::endl;
     printf(" #: %6s %5s  Id\n","pt", "eta");
     printf("  : %6.4f %6.4f %6.4f\n", PV_x, PV_y, PV_z);
@@ -277,8 +278,8 @@ void ThreeLepSelector::printInfo() {
     num=0;
     printf("-------leps-----------\n");
     printf("Muon: pt eta id iso tightcharge dz d0 sip ptratio ptrel\n");
-    printf("Elec: pt eta id mva cutbased iso dz d0 sip ptratio ptrel\n");
-    printf("Elec: sieie hoe 1/e-1/pt ecalSumEt hcalSumEt tkSumPt\n");
+    // printf("Elec: pt eta id mva cutbased iso dz d0 sip ptratio ptrel\n");
+    // printf("Elec: sieie hoe 1/e-1/pt ecalSumEt hcalSumEt tkSumPt\n");
     for(auto lep : goodLeptons) {
 	num++;
 	printf("%2d: %6.2f %+3.2f %+d", num, lep.Pt(), lep.Eta(), -1*lep.Charge());
@@ -308,10 +309,13 @@ void ThreeLepSelector::printInfo() {
     }
     num=0;
     printf("-----loose-muon-------\n");
-    for(auto lep : looseMuons) {
+    //for(auto lep : looseMuons) {
+    for(int i = 0; i < (int)nMuon; i++) {
 	num++;
-	printf("%2d: %6.2f %+3.2f %+d", num, lep.Pt(), lep.Eta(), -1*lep.Charge());
-	printf(" %4.2f %d %+5.3f %+5.3f %5.3f, %5.3f %6.3f", Muon_miniPFRelIso_all[lep.index], Muon_tightCharge[lep.index], Muon_dz[lep.index], Muon_dxy[lep.index], Muon_sip3d[lep.index], 1/(Muon_jetRelIso[lep.index]+1), LepRelPt(lep.v));
+        LorentzVector v(SetupPtEtaPhiM(Muon,i));
+	//int i = lep.index;
+	printf("%2d: %6.2f %+3.2f %+d", num, Muon_pt[i], Muon_eta[i], -1*Muon_charge[i]);
+	printf(" %4.2f %d %+5.3f %+5.3f %5.3f, %5.3f %6.3f %5.1f %5.1f", Muon_miniPFRelIso_all[i], Muon_tightCharge[i], Muon_dz[i], Muon_dxy[i], Muon_sip3d[i], 1/(Muon_jetRelIso[i]+1), LepRelPt(v), (v+goodLeptons[0].v).M(), (v+goodLeptons[1].v).M());
 	printf("\n");
     }
     // printf("--------all-muon-------\n");
@@ -322,48 +326,39 @@ void ThreeLepSelector::printInfo() {
     // 	printf("\n");
     // 	       }
 
-    num=0;
-    printf("-----loose-elec-------\n");
-    for(auto lep : looseElectrons) {
-    	num++;
-    	int index = lep.index;
-	printf("%2d: %6.2f %+3.2f %+d\n", num, lep.Pt(), lep.Eta(), -1*lep.Charge());
-	printf("   %5d %5d %5d %+5.2f %+5.2f %5.3f %5.3f %5.3f %d %5.3f %6.3f\n",  (Electron_convVeto[index]),
-	       (Electron_lostHits[index]),  (Electron_tightCharge[index]),
-    	       (Electron_dz[index]),  (Electron_dxy[index]),  (Electron_sip3d[index]),
-    	       Electron_miniPFRelIso_all[index], Electron_MVA[lep.index], Electron_cutBased[lep.index], 1/(Electron_jetRelIso[lep.index]+1), LepRelPt(lep.v));
-    	printf("   %5s %5s %5s %5s %5s %5s %5s\n",
-    	       boolStr(Electron_convVeto[index]).c_str(),
-    	       boolStr(Electron_lostHits[index] == 0).c_str(),
-    	       boolStr(Electron_tightCharge[index] == 2).c_str(),
-    	       boolStr(abs(Electron_dz[index]) < 0.1).c_str(),
-    	       boolStr(abs(Electron_dxy[index]) < 0.05).c_str(),
-    	       boolStr(Electron_sip3d[index] < 4).c_str(),
-    	       boolStr(Electron_miniPFRelIso_all[lep.index] < 0.12).c_str());
-
-    	printf(" %6.4f %6.4f %+6.4f %6.4f %6.4f %6.4f\n",      Electron_sieie[lep.index],
-    	       Electron_hoe[lep.index],
-    	       Electron_eInvMinusPInv[lep.index],
-    	       Electron_dr03EcalRecHitSumEt[lep.index],
-    	       Electron_dr03HcalDepth1TowerSumEt[lep.index],
-    	       Electron_dr03TkSumPt[lep.index]
-    	       );
-    	printf(" %6s %6s %7s %6s %6s %6s\n",
-    	       boolStr(Electron_sieie[lep.index] < 0.031).c_str(),
-    	       boolStr(Electron_hoe[lep.index] < 0.08).c_str(),
-    	       boolStr(abs(Electron_eInvMinusPInv[lep.index]) < 0.01).c_str(),
-    	       boolStr(Electron_dr03EcalRecHitSumEt[lep.index]/Electron_pt[lep.index] < 0.45).c_str(),
-    	       boolStr(Electron_dr03HcalDepth1TowerSumEt[lep.index]/Electron_pt[lep.index] < 0.25).c_str(),
-    	       boolStr(Electron_dr03TkSumPt[lep.index]/Electron_pt[lep.index] < 0.2).c_str()
-    	       );
-    }
+    // num=0;
+    // printf("-----loose-elec-------\n");
+    // //for(auto lep : looseElectrons) {
+    // for(int i = 0; i < (int)nElectron; i++) {
+    // 	num++;
+    // 	LorentzVector v(SetupPtEtaPhiM(Electron,i));
+    // 	//int i = lep.index;
+    // 	printf("%2d: %6.2f %+3.2f %+d", num, Electron_pt[i], Electron_eta[i], -1*Electron_charge[i]);
+    // 	printf(" %4.2f  %d %5.3f %+5.3f %+5.3f %5.3f %5.3f %6.3f\n", Electron_MVA[i], Electron_cutBased[i], Electron_miniPFRelIso_all[i], Electron_dz[i], Electron_dxy[i], Electron_sip3d[i], 1/(Electron_jetRelIso[i]+1), LepRelPt(v));
+    // 	printf(" %6.4f %6.4f %+6.4f %6.4f %6.4f %6.4f\n",  Electron_sieie[i],
+    // 	       Electron_hoe[i],
+    // 	       Electron_eInvMinusPInv[i],
+    // 	       Electron_dr03EcalRecHitSumEt[i],
+    // 	       Electron_dr03HcalDepth1TowerSumEt[i],
+    // 	       Electron_dr03TkSumPt[i]
+    // 	       );
+    // 	printf(" %6s %6s %7s %6s %6s %6s\n",
+    // 	       boolStr(Electron_sieie[i] < 0.031).c_str(),
+    // 	       boolStr(Electron_hoe[i] < 0.08).c_str(),
+    // 	       boolStr(abs(Electron_eInvMinusPInv[i]) < 0.01).c_str(),
+    // 	       boolStr(Electron_dr03EcalRecHitSumEt[i]/Electron_pt[i] < 0.45).c_str(),
+    // 	       boolStr(Electron_dr03HcalDepth1TowerSumEt[i]/Electron_pt[i] < 0.25).c_str(),
+    // 	       boolStr(Electron_dr03TkSumPt[i]/Electron_pt[i] < 0.2).c_str()
+    // 	       );
+	
+    // }
 
     num=0;
     printf("-------Jets-----------\n");
     for(auto lep : goodJets) {
     	if(!lep.isBTagged) {
     	    num++;
-    	    printf("%2d: %6.2f %+4.2f %4.2f\n", num, lep.Pt(), lep.Eta(), Jet_btagDeepB[lep.index]);
+            printf("%2d: %6.2f %+4.2f %5.3f %5.3f\n", num, lep.Pt(), lep.Eta(), Jet_btagDeepB[lep.index], Jet_btagCSVV2[lep.index]);
     	}
     }
     // for(size_t i = 0; i < nJet; i++) {
@@ -374,7 +369,7 @@ void ThreeLepSelector::printInfo() {
     for(auto lep : goodJets) {
 	if(lep.isBTagged) {
 	    num++;
-	    printf("%2d: %6.2f %+4.2f %4.2f\n", num, lep.Pt(), lep.Eta(), Jet_btagDeepB[lep.index]);
+	    printf("%2d: %6.2f %+4.2f %5.3f %5.3f\n", num, lep.Pt(), lep.Eta(), Jet_btagDeepB[lep.index], Jet_btagCSVV2[lep.index]);
 	}
     }
     printf("-------MET------------\n");
@@ -395,7 +390,7 @@ void ThreeLepSelector::setupMuons() {
 	    looseMuons.push_back(goodLeptons.back());
 		
 	    if(!passFullIso(goodLeptons.back().v, 0.76, 7.2, 1/(Muon_jetRelIso[i]+1))) {    // Extra Iso requirement
-		goodLeptons.pop_back();
+	    	goodLeptons.pop_back();
 	    }
 	}
 	else if(isLooseMuon(i)) {
@@ -776,10 +771,10 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
 
     if(debug) printf("trig \n");
     /// Trigger
-    if(!HLT_DoubleMu8_Mass8_PFHT300 &&
-       !HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300 &&
-       !HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300 &&
-       !HLT_AK8PFJet450
+    if(((channel_ == mm && !HLT_DoubleMu8_Mass8_PFHT300) ||
+    	(channel_ == em && !HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300) ||
+    	(channel_ == ee && !HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300))
+       && !HLT_AK8PFJet450 && !HLT_PFJet450
        ) return;
     Fill1D("CutFlow", ++step);
 
@@ -821,14 +816,14 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
 
     if(debug) printf("zveto %d\n", passZVeto);
     if(!passZVeto) return;
-    // if(goodLeptons.size() != 2 && !passZVeto) return;
+    if(goodLeptons.size() == 2 && !passZVeto) return;
     Fill1D("CutFlow", ++step);
 
     if(debug)   printf("passed\n\n");
 
     if(debug)   return;
 
-    printf("1,%d,%d,%d,%d,%f,%d,%f,%f,%d,%d,%d,%d\n", nJets, nBJets, (int)goodLeptons.size(), (int)event, weight,lumi, goodLeptons[0].Pt(), goodLeptons[1].Pt(), goodLeptons[0].Charge(), goodLeptons[1].Charge(), (int)looseMuons.size(), (int)looseElectrons.size());
+    printf("1,%d,%d,%d,%d,%f,%d,%f,%f,%d,%d,%d,%d,%d\n", nJets, nBJets, (int)goodLeptons.size(), (int)event, weight,lumi, goodLeptons[0].Pt(), goodLeptons[1].Pt(), goodLeptons[0].Charge(), goodLeptons[1].Charge(), (int)looseMuons.size(), (int)looseElectrons.size(), passZVeto);
 
 
 
@@ -850,8 +845,6 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
 	}
 	return;
     }
-
-
 
 
     Fill1D("SR", getSRBin());
