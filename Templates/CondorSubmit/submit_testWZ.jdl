@@ -15,20 +15,20 @@ GetEnv               = false
 # TODO: Understand why AFS is required/remove dependency
 +RequiresSharedFS    = True
 
-WhenToTransferOutput = On_Exit
+WhenToTransferOutput = On_Exit_Or_Evict
 ShouldTransferFiles  = yes
 +IsFastQueueJob      = True
 request_memory       = 2000
 request_disk         = 2048000
 Requirements         = TARGET.Arch == "X86_64" && IsSlowSlot=!=true && (MY.RequiresSharedFS=!=true || TARGET.HasAFS_OSG) && (TARGET.HasParrotCVMFS=?=true || (TARGET.UWCMS_CVMFS_Exists  && TARGET.CMS_CVMFS_Exists))
 # stop jobs from running if they blow up
-periodic_hold        = DiskUsage/1024 > 10.0*2000
+periodic_hold        = (DiskUsage/1024 > 10.0*2000 ||  ImageSize/1024 > RequestMemory*2)
 Analysis = WZxsec2016
-Filelist = WZ2016MC.txt
-# TODO: Actually fill these From templates
-NPerJob = 5
+Filelist = FILELIST_REPLACE
+# TODO: Actually fill these properly from templates (not just sed)
+NPerJob = 3
 #There are 231 files for the test script
-NProcesses = 47
+NProcesses = NUMJOBS_REPLACE
 
 # Recommend randomizing file list so that one job does not
 # end up processing a bunch of the same files that take longer
@@ -37,9 +37,11 @@ NProcesses = 47
 
 # example: --inputs_from_file DYNano_LOandNLO.txt 2 0 -s Zselection --input_tier NanoAOD -o testZGenJets.root -a ZGen --test
 Arguments            = -a $(Analysis) -s Wselection_Full --output_file $(Analysis)_$(Filelist)_$(Process).root --input_tier NanoAOD --test --inputs_from_file $(Filelist).txt $(NPerJob) $(Process) 
-Transfer_Input_Files = ZGen_AnalysisCode.tgz
-output               = $(Analysis)_$(Filelist)_$(Process).out
-error                = $(Analysis)_$(Filelist)_$(Process).err
-Log                  = $(Analysis)_$(Filelist)_$(Process).log
+Transfer_Input_Files = $(Analysis)_AnalysisCode.tgz,$(Filelist).txt
+Transfer_Input_Files = $(Analysis)_AnalysisCode.tgz
+output               = logs/$(Analysis)_$(Filelist)_$(Process).out
+error                = logs/$(Analysis)_$(Filelist)_$(Process).err
+Log                  = logs/$(Analysis)_$(Filelist)_$(Process).log
 
 Queue $(NProcesses)
+

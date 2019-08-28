@@ -16,6 +16,7 @@
 #include "Analysis/VVAnalysis/interface/SelectorBase.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "Analysis/VVAnalysis/interface/helpers.h"
+#include "Analysis/VVAnalysis/interface/BranchManager.h"
 
 class NanoGenSelectorBase : public SelectorBase {
 public :
@@ -26,11 +27,19 @@ public :
     LorentzVector genMet;
 
     unsigned int nLeptons_ = 1;
-    static const unsigned int N_KEEP_GEN_ = 150;
+    static const unsigned int N_KEEP_GEN_ = 300;
     static const unsigned int N_KEEP_JET_ = 30;
+    static const unsigned int N_LHESCALE_WEIGHTS_ = 10;
+    static const unsigned int N_LHEPDF_WEIGHTS_ = 100;
     float weight;
+    
     // Values read from file
     Float_t genWeight;
+    Float_t LHEWeight;
+    UInt_t nLHEScaleWeight;
+    UInt_t nLHEPdfWeight;
+    Float_t LHEScaleWeight[N_LHESCALE_WEIGHTS_];
+    Float_t LHEPdfWeight[N_LHEPDF_WEIGHTS_];
     UInt_t nGenPart;
     Float_t GenPart_pt[N_KEEP_GEN_];
     Float_t GenPart_eta[N_KEEP_GEN_];
@@ -46,22 +55,7 @@ public :
     Float_t GenMET_pt;
     Float_t GenMET_phi;
     
-    TBranch* b_genWeight;
-    TBranch* b_nGenPart;
-    TBranch* b_GenPart_pt;
-    TBranch* b_GenPart_eta;
-    TBranch* b_GenPart_phi;
-    TBranch* b_GenPart_mass;
-    TBranch* b_GenPart_status;
-    TBranch* b_GenPart_pdgId;
-    TBranch* b_nGenJet;
-    TBranch* b_GenJet_pt;
-    TBranch* b_GenJet_eta;
-    TBranch* b_GenJet_phi;
-    TBranch* b_GenJet_mass;
-    TBranch* b_GenJet_status;
-    TBranch* b_GenMET_pt;
-    TBranch* b_GenMET_phi;
+    BranchManager b;
     
     // Readers to access the data (delete the ones you do not need).
     virtual void    Init(TTree *tree) override;

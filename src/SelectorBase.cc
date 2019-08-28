@@ -31,20 +31,21 @@ void SelectorBase::Init(TTree *tree)
         TNamed* name = (TNamed *) GetInputList()->FindObject("name");
         TNamed* chan = (TNamed *) GetInputList()->FindObject("channel");
         TNamed* selection = (TNamed *) GetInputList()->FindObject("selection");
+	TNamed* year = (TNamed *) GetInputList()->FindObject("year");
 
-        if (ntupleType != nullptr) {
-            std::string ntupleName = ntupleType->GetTitle();
-            if (ntupleName == "NanoAOD")
-                ntupleType_ = NanoAOD;
-            else if (ntupleName  == "UWVV")
-                ntupleType_ = UWVV;
-            else
-                throw std::invalid_argument("Unsupported ntuple type!");
-        }
-        else {
-            std::cerr << "INFO: Assuming NanoAOD ntuples" << std::endl;
-            ntupleType_ = NanoAOD;
-        }
+	if (ntupleType != nullptr) {
+	    std::string ntupleName = ntupleType->GetTitle();
+	    if (ntupleName == "NanoAOD")
+		ntupleType_ = NanoAOD;
+	    else if (ntupleName  == "UWVV")
+		ntupleType_ = UWVV;
+	    else
+		throw std::invalid_argument("Unsupported ntuple type!");
+	}
+	else {
+	    std::cerr << "INFO: Assuming NanoAOD ntuples" << std::endl;
+	    ntupleType_ = NanoAOD;
+	}
 
         if (name != nullptr) {
             name_ = name->GetTitle();
@@ -56,11 +57,14 @@ void SelectorBase::Init(TTree *tree)
             std::cerr << "INFO: Using default name \"Unknown\" for file" << std::endl;
             name_ = "Unknown";
         }
-
-        if (chan != nullptr) {
-            channelName_ = chan->GetTitle();
-        }
-        else if (ntupleType_ == UWVV)
+	if(year != nullptr) {
+	    year_ = yearMap_[year->GetTitle()];
+	}
+	
+	if (chan != nullptr) {
+	    channelName_ = chan->GetTitle();
+	}
+	else if (ntupleType_ == UWVV)
             channelName_ = fChain->GetTree()->GetDirectory()->GetName();
         if (selection != nullptr) {
             selectionName_ = selection->GetTitle();
@@ -169,23 +173,29 @@ void SelectorBase::UpdateDirectory()
   }
 }
 
+template<typename T>
+void SelectorBase::InitializeHistMap(std::vector<std::string>& labels, std::map<std::string, T*>& histMap) {
+    for (auto& label : labels) {
+        if (channel_ != Inclusive) {
+            auto histName = getHistName(label, "", channelName_);
+            histMap[histName] = {};
+        }
+        else {
+            for (auto& chan : allChannels_) {
+                auto histName = getHistName(label, "", chan);
+                histMap[histName] = {};
+            }
+        }
+    }
+}
+
 void SelectorBase::InitializeHistogramsFromConfig() {
     TList* histInfo = (TList *) GetInputList()->FindObject("histinfo");
     if (histInfo == nullptr ) 
         throw std::domain_error("Can't initialize histograms without passing histogram information to TSelector");
 
-    for (auto& label : hists1D_) {
-        if (channel_ != Inclusive) {
-            auto histName = getHistName(label, "", channelName_);
-            histMap1D_[histName] = {};
-        }
-        else {
-            for (auto& chan : allChannels_) {
-                auto histName = getHistName(label, "", chan);
-                histMap1D_[histName] = {};
-            }
-        }
-    }
+    InitializeHistMap(hists1D_, histMap1D_);
+    InitializeHistMap(weighthists1D_, weighthistMap1D_);
 
     for (auto && entry : *histInfo) {  
         TNamed* currentHistInfo = dynamic_cast<TNamed*>(entry);
@@ -232,17 +242,17 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
                 AddObject<TH1D>(histMap1D_[syst_histName], syst_histName.c_str(), 
                     histData[0].c_str(),nbins, xmin, xmax);
                 // TODO: Cleaner way to determine if you want to store systematics for weighted entries
-                //if (isaQGC_ && doaQGC_ && (weighthists_.find(name) != weighthists_.end())) { 
+                //if (isaQGC_ && doaQGC_ && (weighthistMap1D_.find(name) != weighthistMap1D_.end())) { 
                 //    std::string weightsyst_histName = name+"_lheWeights_"+syst.second;
-                //    AddObject<TH2D>(weighthists_[syst_histName], 
+                //    AddObject<TH2D>(weighthistMap1D_[syst_histName], 
                 //        (weightsyst_histName+"_"+channel).c_str(), histData[0].c_str(),
                 //        nbins, xmin, xmax, 1000, 0, 1000);
                 //}
             }
         }
         // Weight hists must be subset of 1D hists!
-        if (isMC_ && (weighthists_.find(histName) != weighthists_.end())) { 
-            AddObject<TH2D>(weighthists_[histName], 
+        if (isMC_ && (weighthistMap1D_.find(histName) != weighthistMap1D_.end())) { 
+            AddObject<TH2D>(weighthistMap1D_[histName], 
                 (name+"_lheWeights_"+channel).c_str(), histData[0].c_str(),
                 nbins, xmin, xmax, 1000, 0, 1000);
         }
@@ -262,8 +272,8 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
             }
         }
         // 3D weight hists must be subset of 2D hists!
-        if (isMC_ && (weighthists2D_.find(histName) != weighthists2D_.end())) { 
-            AddObject<TH3D>(weighthists2D_[histName], 
+        if (isMC_ && (weighthistMap2D_.find(histName) != weighthistMap2D_.end())) { 
+            AddObject<TH3D>(weighthistMap2D_[histName], 
                 (name+"_lheWeights_"+channel).c_str(), histData[0].c_str(),
                 nbins, xmin, xmax, nbinsy, ymin, ymax, 1000, 0, 1000);
         }

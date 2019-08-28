@@ -1,3 +1,6 @@
+#ifndef BranchManager_h
+#define BranchManager_h
+
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -42,5 +45,5 @@ struct BranchManager {
   }
 };
 
-
+#endif
 

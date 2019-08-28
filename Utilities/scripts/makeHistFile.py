@@ -24,6 +24,8 @@ def getComLineArgs():
         help="Number of cores to use (parallelize by dataset)")
     parser.add_argument("--input_tier", type=str,
         default="", help="Selection stage of input files")
+    parser.add_argument("--year", type=str,
+        default="default", help="Year of Analysis")
     parser.add_argument("-c", "--channels", 
                         type=lambda x : [i.strip() for i in x.split(',')],
                         default=["eee","eem","emm","mmm"], help="List of channels"
@@ -107,9 +109,10 @@ def makeHistFile(args):
     #            parallel=args['parallel'],
     #            )
 
-    selector = SelectorTools.SelectorDriver(args['analysis'], args['selection'], args['input_tier'])
+    selector = SelectorTools.SelectorDriver(args['analysis'], args['selection'], args['input_tier'], args['year'])
     selector.setOutputfile(fOut.GetName())
     selector.setInputs(sf_inputs+hist_inputs)
+
     selector.setNtupeType("UWVV" if args['uwvv'] else "NanoAOD")
     if args['uwvv']:
         print "Channels", args['channels']
