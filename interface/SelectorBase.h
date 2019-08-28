@@ -186,9 +186,11 @@ class SelectorBase : public TSelector {
     std::map<std::string, TH1D*> histMap1D_ = {};
     //TODO change the name to map and don't break things
     std::map<std::string, TH2D*> hists2D_ = {};
-    std::map<std::string, TH2D*> weighthists_ = {};
-    std::map<std::string, TH3D*> weighthists2D_ {};
+    std::map<std::string, TH2D*> weighthistMap1D_ = {};
+    std::map<std::string, TH3D*> weighthistMap2D_ {};
 
+    std::vector<std::string> hists1D_ = {};
+    std::vector<std::string> weighthists1D_ = {};
     // The histograms for which you also want systematic variations
     std::vector<std::string> systHists_ = {};
     std::vector<std::string> systHists2D_ = {};
@@ -219,6 +221,8 @@ class SelectorBase : public TSelector {
     std::vector<std::string> ReadHistDataFromConfig(std::string histDataString);
     std::string getHistName(std::string histName, std::string variationName, std::string channel);
     std::string getHistName(std::string histName, std::string variationName);
+    template<typename T>
+    void InitializeHistMap(std::vector<std::string>& labels, std::map<std::string, T*>& histMap);
 
     // Filling Functions
     template<typename T, typename... Args>

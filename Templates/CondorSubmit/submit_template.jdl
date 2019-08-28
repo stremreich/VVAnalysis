@@ -9,6 +9,7 @@ GetEnv               = false
 
 WhenToTransferOutput = On_Exit_Or_Evict
 ShouldTransferFiles  = yes
+want_graceful_removal = True 
 +IsFastQueueJob      = True
 request_memory       = 2000
 request_disk         = 2048000
