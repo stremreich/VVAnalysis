@@ -158,7 +158,7 @@ class SelectorDriver(object):
             sumweights_hist = self.outfile.Get("%s/sumweights" % dataset)
             if not sumweights_hist:
                 sumweights_hist = ROOT.TH1D("sumweights", "sumweights", 100, 0, 100)
-            sumweights_hist.SetDirectory(ROOT.gROOT)
+        sumweights_hist.SetDirectory(ROOT.gROOT)
         self.processLocalFiles(select, file_path, addSumweights, chan)
         output_list = select.GetOutputList()
         name = self.inputs.FindObject("name").GetTitle()

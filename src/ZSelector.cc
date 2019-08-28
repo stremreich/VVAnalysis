@@ -4,7 +4,9 @@
 
 void ZSelector::Init(TTree *tree)
 {
-    allChannels_ = {"ee", "mm", "Unknown"};
+    allChannels_ = {"ee", "mm"};
+    // Add CutFlow for Unknown to understand when channels aren't categorized
+    histMap1D_["CutFlow_Unknown"] = {};
     hists1D_ = {"CutFlow", "ZMass", "ZEta", "yZ", "ZPt", "ptl1", "etal1", "ptl2", "etal2",
         "ptj1", "ptj2", "ptj3", "etaj1", "etaj2", "etaj3", "phij1", "phij2", "phij3", "nJets",
         "MET",};
@@ -110,6 +112,8 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
     weight = 1;
     b.SetEntry(entry);
     
+    // You could resize the array per event to match the number number of muons/electrons read but
+    // it doesn't seem worth it to me. Just set to a high enough value
     if (nElectron > N_KEEP_MU_E_ || nMuon > N_KEEP_MU_E_) {
         std::string message = "Found more electrons or muons than max read number.\n    Found ";
         message += std::to_string(nElectron);
