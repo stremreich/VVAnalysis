@@ -5,32 +5,25 @@
 
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>>LorentzVector;
 
-void Efficiency::Init(TTree *tree) {
-  
-    b.SetTree(tree);
+enum PID {PID_MUON = 13, PID_ELECTRON = 11, PID_BJET = 5};
 
-    allChannels_ = {"mm", "ee", "em", "all", "lll"};
+void Efficiency::Init(TTree *tree) {
 
     hists1D_ = {"GenMuonPt","GenElecPt", "nGenMuon", "nGenElec", "nFakeMuon", "nFakeElec", "nRecoElec", "nRecoMuon", "RecoMuonPt", "RecoElecPt"};
-   
     // hists2D_ = {"bJetvsJets",    "Beff_b_btag", "Beff_j_btag", "Beff_b", "Beff_j"};
+    b.SetTree(tree);
 
+    allChannels_ = {"all"};
+    
     SelectorBase::Init(tree);
     
-    // for (auto item : *GetInputList()) {
-    // std::cout<< item->GetTitle() <<std::endl;
-    // }
-    
-    // TList* histInfo = (TList* ) GetInputList()->FindObject("histinfo");
-    // for (auto && entry : *histInfo) {  
-    //   TNamed* currentHistInfo = dynamic_cast<TNamed*>(entry);
-    //   std::string name = currentHistInfo->GetName();
-    //   std::cout << name<<std::endl;
-    // }
-    
-    TTTAna.SetInputList(GetInputList());
+    TList* slaveClassList = GetInputList();
+    slaveClassList->Add(new TNamed("isSlaveClass", "isSlaveClass"));
+    TTTAna.SetInputList(slaveClassList);
     TTTAna.Init(tree);
+    TTTAna.SetBranches();
 }
+
 void Efficiency::SetupNewDirectory() {
     SelectorBase::SetupNewDirectory();
 
@@ -38,15 +31,14 @@ void Efficiency::SetupNewDirectory() {
 }
 
 void Efficiency::SetBranchesNanoAOD() {
-  b.CleanUp();
-  // TTTAna.SetBranchesNanoAOD();
-  b.SetBranch("nGenPart", nGenPart);
-  b.SetBranch("GenPart_pt", GenPart_pt);
-  b.SetBranch("GenPart_pdgId", GenPart_pdgId);
-  b.SetBranch("GenPart_eta", GenPart_eta);
-  b.SetBranch("GenPart_phi", GenPart_phi);
-  b.SetBranch("GenPart_mass",GenPart_mass);
-
+    b.CleanUp();
+    
+    b.SetBranch("nGenPart", nGenPart);
+    b.SetBranch("GenPart_pt", GenPart_pt);
+    b.SetBranch("GenPart_pdgId", GenPart_pdgId);
+    b.SetBranch("GenPart_eta", GenPart_eta);
+    b.SetBranch("GenPart_phi", GenPart_phi);
+    b.SetBranch("GenPart_mass",GenPart_mass);
   
 }
 
@@ -143,3 +135,5 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   }
   return;
 }
+
+

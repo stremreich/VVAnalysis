@@ -27,7 +27,7 @@ void SelectorBase::Init(TTree *tree)
     TString option = GetOption();
 
     if (GetInputList() != nullptr) {
-        TNamed* ntupleType = (TNamed *) GetInputList()->FindObject("ntupleType");
+	TNamed* ntupleType = (TNamed *) GetInputList()->FindObject("ntupleType");
         TNamed* name = (TNamed *) GetInputList()->FindObject("name");
         TNamed* chan = (TNamed *) GetInputList()->FindObject("channel");
         TNamed* selection = (TNamed *) GetInputList()->FindObject("selection");
@@ -70,9 +70,9 @@ void SelectorBase::Init(TTree *tree)
             selectionName_ = selection->GetTitle();
         }
     }
-
+    
     if (selectionMap_.find(selectionName_) != selectionMap_.end()) {
-        selection_ = selectionMap_[selectionName_];
+	selection_ = selectionMap_[selectionName_];
     }
     else
         throw std::invalid_argument("Invalid selection!");
@@ -83,7 +83,7 @@ void SelectorBase::Init(TTree *tree)
     }
     if (doSystematics_ && isMC_) // isNonpromptEstimate?
         variations_.insert(systematics_.begin(), systematics_.end());
-
+    
     currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(name_.c_str()));
 
     if (channelMap_.find(channelName_) != channelMap_.end())
@@ -96,18 +96,23 @@ void SelectorBase::Init(TTree *tree)
             message += chan.first + ", " ;
         throw std::invalid_argument(message);
     }
+
+    // only make the directory iff class isn't being run as a slave class /////
+    TNamed* isSlaveClass = (TNamed *) GetInputList()->FindObject("isSlaveClass");
+    if(isSlaveClass != nullptr) return;
     
     if ( currentHistDir_ == nullptr ) {
-        currentHistDir_ = new TList();
-        currentHistDir_->SetName(name_.c_str());
-        fOutput->Add(currentHistDir_);
-        // Watch for something that I hope never happens,
-        size_t existingObjectPtrsSize = allObjects_.size();
-        SetupNewDirectory();
-        if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
-            std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
-        }
+	currentHistDir_ = new TList();
+	currentHistDir_->SetName(name_.c_str());
+	fOutput->Add(currentHistDir_);
+	// Watch for something that I hope never happens,
+	size_t existingObjectPtrsSize = allObjects_.size();
+	SetupNewDirectory();
+	if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
+	    std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
+	}
     }
+    
     UpdateDirectory();
 
     SetBranches();
@@ -207,23 +212,22 @@ void SelectorBase::InitializeHistogramsFromConfig() {
     for (auto && entry : *histInfo) {  
         TNamed* currentHistInfo = dynamic_cast<TNamed*>(entry);
         std::string name = currentHistInfo->GetName();
-	//	std::cout<<name<<std::endl;
-        std::vector<std::string> histData = ReadHistDataFromConfig(currentHistInfo->GetTitle());
-        
-        std::vector<std::string> channels = {channelName_};
-        if (channel_ == Inclusive) {
-            channels = allChannels_;
-        }
+	std::vector<std::string> histData = ReadHistDataFromConfig(currentHistInfo->GetTitle());
 
-        for (auto& chan : channels) {
-            auto histName = getHistName(name, "", chan); 
-            if (histMap2D_.find(histName) != histMap2D_.end() || histMap1D_.find(histName) != histMap1D_.end()) { 
-	      InitializeHistogramFromConfig(name, chan, histData);
-            }
-            //No need to print warning for every channel
-            else if (chan == channels.front())
-                std::cerr << "Skipping invalid histogram " << name << std::endl;
-        }
+	std::vector<std::string> channels = {channelName_};
+	if (channel_ == Inclusive) {
+	    channels = allChannels_;
+	}
+
+	for (auto& chan : channels) {
+	    auto histName = getHistName(name, "", chan); 
+	    if (histMap2D_.find(histName) != histMap2D_.end() || histMap1D_.find(histName) != histMap1D_.end()) { 
+		InitializeHistogramFromConfig(name, chan, histData);
+	    }
+	    //No need to print warning for every channel
+	    else if (chan == channels.front())
+		std::cerr << "Skipping invalid histogram " << name << std::endl;
+	}
     }
 }
 

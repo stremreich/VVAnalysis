@@ -26,5 +26,21 @@ struct GoodPart {
     int Id() {return std::abs(pdgId);}
 };
 
+/// Seems a little less clunky
+// Can also add some help functions as time goes on
+struct GenPart {
+    GoodPart gen;
+    GoodPart reco;
+
+    void SetupGen(double pt, double eta, double phi, double m, int pdg) {
+	gen = GoodPart(pt, eta, phi, m);
+	gen.SetPdgId(pdg);
+    }
+    int gId() {return gen.Id();}
+    double gPt() {return gen.Pt();}
+    double gEta() {return gen.Eta();}
+    double gPhi() {return gen.Phi();}
+    
+};
 
 #endif
