@@ -111,7 +111,7 @@ void ThreeLepSelector::Init(TTree *tree) {
 void ThreeLepSelector::SetBranchesNanoAOD() {
     //  NECESSARY!!!!
     b.CleanUp();
-
+    
     b.SetBranch("HLT_DoubleMu8_Mass8_PFHT300", HLT_DoubleMu8_Mass8_PFHT300);
     b.SetBranch("HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300", HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300);
     b.SetBranch("HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300", HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300);
@@ -142,7 +142,6 @@ void ThreeLepSelector::SetBranchesNanoAOD() {
 	b.SetBranch("Electron_mvaSpring16GP",        Electron_MVA);
 	b.SetBranch("Electron_cutBased_Sum16",       Electron_cutBased);
     }
-
     b.SetBranch("Electron_tightCharge", Electron_tightCharge);
     b.SetBranch("Electron_sieie",                        Electron_sieie);
     b.SetBranch("Electron_hoe",                          Electron_hoe);

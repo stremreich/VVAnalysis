@@ -141,16 +141,12 @@ def getListOfHDFSFiles(file_path):
 def getListOfFiles(filelist, selection, manager_path=""):
     if manager_path is "":
         manager_path = getManagerPath()
-    # let's try to change this........only looking at TTT data currently;
-#    data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
-#    data_info = UserInput.readAllInfo("/".join([data_path, "data/*"]))
-#    mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
-#    valid_names = data_info.keys() + mc_info.keys()
+    
+    data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
+    data_info = UserInput.readAllInfo("/".join([data_path, "data/*"]))
+    mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
+    valid_names = data_info.keys() + mc_info.keys()
 
-### CHANGE DATA PATH IF GOING FROM EFF TO TTT !!!!!!!!!!!!!! ######################
-    data_path = "%s/AnalysisDatasetManager/FileInfo/" % manager_path 
-    data_info = UserInput.readAllInfo("/".join([data_path, "Eff/*"]))
-    valid_names = data_info.keys()
     names = []
     for name in filelist:
         if ".root" in name:
