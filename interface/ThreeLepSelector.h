@@ -111,34 +111,6 @@ public :
   Float_t   Jet_chEmEF[N_KEEP_JET_];
   Int_t     Jet_jetId[N_KEEP_JET_];
   Int_t     Jet_hadronFlavour[N_KEEP_JET_];
-  
-  Int_t numPU;
-
-  UInt_t nJet;
-  Float_t Jet_btagCSVV2[N_KEEP_JET_];
-  Float_t Jet_btagDeepB[N_KEEP_JET_];
-  Float_t Jet_eta[N_KEEP_JET_];
-  Float_t Jet_phi[N_KEEP_JET_];
-  Float_t Jet_pt[N_KEEP_JET_];
-  Float_t Jet_mass[N_KEEP_JET_];
-  Float_t Jet_neHEF[N_KEEP_JET_];
-  Float_t Jet_neEmEF[N_KEEP_JET_];
-  Int_t Jet_nConstituents[N_KEEP_JET_];
-  Float_t Jet_chHEF[N_KEEP_JET_];  
-  Float_t Jet_chEmEF[N_KEEP_JET_];
-
-  /// gen 
-  Float_t GenJet_pt[N_KEEP_JET_];
-  UInt_t nGenJet;
-  Float_t GenMET_pt;
-
-  UInt_t nGenPart;
-  Float_t GenPart_pt[N_KEEP_MU_E_];
-  Int_t GenPart_pdgId[N_KEEP_MU_E_];
-  Float_t GenPart_eta[N_KEEP_MU_E_];
-  Float_t GenPart_phi[N_KEEP_MU_E_];
-  Float_t GenPart_mass[N_KEEP_MU_E_];
-  
 
     
   ClassDefOverride(ThreeLepSelector,0);

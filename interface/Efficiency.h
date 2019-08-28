@@ -19,8 +19,10 @@
 #include "Analysis/VVAnalysis/interface/SelectorBase.h"
 #include "Analysis/VVAnalysis/interface/BranchManager.h"
 #include "Analysis/VVAnalysis/interface/GoodParticle.h"
-
+#include "Analysis/VVAnalysis/interface/GenRecoParticle.h"
+//#include "TLorentzVector.h"
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
+
 
 class Efficiency : public SelectorBase {
  public:
@@ -32,6 +34,8 @@ class Efficiency : public SelectorBase {
   static const unsigned int N_KEEP_MU_E_ = 35;
   static const unsigned int N_KEEP_JET_ = 35;
 
+  int Electron = 11;
+  int Muon = 13;
   //// gen branches ///////////////////////////
 
   Float_t GenMET_pt;
@@ -66,15 +70,17 @@ class Efficiency : public SelectorBase {
   // any other functions??
   BranchManager b;
   Float_t weight_g;
-  std::vector<GoodPart> goodParts;
-  std::vector<GenPart> genVector;
+  // std::vector<GoodPart> goodParts;
+  // std::vector<GenPart> genVector;
   std::vector<GenPart> genElec;
   std::vector<GenPart> genMuon;
-  std::vector<GenPart> genJet;
-
+  //std::vector<GenPart> genJet;
+  std::vector<RecoPart> recoElec;
+  std::vector<RecoPart> recoMuon;
+  std::vector<FakePart> fakeElec;
+  std::vector<FakePart> fakeMuon;
 
   void clearValues();
-  
   // overloaded or necessary functions
   virtual void    SetBranchesNanoAOD() override;
   void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
