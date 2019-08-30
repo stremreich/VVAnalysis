@@ -209,11 +209,11 @@ def fillTemplatedFile(template_file_name, out_file_name, template_dict):
     with open(out_file_name, "w") as outFile:
         outFile.write(result)
 
-def getListOfFilesWithXSec(filelist, manager_path=""):
+def getListOfFilesWithXSec(filelist, manager_path="", selection="ntuples"):
     if manager_path is "":
         manager_path = getManagerPath()
-    data_path = "%s/%s/FileInfo" % (getManagerName(), manager_path)
-    files = getListOfFiles(filelist, "ntuples", manager_path)
+    data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
+    files = getListOfFiles(filelist, selection, manager_path)
     mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
     info = {}
     for file_name in files:
