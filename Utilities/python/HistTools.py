@@ -1,5 +1,6 @@
 import array
 import ROOT
+import logging
 
 def getDifference(fOut, name, dir1, dir2, ratioFunc=None):
     differences = ROOT.TList()
@@ -12,11 +13,11 @@ def getDifference(fOut, name, dir1, dir2, ratioFunc=None):
             diff = hist1.Clone()
             diff.Add(hist2, -1)
         elif not hist1:
-            print "WARNING: Hist %s was not produced for " \
-                "dataset(s) %s" % (histname, dir1)
+            logging.warning("Hist %s was not produced for " \
+                "dataset(s) %s" % (histname, dir1))
         elif not hist2:
-            print "WARNING: Hist %s was not produced for " \
-                "dataset(s) %s" % (histname, dir2)
+            logging.warning("Hist %s was not produced for " \
+                "dataset(s) %s" % (histname, dir2))
         differences.Add(diff)
     if ratioFunc:
         ratios = ratioFunc(differences)
@@ -162,12 +163,13 @@ def getVariationHists(hists, process_name, histUp_name, up_action, down_action, 
         histDown.SetBinContent(i, down_action(vals))
         # For now, skip this check on aQGC for now, since they're screwed up
         if "aqgc" in process_name: continue
+    logging.debug("For process %s: Central, down, up: %s, %s, %s" % (process_name, histCentral.Integral(), histDown.Integral(), histUp.Integral()))
     isValidVariation(process_name, histCentral, histUp, histDown)
     return [histUp, histDown]
 
 def isValidVariation(process_name, histCentral, histUp, histDown):
     for i in range(0, histCentral.GetNbinsX()+2):
-        if histDown.GetBinContent(i) >= histCentral.GetBinContent(i) and histCentral.GetBinContent(i) > 0:
+        if histDown.GetBinContent(i) >= histCentral.GetBinContent(i) and histCentral.GetBinContent(i) > 0.01:
             raise RuntimeError("Down variation >= central value for %s, hist %s"
                 " This shouldn't be possible.\n"
                 "down_hist: %0.4f\n" 
@@ -175,11 +177,11 @@ def isValidVariation(process_name, histCentral, histUp, histDown):
                 "bin: %i\n" 
                 % (process_name, histDown.GetName(), histDown.GetBinContent(i), histCentral.GetBinContent(i), i)
             )
-        if histUp.GetBinContent(i) <= histCentral.GetBinContent(i) and histCentral.GetBinContent(i) > 0:
+        if histUp.GetBinContent(i) <= histCentral.GetBinContent(i) and histCentral.GetBinContent(i) > 0.01:
             raise RuntimeError("Up variation <= central value for %s, hist %s."
                 " This shouldn't be possible.\n"
-                "up_hist: %0.2f\n" 
-                "central_hist: %0.2f\n" 
+                "up_hist: %0.4f\n" 
+                "central_hist: %0.4f\n" 
                 "bin: %i\n" 
                 % (process_name, histUp.GetName(), histUp.GetBinContent(i), histCentral.GetBinContent(i), i)
             )
@@ -257,7 +259,7 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
         if "aqgc" in directory:
             directory = name
         if not hist_file.Get(directory):
-            print "Skipping invalid filename %s" % directory
+            logging.warning("Skipping invalid filename %s" % directory)
             continue
         if hists == []:
             hists = [i.GetName() for i in hist_file.Get(directory).GetListOfKeys()]
@@ -266,7 +268,7 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
             sumweights_hist = hist_file.Get("/".join([directory.split("__")[0], "sumweights"]))
             if not sumweights_hist:
                 raise RuntimeError("Failed to find sumWeights for dataset %s" % directory)
-            sumweights = sumweights_hist.Integral()
+            sumweights = sumweights_hist.Integral(1, sumweights_hist.GetNbinsX()+2)
             sumweights_hist.Delete()
         for histname in hists:
             if histname == "sumweights": continue
