@@ -12,7 +12,7 @@ shapes nonprompt * ${output_file} nonprompt/${fit_variable}_Fakes nonprompt/${fi
 shapes data_obs  * ${output_file} data/${fit_variable}
 
 bin          all   
-observation  -1
+observation  ${data}
 
 ------------
 #nonprompt is data-driven Z+X background
@@ -30,4 +30,10 @@ trigger                 lnN       1.020             1.020             1.020     
 CMS_eff_e               shape       1                 1                 1            1          0
 CMS_RecoEff_e           shape       1                 1                 1            1          0
 CMS_eff_m               shape       1                 1                 1            1          0
-CMS_pileup              shape       1                 1                 1            1          0 
+#CMS_pileup              shape       1                 1                 1            1          0 
+QCDscale_HZZ_signal     shape       1                   0               0               0           0
+QCDscale_qqZZ_powheg    shape       0                   1               0               0           0
+QCDscale_ggZZ           lnN         0                   0               1.2             0           0
+QCDscale_VVV            shape       0                   0               0               1           0
+
+* autoMCStats 1

@@ -8,6 +8,7 @@ import json
 import array
 import string
 import socket
+import logging
 #try:
 import configparser
 #except:
@@ -50,13 +51,14 @@ def getManagerName():
     default_name = "AnalysisDatasetManager"
     if not os.path.isfile(config_name):
         logging.warning("dataset_manager_name not specified in config file %s" % config_name)
-        logging.warning("%s. Using default '%s'" % default_name)
+        logging.warning("Using default '%s'" % default_name)
         return default_name
     config = configparser.ConfigParser()
     config.read_file(open(config_name))
     if "dataset_manager_name" not in config['Setup']:
         logging.warning("dataset_manager_name not specified in config file %s" % config_name)
-        logging.warning("%s. Using default '%s'" % default_name)
+        logging.warning("Using default '%s'" % default_name)
+        return default_name
     return config['Setup']['dataset_manager_name']
 
 def getManagerPath():
@@ -81,7 +83,18 @@ def getCombinePath():
         raise ValueError("dataset_manager_path not specified in config file Template/config.%s" 
                             % os.environ["USER"])
     return config['Setup']['combine_path'] + "/"
-def getListOfEWKFilenames():
+def getListOfEWKFilenames(analysis=""):
+    if "ZZ4l" in analysis:
+        return [
+            "zz4l-powheg",
+            "ggZZ4e",
+            "ggZZ4m",
+            "ggZZ4t",
+            "ggZZ2e2mu",
+            "ggZZ2e2tau",
+            "ggZZ2mu2tau",
+        ]
+    # TODO: This is obviously WZ specific and should be updated
     return [
     #    "wz3lnu-powheg",
     # Use jet binned WZ samples for subtraction by default
