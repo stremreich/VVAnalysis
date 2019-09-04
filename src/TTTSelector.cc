@@ -52,7 +52,7 @@ void TTTSelector::Init(TTree *tree){
   
   allChannels_ = {"ee", "mm", "em", "all"};
  
-  hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR", "bjetpt", "jetpt", "nbjet", "njet", "jetphi","bjetphi", "phil1", "phil2","HT","MET", "nelec", "nmuon", "lept_charge", "before", "after"};
+  hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR", "bjetpt", "jetpt", "nbjet", "njet", "jetphi","bjetphi", "phil1", "phil2","HT","MET", "nelec", "nmuon", "lept_charge", "before", "after", "nGoodParts"};
   hists2D_ = {"bJetvsJets"};
   
   SelectorBase::Init(tree);
@@ -374,6 +374,8 @@ void TTTSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::stri
   
   int step = 0;
   Fill1D("CutFlow", 0);
+
+  Fill1D("nGoodParts", goodParts.size());
   
   /// 2 good leptons
   if(goodParts.size() != 2) return;

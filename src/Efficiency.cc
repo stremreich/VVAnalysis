@@ -1,3 +1,4 @@
+
 #include "Analysis/VVAnalysis/interface/Efficiency.h"
 #include "TLorentzVector.h"
 #define Fill1D(NAME, VALUE_) HistFullFill(histMap1D_, NAME, variation.second, VALUE_, weight_g);
@@ -6,6 +7,7 @@
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>>LorentzVector;
 
 enum PID {PID_MUON = 13, PID_ELECTRON = 11, PID_BJET = 5};
+enum TYPE {RECO =1, FAKE = 2, NOT_RECO = 3};
 
 void Efficiency::Init(TTree *tree) {
 
@@ -22,6 +24,7 @@ void Efficiency::Init(TTree *tree) {
     TTTAna.SetInputList(slaveClassList);
     TTTAna.Init(tree);
     TTTAna.SetBranches();
+
 }
 
 void Efficiency::SetupNewDirectory() {
@@ -44,12 +47,10 @@ void Efficiency::SetBranchesNanoAOD() {
 
 void Efficiency::clearValues() {
   weight_g=1;
-  genElec.clear();
-  genMuon.clear();
-  recoElec.clear();
-  recoMuon.clear();
-  fakeElec.clear();
-  fakeMuon.clear();
+  //notrecoLeptons.clear();
+  recoLeptons.clear();
+  fakeLeptons.clear();
+  genLeptons.clear();
 }
 
 void Efficiency::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) {
@@ -57,83 +58,96 @@ void Efficiency::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::
   b.SetEntry(entry);
   TTTAna.LoadBranchesNanoAOD(entry,variation);
 
-  for(size_t i =0; i< nGenPart; i++) {
-    if (abs(GenPart_pdgId[i]) == Electron) {
-      genElec.push_back(GenPart(SetupPtEtaPhiM(GenPart,i)));
-      
-      
-    }
-    else if (abs(GenPart_pdgId[i]) == Muon) {
-      genMuon.push_back(GenPart(SetupPtEtaPhiM(GenPart,i)));
-    }
-  }
-  
-  int fakeIdx=0;
-  for(auto recolep : TTTAna.goodLeptons) {
-    bool found = false;
-    if (abs(recolep.Id()) == Electron) {
-      int eIdx =0;
-      for(auto gen_elec : genElec) {
-	if(reco::deltaR(recolep.v, gen_elec.v_g) <0.4) {
-	  found = true;
-	  recoElec.push_back(RecoPart(SetupPtEtaPhiM(TTTAna.Electron, eIdx)));
-	  break;
-	}
-	eIdx++;
-      }
-    }
-    else if (abs(recolep.Id()) ==Muon) {
-      int mIdx =0;
-      for(auto gen_muon : genMuon) {
-	if (reco::deltaR(recolep.v, gen_muon.v_g)<0.4) {
-	  found =true;
-	  recoMuon.push_back(RecoPart(SetupPtEtaPhiM(TTTAna.Muon, mIdx)));
-	  break;
-	}
-	mIdx++;
-      }
-    }
-    if (!found) {
-      if (abs(recolep.Id()) == Electron) {
-	fakeElec.push_back(FakePart(SetupPtEtaPhiM(TTTAna.Electron, fakeIdx)));
-      }
-      else if (abs(recolep.Id()) ==Muon) {
-	fakeMuon.push_back(FakePart(SetupPtEtaPhiM(TTTAna.Muon, fakeIdx)));
-      }
-      fakeIdx++;
+  // GenPart genpart
+  for (size_t i=0; i< nGenPart; i++) {
+    if (abs(GenPart_pdgId[i]) == PID_ELECTRON || abs(GenPart_pdgId[i]) == PID_MUON) {
+      genLeptons.push_back(GenPart(SetupPtEtaPhiM(GenPart, i)));
+      genLeptons.back().SetPdgId(abs(GenPart_pdgId[i]));
     }
   }
 
+  int idx =0;
+  for (auto goodlep : TTTAna.goodLeptons) {
+    bool found =false;
+    for (auto genlep : genLeptons) {
+      if (reco::deltaR(goodlep.v, genlep.v)<0.4) {
+      // good lepton is a reco
+	if (abs(goodlep.Id()) == PID_ELECTRON) {
+	  recoLeptons.push_back(RecoPart(SetupPtEtaPhiM(TTTAna.Electron,idx)));
+	  recoLeptons.back().SetPdgId(abs(goodlep.Id()));
+	  found = true;
+	}
+	else if (abs(goodlep.Id()) == PID_MUON) {
+	  recoLeptons.push_back(RecoPart(SetupPtEtaPhiM(TTTAna.Muon, idx)));
+	  recoLeptons.back().SetPdgId(abs(goodlep.Id()));
+	  found = true;
+	}
+      }
+    }
+    if (!found) {
+      // good lepton is a fake
+      if (abs(goodlep.Id()) == PID_ELECTRON) {
+  	fakeLeptons.push_back(FakePart(SetupPtEtaPhiM(TTTAna.Electron, idx)));
+	fakeLeptons.back().SetPdgId(abs(goodlep.Id()));
+      }
+      else if (abs(goodlep.Id()) == PID_MUON) {
+  	fakeLeptons.push_back(FakePart(SetupPtEtaPhiM(TTTAna.Muon, idx)));
+	fakeLeptons.back().SetPdgId(abs(goodlep.Id()));
+      }
+    }
+    idx++;
+  }
+
+    
   channelName_ = "all";
   channel_ = channelMap_[channelName_];
 }
 
 void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) {
+  int nGenElec = 0;
+  int nGenMuon = 0;
+  int nRecoElec = 0;
+  int nRecoMuon = 0;
+  for (auto gen: genLeptons) {
+    if (gen.Id() == PID_ELECTRON) {
+      nGenElec ++;
+      Fill1D("GenElecPt", gen.Pt());
+    }
+    else if (gen.Id() == PID_MUON) {
+      std::cout<<"found muon!"<<std::endl;
+      nGenMuon ++;
+      Fill1D("GenMuonPt", gen.Pt());
+    }
+  }
 
-  for (size_t x=0; x<genElec.size(); x++) {
-    Fill1D("nGenElec", x);
-    Fill1D("GenElecPt", genElec[x].Pt());
-  }
-  for (size_t y=0; y<genMuon.size(); y++) {
-    Fill1D("nGenMuon", y);
-    Fill1D("GenMuonPt", genMuon[y].Pt());
+
+  for (size_t x=0; x<fakeLeptons.size(); x++) {
+    if (fakeLeptons[x].Id() == PID_ELECTRON) {
+      Fill1D("nFakeElec", x);
+    }
+    else if (fakeLeptons[x].Id()==PID_MUON) {
+      Fill1D("nFakeMuon", x);
+    }
   }
 
-  for (size_t a=0; a<fakeElec.size(); a++) {
-    Fill1D("nFakeElec", a);
+  for (auto reco : recoLeptons) {
+    if (reco.Id() == PID_ELECTRON) {
+      nRecoElec ++;
+      Fill1D("RecoElecPt", reco.Pt());
+    }
+    else if (reco.Id() == PID_MUON) {
+      nRecoMuon ++;
+      Fill1D("RecoMuonPt", reco.Pt());
+    }
   }
-  for (size_t b=0; b<fakeMuon.size(); b++) {
-    Fill1D("nFakeMuon", b);
-  }
-  for (size_t c=0; c<recoElec.size(); c++) {
-    Fill1D("nRecoElec", c);
-    Fill1D("RecoElecPt", recoElec[c].Pt());
-  }
-  for (size_t f=0; f<recoMuon.size(); f++) {
-    Fill1D("nRecoMuon", f);
-    Fill1D("RecoMuonPt", recoMuon[f].Pt());
-  }
+
+  Fill1D("nGenElec", nGenElec);
+  Fill1D("nGenMuon", nGenMuon);
+  Fill1D("nRecoElec", nRecoElec);
+  Fill1D("nRecoMuon", nRecoMuon);
+  
   return;
 }
+
 
 
