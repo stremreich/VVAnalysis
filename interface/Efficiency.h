@@ -18,7 +18,7 @@
 #include "Analysis/VVAnalysis/interface/ScaleFactor.h"
 #include "Analysis/VVAnalysis/interface/SelectorBase.h"
 #include "Analysis/VVAnalysis/interface/BranchManager.h"
-//#include "Analysis/VVAnalysis/interface/GoodParticle.h"
+#include "Analysis/VVAnalysis/interface/GoodParticle.h"
 #include "Analysis/VVAnalysis/interface/GenRecoParticle.h"
 //#include "TLorentzVector.h"
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
@@ -31,34 +31,30 @@ class Efficiency : public SelectorBase {
 
  
   //  //NanoAOD variables //keep mu e was 15 --> bumped it up to 35
-  static const unsigned int N_KEEP_MU_E_ = 35;
+  // static const unsigned int N_KEEP_MU_E_ = 35;
   static const unsigned int N_KEEP_JET_ = 35;
+  static const unsigned int N_KEEP_GEN_ = 250;
 
   //// gen branches ///////////////////////////
 
   Float_t GenMET_pt;
 
   UInt_t nGenPart;
-  Float_t GenPart_pt[N_KEEP_MU_E_];
-  Int_t   GenPart_pdgId[N_KEEP_MU_E_];
-  Float_t GenPart_eta[N_KEEP_MU_E_];
-  Float_t GenPart_phi[N_KEEP_MU_E_];
-  Float_t GenPart_mass[N_KEEP_MU_E_];
+  Float_t GenPart_pt[N_KEEP_GEN_];
+  Int_t   GenPart_pdgId[N_KEEP_GEN_];
+  Float_t GenPart_eta[N_KEEP_GEN_];
+  Float_t GenPart_phi[N_KEEP_GEN_];
+  Float_t GenPart_mass[N_KEEP_GEN_];
 
   // any other functions??
   BranchManager b;
   Float_t weight_g;
   std::vector<GenPart> genLeptons;
-  std::vector<GenPart> notrecoLeptons;
-  // std::vector<GenPart> recoLeptons;
-  // std::vector<GenPart> fakeLeptons;
-  
-  void clearValues();
-
-    // part of the old stuff
   std::vector<RecoPart> recoLeptons;
   std::vector<FakePart> fakeLeptons;
-
+  
+  void clearValues();
+  
   // overloaded or necessary functions
   virtual void    SetBranchesNanoAOD() override;
   void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;

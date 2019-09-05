@@ -58,12 +58,22 @@ void Efficiency::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::
   b.SetEntry(entry);
   TTTAna.LoadBranchesNanoAOD(entry,variation);
 
-  // GenPart genpart
+  if (nGenPart > N_KEEP_GEN_) {
+    std::string message = "Found more Gen particles than max read number. \n Found" ;
+    message += std::to_string(nGenPart);
+    message += " particles\n  --> Max read number was ";
+    message += std::to_string(N_KEEP_GEN_);
+    message += "\nExiting because this can cause problems. Increase N_KEEP_GEN_ to avoid this error.\n";
+    throw std::domain_error(message);
+  }
+  
   for (size_t i=0; i< nGenPart; i++) {
-    if (abs(GenPart_pdgId[i]) == PID_ELECTRON || abs(GenPart_pdgId[i]) == PID_MUON) {
+    if (std::abs(GenPart_pdgId[i]) == PID_ELECTRON || std::abs(GenPart_pdgId[i]) == PID_MUON) {
       genLeptons.push_back(GenPart(SetupPtEtaPhiM(GenPart, i)));
       genLeptons.back().SetPdgId(abs(GenPart_pdgId[i]));
+
     }
+    else continue;
   }
 
   int idx =0;
@@ -72,27 +82,27 @@ void Efficiency::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::
     for (auto genlep : genLeptons) {
       if (reco::deltaR(goodlep.v, genlep.v)<0.4) {
       // good lepton is a reco
-	if (abs(goodlep.Id()) == PID_ELECTRON) {
-	  recoLeptons.push_back(RecoPart(SetupPtEtaPhiM(TTTAna.Electron,idx)));
-	  recoLeptons.back().SetPdgId(abs(goodlep.Id()));
-	  found = true;
-	}
-	else if (abs(goodlep.Id()) == PID_MUON) {
-	  recoLeptons.push_back(RecoPart(SetupPtEtaPhiM(TTTAna.Muon, idx)));
-	  recoLeptons.back().SetPdgId(abs(goodlep.Id()));
-	  found = true;
-	}
+  	if (abs(goodlep.Id()) == PID_ELECTRON) {
+  	  recoLeptons.push_back(RecoPart(SetupPtEtaPhiM(TTTAna.Electron,idx)));
+  	  recoLeptons.back().SetPdgId(abs(goodlep.Id()));
+  	  found = true;
+  	}
+  	else if (abs(goodlep.Id()) == PID_MUON) {
+  	  recoLeptons.push_back(RecoPart(SetupPtEtaPhiM(TTTAna.Muon, idx)));
+  	  recoLeptons.back().SetPdgId(abs(goodlep.Id()));
+  	  found = true;
+  	}
       }
     }
     if (!found) {
       // good lepton is a fake
       if (abs(goodlep.Id()) == PID_ELECTRON) {
   	fakeLeptons.push_back(FakePart(SetupPtEtaPhiM(TTTAna.Electron, idx)));
-	fakeLeptons.back().SetPdgId(abs(goodlep.Id()));
+  	fakeLeptons.back().SetPdgId(abs(goodlep.Id()));
       }
       else if (abs(goodlep.Id()) == PID_MUON) {
   	fakeLeptons.push_back(FakePart(SetupPtEtaPhiM(TTTAna.Muon, idx)));
-	fakeLeptons.back().SetPdgId(abs(goodlep.Id()));
+  	fakeLeptons.back().SetPdgId(abs(goodlep.Id()));
       }
     }
     idx++;
@@ -110,17 +120,17 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   int nRecoMuon = 0;
   for (auto gen: genLeptons) {
     if (gen.Id() == PID_ELECTRON) {
-      nGenElec ++;
       Fill1D("GenElecPt", gen.Pt());
+       nGenElec ++;
+
     }
     else if (gen.Id() == PID_MUON) {
-      std::cout<<"found muon!"<<std::endl;
-      nGenMuon ++;
       Fill1D("GenMuonPt", gen.Pt());
+      nGenMuon ++;
+	
     }
   }
-
-
+  
   for (size_t x=0; x<fakeLeptons.size(); x++) {
     if (fakeLeptons[x].Id() == PID_ELECTRON) {
       Fill1D("nFakeElec", x);
@@ -132,15 +142,16 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
 
   for (auto reco : recoLeptons) {
     if (reco.Id() == PID_ELECTRON) {
-      nRecoElec ++;
       Fill1D("RecoElecPt", reco.Pt());
+      nRecoElec ++;
+
     }
     else if (reco.Id() == PID_MUON) {
-      nRecoMuon ++;
       Fill1D("RecoMuonPt", reco.Pt());
+      nRecoMuon ++;
+
     }
   }
-
   Fill1D("nGenElec", nGenElec);
   Fill1D("nGenMuon", nGenMuon);
   Fill1D("nRecoElec", nRecoElec);
