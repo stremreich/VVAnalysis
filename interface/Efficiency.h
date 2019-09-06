@@ -19,7 +19,7 @@
 #include "Analysis/VVAnalysis/interface/SelectorBase.h"
 #include "Analysis/VVAnalysis/interface/BranchManager.h"
 #include "Analysis/VVAnalysis/interface/GoodParticle.h"
-#include "Analysis/VVAnalysis/interface/GenRecoParticle.h"
+//#include "Analysis/VVAnalysis/interface/GenRecoParticle.h"
 //#include "TLorentzVector.h"
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
 
@@ -49,9 +49,9 @@ class Efficiency : public SelectorBase {
   // any other functions??
   BranchManager b;
   Float_t weight_g;
-  std::vector<GenPart> genLeptons;
-  std::vector<RecoPart> recoLeptons;
-  std::vector<FakePart> fakeLeptons;
+  std::vector<GenPart> Leptons;
+  //std::vector<RecoPart> recoLeptons;
+  // std::vector<FakePart> fakeLeptons;
   
   void clearValues();
   

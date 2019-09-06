@@ -24,27 +24,27 @@
 /* }; */
 
 
-struct GenPart {
-  LorentzVector v;
-  int pdgId;
-  int index;
+/* struct GenPart { */
+/*   LorentzVector v; */
+/*   int pdgId; */
+/*   int index; */
   
-  GenPart(double pt, double eta, double phi, double m ) : v(pt, eta, phi, m) {
+/*   GenPart(double pt, double eta, double phi, double m ) : v(pt, eta, phi, m) { */
   
-  }
+/*   } */
 
-  void SetPdgId(int pdg) {
-    pdgId = pdg;
-  }
+/*   void SetPdgId(int pdg) { */
+/*     pdgId = pdg; */
+/*   } */
   
-  int Id() {return std::abs(pdgId);}
+/*   int Id() {return std::abs(pdgId);} */
 
   
-  double Pt() {return v.Pt();}
-  double Eta() {return v.Eta();}
-  double Phi() {return v.Phi();}
+/*   double Pt() {return v.Pt();} */
+/*   double Eta() {return v.Eta();} */
+/*   double Phi() {return v.Phi();} */
 
-};
+/* }; */
 
 struct RecoPart {
   LorentzVector v;
