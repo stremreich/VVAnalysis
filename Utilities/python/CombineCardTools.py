@@ -140,7 +140,7 @@ class CombineCardTools(object):
         return plots
 
     # processName needs to match a PlotGroup 
-    def loadHistsForProcess(self, processName, addTheory, scaleNorm=1):
+    def loadHistsForProcess(self, processName, addTheory, central=-1, scaleNorm=1):
         plotsToRead = self.listOfHistsByProcess(processName, addTheory)
 
         group = HistTools.makeCompositeHists(self.inputFile, processName, 
@@ -170,8 +170,9 @@ class CombineCardTools(object):
                 if not weightHist:
                     logging.warning("Failed to find %s. Skipping" % self.weightHistName(chan, processName))
                     continue
-                scaleHists = HistTools.getScaleHists(weightHist, processName, self.rebin)
-                group.extend(scaleHists)
+                scaleHists = HistTools.getScaleHists(weightHist, processName, self.rebin, central=central)
+                pdfHists = HistTools.getPDFHists(weightHist, range(9,8+100), processName, self.rebin, central=central)
+                group.extend(scaleHists+pdfHists)
         #TODO: You may want to combine channels before removing zeros
         self.combineChannels(group)
         #TODO: Make optional
@@ -197,7 +198,7 @@ class CombineCardTools(object):
         chan_dict["output_file"] = self.outputFile.GetName()
         outputCard = self.templateName.split("/")[-1].format(channel=chan, year=year) 
         outputCard = outputCard.replace("template", "")
-        #outputCard = outputCard.replace("__", "_")
+        outputCard = outputCard.replace("__", "_")
         ConfigureJobs.fillTemplatedFile(self.templateName.format(channel=chan, year=year),
             "/".join([self.outputFolder, outputCard]),
             chan_dict

@@ -114,6 +114,7 @@ def getStatHists(hist, name, chan, signal):
     return (stat_hists, variation_names)
 
 def getWeightHistProjection(init2D_hist, name, entry, rebin): 
+    print name, entry
     hist_name = init2D_hist.GetName().replace("lheWeights", name+"_weight%i" % entry)
     tmphist = init2D_hist.ProjectionX("temp", entry, entry, "e")
     hist = tmphist.Clone(hist_name) if not rebin else tmphist.Rebin(len(rebin)-1, hist_name, rebin)
@@ -130,10 +131,10 @@ def getLHEWeightHists(init2D_hist, entries, name, variation_name, rebin=None):
 def getPDFHists(init2D_hist, entries, name, rebin=None, central=0):
     hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
     #return hists
+    upaction = lambda x: x[int(0.84*len(entries))] if central == -1 else x[central]*(1+getPDFPercentVariation(x))
+    downaction = lambda x: x[int(0.16*len(entries))] if central == -1 else x[central]*(1+getPDFPercentVariation(x))
     return getVariationHists(hists, name, hist_name, 
-            lambda x: x[central]*(1+getPDFPercentVariation(x)), 
-            lambda x: x[central]*(1-getPDFPercentVariation(x)),
-            central
+            upaction, downaction, central
     )
 
 def getPDFPercentVariation(values):
@@ -143,7 +144,9 @@ def getPDFPercentVariation(values):
     return abs(values[84] - values[16])/denom
 
 def getScaleHists(scale_hist2D, name, rebin=None, central=0, exclude=[7,9]):
-    entries = [i for i in range(1,10) if i not in exclude]
+    if central == -1: 
+        exclude = [6,8] # Hack! For nanoaod
+    entries = [i for i in range(1,10 if central != -1 else 9) if i not in exclude]
     hists, hist_name = getLHEWeightHists(scale_hist2D, entries, name, "QCDscale", rebin)
     return getVariationHists(hists, name, hist_name, lambda x: x[-1], lambda x: x[1], central)
 
@@ -151,20 +154,21 @@ def getVariationHists(hists, process_name, histUp_name, up_action, down_action, 
     histUp = hists[central].Clone(histUp_name)
     histDown = histUp.Clone(histUp_name.replace("Up", "Down"))
     
-    histCentral = hists.pop(central)
+    histCentral = hists.pop(central) if central != -1 else None
     # Include overflow
-    for i in range(0, histCentral.GetNbinsX()+2):
+    for i in range(0, histUp.GetNbinsX()+2):
         vals = []
         for hist in hists:
             vals.append(hist.GetBinContent(i))
         vals.sort()
-        vals.insert(0, histCentral.GetBinContent(i))
+        vals.insert(0, histCentral.GetBinContent(i) if histCentral else 0)
         histUp.SetBinContent(i, up_action(vals))
         histDown.SetBinContent(i, down_action(vals))
         # For now, skip this check on aQGC for now, since they're screwed up
         if "aqgc" in process_name: continue
-    logging.debug("For process %s: Central, down, up: %s, %s, %s" % (process_name, histCentral.Integral(), histDown.Integral(), histUp.Integral()))
-    isValidVariation(process_name, histCentral, histUp, histDown)
+    logging.debug("For process %s: Central, down, up: %s, %s, %s" % (process_name, histCentral.Integral() if histCentral else 0, histDown.Integral(), histUp.Integral()))
+    if histCentral:
+        isValidVariation(process_name, histCentral, histUp, histDown)
     return [histUp, histDown]
 
 def isValidVariation(process_name, histCentral, histUp, histDown):
@@ -251,10 +255,6 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
     composite = ROOT.TList()
     composite.SetName(name)
     for directory in [str(i) for i in members.keys()]:
-        #TODO: Remove this, it's very WZ specific
-        dirname = directory
-        directory = directory.replace("_", "-")
-        directory = directory.replace("--", "__")
         # For aQGC, the different plot groups should already be in their own files
         if "aqgc" in directory:
             directory = name
@@ -264,8 +264,8 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
         if hists == []:
             hists = [i.GetName() for i in hist_file.Get(directory).GetListOfKeys()]
         sumweights = 0
-        if "data" not in directory.lower():
-            sumweights_hist = hist_file.Get("/".join([directory.split("__")[0], "sumweights"]))
+        if "data" not in directory.lower() and "nonprompt" not in directory.lower():
+            sumweights_hist = hist_file.Get("/".join([directory, "sumweights"]))
             if not sumweights_hist:
                 raise RuntimeError("Failed to find sumWeights for dataset %s" % directory)
             sumweights = sumweights_hist.Integral(1, sumweights_hist.GetNbinsX()+2)
@@ -281,7 +281,8 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
             if hist:
                 sumhist = composite.FindObject(hist.GetName())
                 if sumweights:
-                    hist.Scale(members[dirname.split("__")[0]]*1000*lumi/sumweights)
+                    xsec = members[directory if directory in members.keys() else directory.split("__")[0]]
+                    hist.Scale(xsec*1000*lumi/sumweights)
                 addOverflowAndUnderflow(hist, underflow, overflow)
             else:
                 raise RuntimeError("hist %s was not produced for "

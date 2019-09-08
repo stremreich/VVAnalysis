@@ -230,7 +230,7 @@ def getListOfFilesWithXSec(filelist, manager_path="", selection="ntuples"):
     mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
     info = {}
     for file_name in files:
-        if "data" in file_name.lower():
+        if "data" in file_name.lower() or "nonprompt" in file_name.lower():
             info.update({file_name : 1})
         else:
             file_info = mc_info[file_name.split("__")[0]]
