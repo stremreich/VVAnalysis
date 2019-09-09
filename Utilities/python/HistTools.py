@@ -115,7 +115,6 @@ def getStatHists(hist, name, chan, signal):
     return (stat_hists, variation_names)
 
 def getWeightHistProjection(init2D_hist, name, entry, rebin): 
-    print name, entry
     hist_name = init2D_hist.GetName().replace("lheWeights", name+"_weight%i" % entry)
     tmphist = init2D_hist.ProjectionX("temp", entry, entry, "e")
     hist = tmphist.Clone(hist_name) if not rebin else tmphist.Rebin(len(rebin)-1, hist_name, rebin)
@@ -131,8 +130,13 @@ def getLHEWeightHists(init2D_hist, entries, name, variation_name, rebin=None):
 
 def getMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
     hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
-    upaction = lambda x: x[int(0.84*len(entries))] if central == -1 else x[central]*(1+getPDFPercentVariation(x))
-    downaction = lambda x: x[int(0.16*len(entries))] if central == -1 else x[central]*(1+getPDFPercentVariation(x))
+    if central == -1:
+        upaction = lambda x: x[int(0.84*len(entries))] 
+        downaction = lambda x: x[int(0.16*len(entries))] 
+    else:
+        upaction = lambda x : x[central]*(1+getPDFPercentVariation(x))
+        downaction = lambda x: x[central]*(1-getPDFPercentVariation(x))
+
     return getVariationHists(hists, name, hist_name, 
             upaction, downaction, central
     )
@@ -178,27 +182,29 @@ def getVariationHists(hists, process_name, histUp_name, up_action, down_action, 
         # For now, skip this check on aQGC for now, since they're screwed up
         if "aqgc" in process_name: continue
     logging.debug("For process %s: Central, down, up: %s, %s, %s" % (process_name, histCentral.Integral() if histCentral else 0, histDown.Integral(), histUp.Integral()))
-    if histCentral:
+    if histCentral and False: # Off for now, it can happen that groups have some hists with no weights which screws this up
         isValidVariation(process_name, histCentral, histUp, histDown)
     return [histUp, histDown]
 
 def isValidVariation(process_name, histCentral, histUp, histDown):
     for i in range(0, histCentral.GetNbinsX()+2):
-        if histDown.GetBinContent(i) >= histCentral.GetBinContent(i) and histCentral.GetBinContent(i) > 0.01:
+        if histDown.GetBinContent(i) > histCentral.GetBinContent(i) and histCentral.GetBinContent(i) > 0.01:
             raise RuntimeError("Down variation >= central value for %s, hist %s"
                 " This shouldn't be possible.\n"
+                "up_hist: %0.4f\n" 
                 "down_hist: %0.4f\n" 
                 "central_hist: %0.4f\n" 
                 "bin: %i\n" 
-                % (process_name, histDown.GetName(), histDown.GetBinContent(i), histCentral.GetBinContent(i), i)
+                % (process_name, histDown.GetName(), histUp.GetBinContent(i), histDown.GetBinContent(i), histCentral.GetBinContent(i), i)
             )
-        if histUp.GetBinContent(i) <= histCentral.GetBinContent(i) and histCentral.GetBinContent(i) > 0.01:
+        if histUp.GetBinContent(i) < histCentral.GetBinContent(i) and histCentral.GetBinContent(i) > 0.01:
             raise RuntimeError("Up variation <= central value for %s, hist %s."
                 " This shouldn't be possible.\n"
                 "up_hist: %0.4f\n" 
+                "down_hist: %0.4f\n" 
                 "central_hist: %0.4f\n" 
                 "bin: %i\n" 
-                % (process_name, histUp.GetName(), histUp.GetBinContent(i), histCentral.GetBinContent(i), i)
+                % (process_name, histUp.GetName(), histUp.GetBinContent(i), histDown.GetBinContent(i), histCentral.GetBinContent(i), i)
             )
 
 def getTransformed3DScaleHists(scale_hist3D, transformation, transform_args, name):

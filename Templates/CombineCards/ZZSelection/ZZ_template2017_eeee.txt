@@ -38,5 +38,9 @@ QCDscale_HZZ_signal     shape       1                   0               0       
 QCDscale_qqZZ_powheg    shape       0                   1               0               0           0
 QCDscale_ggZZ           lnN         0                   0               1.2             0           0
 QCDscale_VVV            shape       0                   0               0               1           0
+pdf_HZZ_signal          shape       1                   0               0               0           0
+pdf_qqZZ_powheg         shape       0                   1               0               0           0
+pdf_ggZZ                lnN         0                   0               1.05            0           0
+pdf_VVV                 shape       0                   0               0               1           0
 
 * autoMCStats 1
