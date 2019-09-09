@@ -1,6 +1,7 @@
 import array
 import ROOT
 import logging
+import math
 
 def getDifference(fOut, name, dir1, dir2, ratioFunc=None):
     differences = ROOT.TList()
@@ -128,14 +129,27 @@ def getLHEWeightHists(init2D_hist, entries, name, variation_name, rebin=None):
     hist_name = init2D_hist.GetName().replace("lheWeights", "%s_%sUp" % (variation_name, name))
     return hists, hist_name
 
-def getPDFHists(init2D_hist, entries, name, rebin=None, central=0):
+def getMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
     hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
-    #return hists
     upaction = lambda x: x[int(0.84*len(entries))] if central == -1 else x[central]*(1+getPDFPercentVariation(x))
     downaction = lambda x: x[int(0.16*len(entries))] if central == -1 else x[central]*(1+getPDFPercentVariation(x))
     return getVariationHists(hists, name, hist_name, 
             upaction, downaction, central
     )
+
+def getHessianPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
+    #centralIndex = central if central != -1 else int(len(entries)/2)
+    sumsq = lambda x: math.sqrt(sum([0 if y < 0.01 else ((x[central] - y)**2) for y in x]))
+    upaction = lambda x: x[central] + sumsq(x) 
+    downaction = lambda x: x[central] - sumsq(x) 
+    return getVariationHists(hists, name, hist_name, 
+            upaction, downaction, central, #downaction, central
+    )
+
+def getAllHessianPDFHists():
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
+    return hists
 
 def getPDFPercentVariation(values):
     denom = values[84] + values[16]
@@ -143,10 +157,7 @@ def getPDFPercentVariation(values):
         return 0
     return abs(values[84] - values[16])/denom
 
-def getScaleHists(scale_hist2D, name, rebin=None, central=0, exclude=[7,9]):
-    if central == -1: 
-        exclude = [6,8] # Hack! For nanoaod
-    entries = [i for i in range(1,10 if central != -1 else 9) if i not in exclude]
+def getScaleHists(scale_hist2D, name, rebin=None, entries=[i for i in range(1,10)], central=0, exclude=[7,9]):
     hists, hist_name = getLHEWeightHists(scale_hist2D, entries, name, "QCDscale", rebin)
     return getVariationHists(hists, name, hist_name, lambda x: x[-1], lambda x: x[1], central)
 

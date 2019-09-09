@@ -23,6 +23,7 @@ class CombineCardTools(object):
         self.isUnrolledFit = False
         self.lumi = 1
         self.outputFolder = "."
+        self.theoryVariations = {}
 
     def setPlotGroups(self, xsecMap):
         self.crossSectionMap = xsecMap
@@ -78,6 +79,22 @@ class CombineCardTools(object):
         if not os.path.isdir(outputFolder):
             os.makedirs(outputFolder)
 
+    def addTheoryVar(self, processName, varName, entries, central=0, exclude=[]):
+        if "scale" not in varName.lower() and "pdf" not in varName.lower():
+            raise ValueError("Invalid theory uncertainty %s. Must be type 'scale' or 'pdf'" % varName)
+        name = "scale" if "scale" in varName.lower() else "pdf"
+
+        if not processName in self.theoryVariations:
+            self.theoryVariations[processName] = {}
+
+        self.theoryVariations[processName].update({ name : {
+                "entries" : entries,
+                "central" : central,
+                "exclude" : exclude,
+                "combine" : "envelope" if name == "scale" else ("mc" if "hessian" not in varName else "mc"),
+            }
+        })
+
     def getRootFile(self, rtfile, mode=None):
         if type(rtfile) == str:
             if mode:
@@ -128,20 +145,20 @@ class CombineCardTools(object):
                 chan_hist = group.FindObject(name + "_" + chan)
                 hist.Add(chan_hist)
 
-    def listOfHistsByProcess(self, processName, addTheory):
+    def listOfHistsByProcess(self, processName):
         if self.fitVariable == "":
             raise ValueError("Must declare fit variable before defining plots")
         fitVariable = self.getFitVariable(processName)
         plots = ["_".join([fitVariable, chan]) for chan in self.channels]
         variations = self.getVariationsForProcess(processName)
         plots += ["_".join([fitVariable, var, c]) for var in variations for c in self.channels]
-        if addTheory:
+        if processName in self.theoryVariations.keys():
             plots += [self.weightHistName(c, processName) for c in self.channels]
         return plots
 
     # processName needs to match a PlotGroup 
-    def loadHistsForProcess(self, processName, addTheory, central=-1, scaleNorm=1):
-        plotsToRead = self.listOfHistsByProcess(processName, addTheory)
+    def loadHistsForProcess(self, processName, scaleNorm=1):
+        plotsToRead = self.listOfHistsByProcess(processName)
 
         group = HistTools.makeCompositeHists(self.inputFile, processName, 
                     {proc : self.crossSectionMap[proc] for proc in self.processes[processName]}, 
@@ -165,13 +182,16 @@ class CombineCardTools(object):
             else:
                 self.yields["all"][processName] += self.yields[chan][processName]
 
-            if addTheory:
+            if processName in self.theoryVariations:
                 weightHist = group.FindObject(self.weightHistName(chan, processName))
                 if not weightHist:
                     logging.warning("Failed to find %s. Skipping" % self.weightHistName(chan, processName))
                     continue
-                scaleHists = HistTools.getScaleHists(weightHist, processName, self.rebin, central=central)
-                pdfHists = HistTools.getPDFHists(weightHist, range(9,8+100), processName, self.rebin, central=central)
+                theoryVars = self.theoryVariations[processName]
+                scaleHists = HistTools.getScaleHists(weightHist, processName, self.rebin, 
+                        entries=theoryVars['scale']['entries'], central=theoryVars['scale']['central'])
+                pdfHists = HistTools.getHessianPDFVariationHists(weightHist, theoryVars['pdf']['entries'], processName, 
+                        self.rebin, central=theoryVars['pdf']['central'])
                 group.extend(scaleHists+pdfHists)
         #TODO: You may want to combine channels before removing zeros
         self.combineChannels(group)
