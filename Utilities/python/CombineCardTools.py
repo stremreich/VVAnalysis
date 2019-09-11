@@ -189,10 +189,10 @@ class CombineCardTools(object):
                     continue
                 theoryVars = self.theoryVariations[processName]
                 scaleHists = HistTools.getScaleHists(weightHist, processName, self.rebin, 
-                        entries=theoryVars['scale']['entries'], central=theoryVars['scale']['central'])
+                        entries=theoryVars['scale']['entries'], central=theoryVars['scale']['central']) if 'scale' in theoryVars else []
                 pdfFunction = getattr(HistTools, "get%sPDFVariationHists" % ("Hessian" if "hessian" in theoryVars['pdf']['combine'] else "MC"))
                 pdfHists = pdfFunction(weightHist, theoryVars['pdf']['entries'], processName, 
-                        self.rebin, central=theoryVars['pdf']['central'])
+                        self.rebin, central=theoryVars['pdf']['central']) if 'pdf' in theoryVars else []
                 group.extend(scaleHists+pdfHists)
         #TODO: You may want to combine channels before removing zeros
         self.combineChannels(group)

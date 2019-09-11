@@ -21,7 +21,7 @@ config_factory = ConfigHistFactory(
 )
 
 #plot_groups = ["nonprompt", "dy_lo", "dy_htbinned", "dy_htbinned_cp5", "dy_lo_2018"]
-plot_groups = ["nonprompt", "dy_htbinned_cp5", "dy_lo_2018"]
+plot_groups = ["nonprompt", "dy_htbinned_cp5", "dy_lo_2018", "dy_nlo_2018", "dy_lo", "dy_nlo"]
 plotGroupsMap = {name : config_factory.getPlotGroupMembers(name) for name in plot_groups}
 
 xsecs  = ConfigureJobs.getListOfFilesWithXSec([f for files in plotGroupsMap.values() for f in files])
@@ -43,8 +43,9 @@ cardtool.setOutputFile("ZGenCombineInput.root")
 for process in plot_groups:
     #Turn this back on when the theory uncertainties are added
     if process not in ["nonprompt", "data"]: #and False
-        cardtool.addTheoryVar(process, 'scale', range(0, 8), exclude=[5, 7], central=-1)
-        cardtool.addTheoryVar(process, 'pdf_hessian', range(9, 109), central=-1)
+        cardtool.addTheoryVar(process, 'scale', range(1, 9), exclude=[6, 7], central=-1)
+        pdf_entries = range(9, 40)
+        cardtool.addTheoryVar(process, 'pdf_mc', pdf_entries, central=-1)
     cardtool.loadHistsForProcess(process)
     cardtool.writeProcessHistsToOutput(process)
 

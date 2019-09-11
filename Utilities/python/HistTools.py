@@ -133,9 +133,11 @@ def getMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
     if central == -1:
         upaction = lambda x: x[int(0.84*len(entries))] 
         downaction = lambda x: x[int(0.16*len(entries))] 
-    else:
-        upaction = lambda x : x[central]*(1+getPDFPercentVariation(x))
-        downaction = lambda x: x[central]*(1-getPDFPercentVariation(x))
+    #else:
+    #    upaction = lambda x: x[int(0.84*len(entries))]
+    #    downaction = lambda x: x[int(0.16*len(entries))]
+    #    upaction = lambda x : x[central]*(1+getPDFPercentVariation(x))
+    #    downaction = lambda x: x[central]*(1-getPDFPercentVariation(x))
 
     return getVariationHists(hists, name, hist_name, 
             upaction, downaction, central
@@ -156,10 +158,12 @@ def getAllHessianPDFHists():
     return hists
 
 def getPDFPercentVariation(values):
-    denom = values[84] + values[16]
+    upvar = int(0.84*len(values))
+    downvar = int(0.16*len(values))
+    denom = values[upvar] + values[downvar]
     if denom == 0: 
         return 0
-    return abs(values[84] - values[16])/denom
+    return abs(values[upvar] - values[downvar])/denom
 
 def getScaleHists(scale_hist2D, name, rebin=None, entries=[i for i in range(1,10)], central=0, exclude=[7,9]):
     hists, hist_name = getLHEWeightHists(scale_hist2D, entries, name, "QCDscale", rebin)
