@@ -49,7 +49,7 @@ for process in plot_groups:
     cardtool.loadHistsForProcess(process)
     cardtool.writeProcessHistsToOutput(process)
 
-nuissance_map = {"ee" : 3, "mm" : 3 }
+nuissance_map = {"ee" : 5, "mm" : 5 }
 for chan in channels: #+ ["all"]:
     cardtool.setTemplateFileName("Templates/CombineCards/VGen/ZGen_template_{channel}.txt")
     logging.info("Writting cards for channel %s" % chan)
