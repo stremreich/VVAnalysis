@@ -20,7 +20,7 @@ config_factory = ConfigHistFactory(
     "ZZ4l2016/LooseLeptons",
 )
 
-plot_groups = ["HZZ_signal","qqZZ_powheg","ggZZ", "VVV", "data", "nonprompt",] 
+plot_groups = ["HZZ_signal","qqZZ_powheg","ggZZ", "zzjj4l_ewk", "VVV", "data", "nonprompt", "zz_atgc_f4_fg_0_fz_0p0015"] 
 plotGroupsMap = {name : config_factory.getPlotGroupMembers(name) for name in plot_groups}
 
 xsecs  = ConfigureJobs.getListOfFilesWithXSec([f for files in plotGroupsMap.values() for f in files])
@@ -31,7 +31,7 @@ fileMap = { "2016" : "/eos/user/k/kelong/HistFiles/ZZ/Hists02Sep2019-ZZ4l2016.ro
     "2018" : "/eos/user/k/kelong/HistFiles/ZZ/Hists02Sep2019-ZZ4l2018.root",
 }
 channels = ["eeee", "eemm", "mmee", "mmmm"]
-nuissance_map = {"eeee" : 16, "eemm" : 17, "mmee" : 17, "mmmm" : 15, "all" : 13}
+nuissance_map = {"eeee" : 18, "eemm" : 19, "mmee" : 19, "mmmm" : 17, "all" : 15}
 #fitvar = "ZZPt"
 #rebin = array.array('d', [0.0,50.0,100.0,150.0,200.0,250.0,300.0,350.0,400.0])
 fitvar = "Mass"
@@ -46,7 +46,8 @@ cardtool.setCrosSectionMap(xsecs)
 cardtool.setVariations(["CMS_eff_e", "CMS_RecoEff_e", "CMS_eff_m", ],#"CMS_pileup"],
                         exclude=["nonprompt", "data"])
 #cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%s2016Fit" % fitvar)
-cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%sFitFullRunII" % fitvar)
+cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%sFitFullRunIIaTGC" % fitvar)
+isaTGC = True
 
 for year in fileMap.keys():
     cardtool.setLumi(lumiMap[year])
@@ -55,15 +56,15 @@ for year in fileMap.keys():
     cardtool.setOutputFile("ZZCombineInput_{year}.root".format(year=year))
     #cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%s%sFit" % (fitvar, year))
     for process in plot_groups:
-        #Turn this back on when the theory uncertainties are added
-        if process not in ["nonprompt", "data"]: #and False
+        if process not in ["nonprompt", "data"] and "atgc" not in process: 
             cardtool.addTheoryVar(process, 'scale', range(1, 10), exclude=[6, 8], central=0)
             cardtool.addTheoryVar(process, 'pdf_hessian' if year != "2016" else 'pdf_mc', [1]+[i for i in range(10, 111)], central=0)
         cardtool.loadHistsForProcess(process)
         cardtool.writeProcessHistsToOutput(process)
 
     for chan in channels + ["all"]:
-        cardtool.setTemplateFileName("Templates/CombineCards/ZZSelection/ZZ_template{year}_{channel}.txt")
+        cardname = "ZZ%s_template{year}_{channel}.txt" % ("aTGC" if isaTGC else "")
+        cardtool.setTemplateFileName("Templates/CombineCards/ZZSelection/"+ cardname)
         logging.info("Writting cards for channel %s" % chan)
         cardtool.writeCards(chan, nuissance_map[chan], year=year)
 

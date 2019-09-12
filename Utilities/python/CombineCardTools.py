@@ -220,6 +220,7 @@ class CombineCardTools(object):
         outputCard = self.templateName.split("/")[-1].format(channel=chan, year=year) 
         outputCard = outputCard.replace("template", "")
         outputCard = outputCard.replace("__", "_")
+        print "Writing card",self.templateName.format(channel=chan, year=year)
         ConfigureJobs.fillTemplatedFile(self.templateName.format(channel=chan, year=year),
             "/".join([self.outputFolder, outputCard]),
             chan_dict

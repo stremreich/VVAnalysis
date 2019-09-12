@@ -133,11 +133,9 @@ def getMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
     if central == -1:
         upaction = lambda x: x[int(0.84*len(entries))] 
         downaction = lambda x: x[int(0.16*len(entries))] 
-    #else:
-    #    upaction = lambda x: x[int(0.84*len(entries))]
-    #    downaction = lambda x: x[int(0.16*len(entries))]
-    #    upaction = lambda x : x[central]*(1+getPDFPercentVariation(x))
-    #    downaction = lambda x: x[central]*(1-getPDFPercentVariation(x))
+    else:
+        upaction = lambda x : x[central]*(1+getPDFPercentVariation(x))
+        downaction = lambda x: x[central]*(1-getPDFPercentVariation(x))
 
     return getVariationHists(hists, name, hist_name, 
             upaction, downaction, central

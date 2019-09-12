@@ -21,27 +21,27 @@ observation  ${data}
 # then we list the independent sources of uncertainties, and give their effect (syst. error)
 # on each process and bin
 bin                                mmee              mmee               mmee      mmee           mmee         
-process                         HZZ_signal        qqZZ_powheg           ggZZ      VVV          nonprompt  
-process                            -2                 -1                  0        1               1
-rate                           ${HZZ_signal}      ${qqZZ_powheg}       ${ggZZ}    ${VVV}       ${nonprompt}
-------------------------------------------------------------------------------- -------------------------------                                                                                                                                                                                                                    
-bkg_mm_17                 lnN        -                  -                 -            -        1.1
-bkg_ee_17                 lnN        -                  -                 -           -         1.1
-trigger_ee_17             lnN       1.01             1.01                1.01         1.01        -       
-trigger_mm_17             lnN       1.01             1.01                1.01         1.01        -       
-CMS_eff_e               shape       1                 1                 1            1          0
-CMS_RecoEff_e           shape       1                 1                 1            1          0
-CMS_eff_m               shape       1                 1                 1            1          0
-#CMS_pileup              shape       1                 1                 1            1          0
-CMS_lumi                  lnN       1.01             1.01               1.01         1.01       1.01
-lumi_17                   lnN       1.021            1.021              1.021        1.021      1.021
-QCDscale_HZZ_signal     shape       1                   0               0               0           0
-QCDscale_qqZZ_powheg    shape       0                   1               0               0           0
-QCDscale_ggZZ           lnN         0                   0               1.2             0           0
-QCDscale_VVV            shape       0                   0               0               1           0
-pdf_HZZ_signal          shape       1                   0               0               0           0
-pdf_qqZZ_powheg         shape       0                   1               0               0           0
-pdf_ggZZ                lnN         0                   0               1.05            0           0
-pdf_VVV                 shape       0                   0               0               1           0
+process                 zz_atgc_f4_fg-0_fz_0p0015   HZZ_signal        qqZZ_powheg           ggZZ       VVV       nonprompt  
+process                             -1                    3                4                  0         1          2
+rate                  ${zz_atgc_f4_fg-0_fz_0p0015} ${HZZ_signal}       ${qqZZ_powheg}       ${ggZZ}    ${VVV}   ${nonprompt}
+--------------------------------------------------------------------------------------------------------------                                                                                                                                                                                                                    
+bkg_mm_16                 lnN         -                 -                  -                 -            -        1.1
+bkg_ee_16                 lnN         -                 -                  -                 -           -         1.1
+trigger_ee_16             lnN        1.01              1.01             1.01                1.01         1.01        -       
+trigger_mm_16             lnN        1.01              1.01             1.01                1.01         1.01        -       
+CMS_eff_e               shape        1                 1                 1                 1            1          0
+CMS_RecoEff_e           shape        1                 1                 1                 1            1          0
+CMS_eff_m               shape        1                 1                 1                 1            1          0
+#CMS_pileup              shape        1                 1                 1                 1            1          0
+CMS_lumi                  lnN        1.01              1.01             1.01               1.01         1.01       1.01
+lumi_16                   lnN        1.021             1.021            1.021              1.021        1.021      1.021
+QCDscale_HZZ_signal     shape        0                 1                   0               0               0           0
+QCDscale_qqZZ_powheg    shape        0                 0                   1               0               0           0
+QCDscale_ggZZ           lnN          0                 0                   0               1.2             0           0
+QCDscale_VVV            shape        0                 0                   0               0               1           0
+pdf_HZZ_signal          shape        0                 1                   0               0               0           0
+pdf_qqZZ_powheg         shape        0                 0                   1               0               0           0
+pdf_ggZZ                lnN          0                 0                   0               1.05            0           0
+pdf_VVV                 shape        0                 0                   0               0               1           0
 
 * autoMCStats 1

@@ -25,14 +25,14 @@ process                         HZZ_signal        qqZZ_powheg           ggZZ    
 process                            -2                 -1                  0         1              1
 rate                           ${HZZ_signal}      ${qqZZ_powheg}        ${ggZZ}    ${VVV}       ${nonprompt}
 ---------------------------------------------------------------------------------------------------------------                                                                                                                                                                                                                    
-bkg_mmmm_17               lnN        -                  -                 -           -          1.2
-bkg_mm_17                 lnN        -                  -                 -           -           1.2
-trigger_mmmm_17           lnN       1.01             1.01                1.01         1.01        -       
-trigger_mm_17             lnN       1.01             1.01                1.01         1.01        -       
+bkg_mmmm_16               lnN        -                  -                 -           -          1.2
+bkg_mm_16                 lnN        -                  -                 -           -           1.2
+trigger_mmmm_16           lnN       1.01             1.01                1.01         1.01        -       
+trigger_mm_16             lnN       1.01             1.01                1.01         1.01        -       
 CMS_eff_m               shape       1                 1                 1            1          0
 #CMS_pileup              shape       1                 1                 1            1          0
 CMS_lumi                  lnN       1.01             1.01               1.01         1.01       1.01
-lumi_17                   lnN       1.021            1.021              1.021        1.021      1.021
+lumi_16                   lnN       1.021            1.021              1.021        1.021      1.021
 QCDscale_HZZ_signal     shape       1                   0               0               0           0
 QCDscale_qqZZ_powheg    shape       0                   1               0               0           0
 QCDscale_ggZZ           lnN         0                   0               1.2             0           0
