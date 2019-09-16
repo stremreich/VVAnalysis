@@ -10,6 +10,8 @@ import shutil
 import glob
 import tarfile
 import math
+import re
+import subprocess
 
 def getComLineArgs():
     parser = UserInput.getDefaultParser(False)
@@ -39,6 +41,15 @@ def copyLibs():
     cmssw_libdir = "/".join([os.environ["CMSSW_BASE"], libdir, os.environ["SCRAM_ARCH"], "*VVAnalysis*"])
     for i in glob.glob(cmssw_libdir):
         shutil.copyfile(i, '/'.join([libdir, os.path.basename(i)]))
+
+# Needed on lxplus and uwlogin, where the afs permissions are set
+# very tight and don't let condor access some dumb file it needs
+# TODO: Understand what it needs and why
+def modifyAFSPermissions():
+    if not re.findall("system:anyuser *.*l", subprocess.check_output(["fs", "la"])):
+        subprocess.call(["find", os.environ["CMSSW_BASE"], "-type", "d",
+            "-exec", "fs", "setacl", "-dir", "{}", "-acl", "system:anyuser", "rl", ";"])
+        raise OSError("AFS permissions have been relaxed for condor submission. You should recompile and resubmit")
 
 def copyDatasetManagerFiles(analysis):
     manager_name = "AnalysisDatasetManager"
@@ -107,6 +118,7 @@ def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tie
     copyLibs()
     copyDatasetManagerFiles(analysis)
     copyGridCertificate()
+    modifyAFSPermissions()
 
     filelist = submit_dir + "/filelist.txt"
     numfiles = makeDAS.makeFileListFromDAS(filenames, filelist, analysis, input_tier)

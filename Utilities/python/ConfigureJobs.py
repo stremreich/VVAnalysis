@@ -47,7 +47,11 @@ def getChannels(analysis='WZ'):
         return ["eee", "eem", "emm", "mmm"]
 
 def getManagerName():
-    config_name = "Templates/config.%s" % os.getlogin()
+    config_name = ""
+    try:
+        config_name = "Templates/config.%s" % os.getlogin()
+    except OSError:
+        pass
     default_name = "AnalysisDatasetManager"
     if not os.path.isfile(config_name):
         logging.warning("dataset_manager_name not specified in config file %s" % config_name)
@@ -62,7 +66,11 @@ def getManagerName():
     return config['Setup']['dataset_manager_name']
 
 def getManagerPath():
-    config_name = "Templates/config.%s" % os.getlogin()
+    config_name = ""
+    try:
+        config_name = "Templates/config.%s" % os.getlogin()
+    except OSError:
+        pass
     if not os.path.isfile(config_name):
         if os.path.isdir(getManagerName()):
             return '.'
