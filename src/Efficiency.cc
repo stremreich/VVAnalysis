@@ -120,8 +120,16 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   
   for (auto part: Leptons) {
     if (part.gId() == PID_ELECTRON) {
-      Fill1D("GenElecPt", part.gPt());
-       nGenElec ++;
+
+	if(lep.isMatched()) {
+	    Fill1D("GenElecPt", part.gPt());
+	    Fill1D("RecoElecPt", part.gPt());
+	} else if(lep.noMatched) {
+	    Fill1D("GenElecPt", part.gPt());
+	}
+	
+        Fill1D("GenElecPt", part.gPt());
+	nGenElec ++;
 
     }
     else if (part.gId() == PID_MUON) {
