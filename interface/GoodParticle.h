@@ -38,7 +38,7 @@ struct GoodPart {
 struct GenPart {
   GoodPart gen;
   GoodPart reco;
-  GoodPart fake;
+  GoodPart match;
     
    
   void SetupGen(double pt, double eta, double phi, double m, int pdg) {
@@ -51,9 +51,9 @@ struct GenPart {
     reco.SetPdgId(pdg);
   }
 
-  void SetupFake(double pt, double eta, double phi, double m, int pdg) {
-    fake = GoodPart(pt, eta, phi, m);
-    fake.SetPdgId(pdg);
+  void SetupMatched(double pt, double eta, double phi, double m, int pdg) {
+    match = GoodPart(pt, eta, phi, m);
+    match.SetPdgId(pdg);
   }
   
   int gId() {return gen.Id();}
@@ -70,12 +70,12 @@ struct GenPart {
   double rM() {return reco.M();}
   LorentzVector rVector(){return reco.v;}
 
-  int fId() {return fake.Id();}
-  double fPt() {return fake.Pt();}
-  double fEta() {return fake.Eta();}
-  double fPhi() {return fake.Phi();}
-  double fM() {return fake.M();}
-  LorentzVector fVector(){return fake.v;}
+  int mId() {return match.Id();}
+  double mPt() {return match.Pt();}
+  double mEta() {return match.Eta();}
+  double mPhi() {return match.Phi();}
+  double mM() {return match.M();}
+  LorentzVector mVector(){return match.v;}
   
   
 };

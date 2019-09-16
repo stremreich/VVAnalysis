@@ -11,7 +11,8 @@ enum TYPE {RECO =1, FAKE = 2, NOT_RECO = 3};
 
 void Efficiency::Init(TTree *tree) {
 
-    hists1D_ = {"GenMuonPt","GenElecPt", "nGenMuon", "nGenElec", "nFakeMuon", "nFakeElec", "nRecoElec", "nRecoMuon", "RecoMuonPt", "RecoElecPt"};
+    hists1D_ = {"GenMuonPt", "GenElecPt", "nGenMuon", "nGenElec", "nFakeMuon", "nFakeElec", 
+		"nRecoElec", "nRecoMuon", "RecoMuonPt", "RecoElecPt", "DPt", "DR"};
     // hists2D_ = {"bJetvsJets",    "Beff_b_btag", "Beff_j_btag", "Beff_b", "Beff_j"};
     b.SetTree(tree);
 
@@ -66,31 +67,44 @@ void Efficiency::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::
   
   for (size_t i=0; i< nGenPart; i++) {
     if (std::abs(GenPart_pdgId[i]) == PID_ELECTRON || std::abs(GenPart_pdgId[i]) == PID_MUON) {
-
+      // if (GenPart_pt[i]> 15) {
       Leptons.push_back(GenPart());
       Leptons.back().SetupGen(GenPart_pt[i], GenPart_eta[i], GenPart_phi[i], GenPart_mass[i],
-				       GenPart_pdgId[i]);
+			      GenPart_pdgId[i]);
+	// }
 
     }
     else continue;
   }
 
-  for (auto goodlep : TTTAna.goodLeptons) {
-    bool found = false;
-    for (auto lep : Leptons) {
-      if (reco::deltaR(goodlep.v, lep.gVector())<0.4) {
-	found = true;
+  // newer nested for loops
+  for (auto lep : Leptons) {
+    for (auto goodlep : TTTAna.goodLeptons) {
+      if (reco::deltaR(lep.gVector(), goodlep.v)<0.4 && lep.gId() == goodlep.Id()) {
 	Leptons.push_back(GenPart());
 	Leptons.back().SetupReco(goodlep.Pt(), goodlep.Eta(), goodlep.Phi(), goodlep.M(),
-				goodlep.Id());
+				 goodlep.Id());
       }
     }
-    if (!found) {
-      Leptons.push_back(GenPart());
-      Leptons.back().SetupFake(goodlep.Pt(), goodlep.Eta(), goodlep.Phi(), goodlep.M(),
-			       goodlep.Id());
-    }
   }
+ 
+  
+  // for (auto goodlep : TTTAna.goodLeptons) {
+  //   bool found = false;
+  //   for (auto lep : Leptons) {
+  //     if (reco::deltaR(goodlep.v, lep.gVector())<0.4) {
+  // 	found = true;
+  // 	Leptons.push_back(GenPart());
+  // 	Leptons.back().SetupReco(goodlep.Pt(), goodlep.Eta(), goodlep.Phi(), goodlep.M(),
+  // 				goodlep.Id());
+  //     }
+  //   }
+  //   if (!found) {
+  //     Leptons.push_back(GenPart());
+  //     Leptons.back().SetupFake(goodlep.Pt(), goodlep.Eta(), goodlep.Phi(), goodlep.M(),
+  // 			       goodlep.Id());
+  //   }
+  // }
   
   channelName_ = "all";
   channel_ = channelMap_[channelName_];
@@ -101,8 +115,8 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   int nGenMuon = 0;
   int nRecoElec = 0;
   int nRecoMuon = 0;
-  int nFakeElec = 0;
-  int nFakeMuon = 0;
+  // int nFakeElec = 0;
+  // int nFakeMuon = 0;
   
   for (auto part: Leptons) {
     if (part.gId() == PID_ELECTRON) {
@@ -122,12 +136,12 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
       Fill1D("RecoMuonPt", part.rPt());
       nRecoMuon ++;
     }
-    else if (part.fId() == PID_ELECTRON) {
-      nFakeElec ++;
-    }
-    else if (part.fId() == PID_MUON) {
-      nFakeMuon ++;
-    }
+    // else if (part.fId() == PID_ELECTRON) {
+    //   nFakeElec ++;
+    // }
+    // else if (part.fId() == PID_MUON) {
+    //   nFakeMuon ++;
+    // }
   }
   
   Fill1D("nGenElec", nGenElec);
@@ -135,12 +149,13 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   Fill1D("nRecoElec", nRecoElec);
   Fill1D("nRecoMuon", nRecoMuon);
 
-  if (nFakeElec >= 1) {
-    Fill1D("nFakeElec", nFakeElec);
-  }
-  if (nFakeMuon >= 1) {
-    Fill1D("nFakeMuon", nFakeMuon);
-  }
+  // if (nFakeElec >= 1) {
+  //   Fill1D("nFakeElec", nFakeElec);
+  // }
+  // if (nFakeMuon >= 1) {
+  //   Fill1D("nFakeMuon", nFakeMuon);
+  // }
+  
   return;
 }
 

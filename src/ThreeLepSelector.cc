@@ -555,8 +555,8 @@ bool ThreeLepSelector::isGoodMuon(size_t index) {
     bool yearCuts = true;
     if(year_ == yr2016) yearCuts = (Muon_miniPFRelIso_all[index] < 0.16);
     else                yearCuts = (Muon_miniPFRelIso_all[index] < 0.11);
-
-    return ( (Muon_pt[index] > 20) 
+    //was 20 changing for efficiency plotting purposes
+    return ( (Muon_pt[index] > 0) 
 	     && (Muon_tightCharge[index] == 2) 
 	     && (abs(Muon_eta[index]) < 2.4) 
 	     && (Muon_mediumId[index]) 
@@ -570,7 +570,8 @@ bool ThreeLepSelector::isGoodMuon(size_t index) {
 bool ThreeLepSelector::isGoodElectron(size_t index) {
     if(abs(Electron_eta[index]) > 2.5) return false;
     bool passId = false;
-    double ptCut = 20;
+    // was 20; changing for efficiency plotting purposes
+    double ptCut = 0;
 
 
     if(selection_ == FourTopMVAEl || selection_ != FourTopCutBasedEl) {
