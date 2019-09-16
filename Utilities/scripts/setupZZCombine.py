@@ -20,7 +20,11 @@ config_factory = ConfigHistFactory(
     "ZZ4l2016/LooseLeptons",
 )
 
-plot_groups = ["HZZ_signal","qqZZ_powheg","ggZZ", "zzjj4l_ewk", "VVV", "data", "nonprompt", "zz_atgc_f4_fg_0_fz_0p0015"] 
+#doaTGC = False
+doaTGC = True
+plot_groups = ["HZZ_signal","qqZZ_powheg","ggZZ", "zzjj4l_ewk", "VVV", "data", "nonprompt", ] 
+if doaTGC:
+    plot_groups += ["zz_atgc_f4_fg_0_fz_0p0015"]
 plotGroupsMap = {name : config_factory.getPlotGroupMembers(name) for name in plot_groups}
 
 xsecs  = ConfigureJobs.getListOfFilesWithXSec([f for files in plotGroupsMap.values() for f in files])
@@ -36,8 +40,8 @@ nuissance_map = {"eeee" : 18, "eemm" : 19, "mmee" : 19, "mmmm" : 17, "all" : 15}
 #rebin = array.array('d', [0.0,50.0,100.0,150.0,200.0,250.0,300.0,350.0,400.0])
 fitvar = "Mass"
 rebin = array.array('d', [100.0,200.0,250.0,300.0,350.0,400.0,500.0,600.0,800.0,1000.0,1200.0])
-#fitvar = "yield"
 cardtool.setRebin(rebin)
+#fitvar = "yield"
 cardtool.setFitVariable(fitvar)
 cardtool.setFitVariableAppend("nonprompt", "Fakes")
 cardtool.setProcesses(plotGroupsMap)
@@ -46,8 +50,8 @@ cardtool.setCrosSectionMap(xsecs)
 cardtool.setVariations(["CMS_eff_e", "CMS_RecoEff_e", "CMS_eff_m", ],#"CMS_pileup"],
                         exclude=["nonprompt", "data"])
 #cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%s2016Fit" % fitvar)
-cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%sFitFullRunIIaTGC" % fitvar)
-isaTGC = True
+folderName = ("%sFitFullRunII%s" % (fitvar, "aTGC" if doaTGC else ""))
+cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%s" % folderName)
 
 for year in fileMap.keys():
     cardtool.setLumi(lumiMap[year])
@@ -63,7 +67,7 @@ for year in fileMap.keys():
         cardtool.writeProcessHistsToOutput(process)
 
     for chan in channels + ["all"]:
-        cardname = "ZZ%s_template{year}_{channel}.txt" % ("aTGC" if isaTGC else "")
+        cardname = "ZZ%s_template{year}_{channel}.txt" % ("aTGC" if doaTGC else "")
         cardtool.setTemplateFileName("Templates/CombineCards/ZZSelection/"+ cardname)
         logging.info("Writting cards for channel %s" % chan)
         cardtool.writeCards(chan, nuissance_map[chan], year=year)
