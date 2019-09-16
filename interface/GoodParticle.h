@@ -11,8 +11,9 @@ struct GoodPart {
     bool isBTagged;
     int index;
     
-    GoodPart(double pt, double eta, double phi, double m ) : v(pt, eta, phi, m) {}
-
+    GoodPart(double pt, double eta, double phi, double m, int pdg=0 ) : v(pt, eta, phi, m), pdgId(pdg) {}
+    GoodPart(LorentzVector v_, int pdg=0 ) : v(v_), pdgId(pdg) {}
+    
     void SetPdgId(int pdg) {
 	pdgId = pdg;
     }

@@ -6,7 +6,7 @@
 
 #define Fill1D(NAME, VALUE_) HistFullFill(histMap1D_, NAME, variation.second, VALUE_, weight);
 #define Fill2D(NAME, VALUE1_, VALUE2_) HistFullFill(histMap2D_, NAME, variation.second, VALUE1_, VALUE2_, weight);
-#define SetupPtEtaPhiM(PART, INDEX) PART##_pt[INDEX], PART##_eta[INDEX], PART##_phi[INDEX], PART##_mass[INDEX]
+
 #define GETMASK(index, size) (((1 << (size)) - 1) << (index))
 #define READFROM(data, index, size) (((data) & GETMASK((index), (size))) >> (index))
 
@@ -14,7 +14,6 @@
 
 typedef std::bitset<sizeof(int)> IntBits;
 
-enum PID {PID_MUON = 13, PID_ELECTRON = 11, PID_BJET = 5};
 enum ElectronCBID {CBID_VETO=1, CBID_LOOSE=2, CBID_MEDIUM=3, CBID_TIGHT=4};
 
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
@@ -89,9 +88,9 @@ void ThreeLepSelector::Init(TTree *tree) {
 
     SelectorBase::Init(tree);
 
-    std::string filename = "onlyMyMM_0827.dat";
+    std::string filename = "onlyTheirEE_0916.dat";
     // std::string filename = "MM_ZCR_onlyTheir_0821.dat";
-    // std::string filename = "onlyTheirMM.dat";
+    // std::string filename = "onlyMyMM_0912.dat";
     std::ifstream infile;
     infile.open(filename);
 
@@ -103,7 +102,7 @@ void ThreeLepSelector::Init(TTree *tree) {
 	iss >> event;
 	eventVec[event] = true;
 	info[event] = line;
-	if(num >= 10) break;
+	//if(num >= 10) break;
 	num++;
     }
 
@@ -185,13 +184,27 @@ void ThreeLepSelector::SetBranchesNanoAOD() {
     b.SetBranch("Jet_mass",           Jet_mass);
     b.SetBranch("Jet_jetId",          Jet_jetId);
     b.SetBranch("Jet_hadronFlavour",  Jet_hadronFlavour);
+    b.SetBranch("Jet_rawFactor",  Jet_rawFactor);
 
     b.SetBranch("MET_pt",     MET);
     b.SetBranch("MET_phi",    type1_pfMETPhi);
 
     b.SetBranch("event", event);
     b.SetBranch("luminosityBlock", lumi);
+    
+    b.SetBranch("Flag_goodVertices", Flag_goodVertices);
+    b.SetBranch("Flag_globalSuperTightHalo2016Filter", Flag_globalSuperTightHalo2016Filter);
+    b.SetBranch("Flag_HBHENoiseFilter", Flag_HBHENoiseFilter);
+    b.SetBranch("Flag_HBHENoiseIsoFilter", Flag_HBHENoiseIsoFilter);
+    b.SetBranch("Flag_EcalDeadCellTriggerPrimitiveFilter", Flag_EcalDeadCellTriggerPrimitiveFilter);
+    b.SetBranch("Flag_BadPFMuonFilter", Flag_BadPFMuonFilter);
+    b.SetBranch("Flag_ecalBadCalibFilter", Flag_ecalBadCalibFilter);
 
+    if(true) {
+        b.SetBranch("Jet_L1", Jet_L1);
+	b.SetBranch("Jet_L2L3", Jet_L2L3);
+    }
+    
     b.SetBranch("PV_x", PV_x);
     b.SetBranch("PV_y", PV_y);
     b.SetBranch("PV_z", PV_z);
@@ -199,6 +212,19 @@ void ThreeLepSelector::SetBranchesNanoAOD() {
     if (isMC_) {
 	b.SetBranch("genWeight",    genWeight);
 	b.SetBranch("Pileup_nPU",   numPU);
+    }
+
+    mvaValues[CBID_LOOSE] = {{-0.46, -0.48, 0, -0.85}, 
+			     {-0.03, -0.67, 0, -0.91},
+			     {0.06, -0.49, 0, -0.83}};
+    mvaValues[CBID_TIGHT] = {{10, 0.77, 0, 0.52}, 
+			     {10, 0.56, 0, 0.11},
+			     {10, 0.48, 0, -0.01}};
+    /// Setup interpolation used for 25>pt>15
+    for(auto& pair: mvaValues) {
+	for(auto& vec: pair.second) {
+	    vec[2] = (vec[3]-vec[1])/10;
+	}
     }
 }
 
@@ -210,8 +236,7 @@ void ThreeLepSelector::clearValues() {
     nBJets = 0;
     passZVeto = true;
     goodLeptons.clear();
-    looseMuons.clear();
-    looseElectrons.clear();
+    looseLeptons.clear();
     goodJets.clear();
 }
 
@@ -250,15 +275,10 @@ void ThreeLepSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic,
 
 
     if(debug)  printInfo();
-
-    //  zveto, commented out for now
-    if(goodLeptons.size() >= 2 && looseMuons.size() + looseElectrons.size() >= 3) {
+    
+    if(goodLeptons.size() >= 2 && looseLeptons.size() >= 3) {
 	for(auto lep : goodLeptons) {
-	    if(lep.Id() == PID_MUON)
-		passZVeto = doesPassZVeto(lep, looseMuons);
-	    else
-		passZVeto = doesPassZVeto(lep, looseElectrons);
-            
+	    passZVeto = doesPassZVeto(lep, looseLeptons);
 	    if(!passZVeto) break;
 	}
     }
@@ -282,12 +302,13 @@ void ThreeLepSelector::printInfo() {
     // printf("Elec: sieie hoe 1/e-1/pt ecalSumEt hcalSumEt tkSumPt\n");
     for(auto lep : goodLeptons) {
 	num++;
+	LorentzVector closeJet(get4Vector(PID_JET, getCloseJetIndex(lep.v)));
 	printf("%2d: %6.2f %+3.2f %+d", num, lep.Pt(), lep.Eta(), -1*lep.Charge());
 	if(lep.Id() == PID_MUON) {
-	    printf(" %4.2f %d %+5.3f %+5.3f %5.3f, %5.3f %6.3f", Muon_miniPFRelIso_all[lep.index], Muon_tightCharge[lep.index], Muon_dz[lep.index], Muon_dxy[lep.index], Muon_sip3d[lep.index], 1/(Muon_jetRelIso[lep.index]+1), LepRelPt(lep.v));
+	    printf(" %4.2f %d %+5.3f %+5.3f %5.3f, %5.3f %6.3f", Muon_miniPFRelIso_all[lep.index], Muon_tightCharge[lep.index], Muon_dz[lep.index], Muon_dxy[lep.index], Muon_sip3d[lep.index], (Muon_pt[lep.index]/closeJet.Pt()), LepRelPt(lep.v));
 	}
 	else {
-	    printf(" %4.2f  %d %5.3f %+5.3f %+5.3f %5.3f %5.3f %6.3f\n", Electron_MVA[lep.index], Electron_cutBased[lep.index], Electron_miniPFRelIso_all[lep.index], Electron_dz[lep.index], Electron_dxy[lep.index], Electron_sip3d[lep.index], 1/(Electron_jetRelIso[lep.index]+1), LepRelPt(lep.v));
+	    printf(" %4.2f  %d %5.3f %+5.3f %+5.3f %5.3f %5.3f %6.3f\n", Electron_MVA[lep.index], Electron_cutBased[lep.index], Electron_miniPFRelIso_all[lep.index], Electron_dz[lep.index], Electron_dxy[lep.index], Electron_sip3d[lep.index], lep.Pt()/closeJet.Pt(), LepRelPt(lep.v));
 	    printf(" %6.4f %6.4f %+6.4f %6.4f %6.4f %6.4f\n",      Electron_sieie[lep.index],
 		   Electron_hoe[lep.index],
 		   Electron_eInvMinusPInv[lep.index],
@@ -309,14 +330,23 @@ void ThreeLepSelector::printInfo() {
     }
     num=0;
     printf("-----loose-muon-------\n");
-    //for(auto lep : looseMuons) {
-    for(int i = 0; i < (int)nMuon; i++) {
-	num++;
-        LorentzVector v(SetupPtEtaPhiM(Muon,i));
-	//int i = lep.index;
-	printf("%2d: %6.2f %+3.2f %+d", num, Muon_pt[i], Muon_eta[i], -1*Muon_charge[i]);
-	printf(" %4.2f %d %+5.3f %+5.3f %5.3f, %5.3f %6.3f %5.1f %5.1f", Muon_miniPFRelIso_all[i], Muon_tightCharge[i], Muon_dz[i], Muon_dxy[i], Muon_sip3d[i], 1/(Muon_jetRelIso[i]+1), LepRelPt(v), (v+goodLeptons[0].v).M(), (v+goodLeptons[1].v).M());
-	printf("\n");
+    for(auto lep : looseLeptons) {
+	if(lep.Id() != PID_MUON) continue;
+	int i = lep.index;
+	LorentzVector v = lep.v;
+	// for(int i = 0; i < (int)nMuon; i++) {
+    	num++;
+        //LorentzVector v = get4Vector(PID_MUON,i);
+	int closeIdx = getCloseJetIndex(v);
+	LorentzVector closeJet = get4Vector(PID_JET, closeIdx);
+	//closeJet += (1-Jet_L2L3[closeIdx])*v;
+        closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-v)*Jet_L2L3[closeIdx]+v;
+	
+    	//int i = lep.index;
+    	printf("%2d: %6.2f %+3.2f %+3.2f %+d", num, Muon_pt[i], Muon_eta[i], Muon_phi[i], -1*Muon_charge[i]);
+    	printf(" %+5.3f %+5.3f %5.3f | %4.2f %5.3f %6.3f rawpt %6.3f", Muon_dz[i], Muon_dxy[i], Muon_sip3d[i], Muon_miniPFRelIso_all[i], v.Pt()/closeJet.Pt(), LepRelPt(v), Jet_rawFactor[getCloseJetIndex(v)]);
+    	printf("\n");
+    	printf("    %6.2f %+3.2f %+3.2f | %6.2f %+3.2f %+3.2f | %7.5f\n", v.Pt(), v.Eta(), v.Phi(), closeJet.Pt(), closeJet.Eta(), closeJet.Phi(), reco::deltaR(closeJet, v));
     }
     // printf("--------all-muon-------\n");
     // for(size_t index = 0; index < nMuon; index++) {
@@ -326,50 +356,78 @@ void ThreeLepSelector::printInfo() {
     // 	printf("\n");
     // 	       }
 
-    // num=0;
-    // printf("-----loose-elec-------\n");
-    // //for(auto lep : looseElectrons) {
-    // for(int i = 0; i < (int)nElectron; i++) {
-    // 	num++;
-    // 	LorentzVector v(SetupPtEtaPhiM(Electron,i));
-    // 	//int i = lep.index;
-    // 	printf("%2d: %6.2f %+3.2f %+d", num, Electron_pt[i], Electron_eta[i], -1*Electron_charge[i]);
-    // 	printf(" %4.2f  %d %5.3f %+5.3f %+5.3f %5.3f %5.3f %6.3f\n", Electron_MVA[i], Electron_cutBased[i], Electron_miniPFRelIso_all[i], Electron_dz[i], Electron_dxy[i], Electron_sip3d[i], 1/(Electron_jetRelIso[i]+1), LepRelPt(v));
-    // 	printf(" %6.4f %6.4f %+6.4f %6.4f %6.4f %6.4f\n",  Electron_sieie[i],
-    // 	       Electron_hoe[i],
-    // 	       Electron_eInvMinusPInv[i],
-    // 	       Electron_dr03EcalRecHitSumEt[i],
-    // 	       Electron_dr03HcalDepth1TowerSumEt[i],
-    // 	       Electron_dr03TkSumPt[i]
-    // 	       );
-    // 	printf(" %6s %6s %7s %6s %6s %6s\n",
-    // 	       boolStr(Electron_sieie[i] < 0.031).c_str(),
-    // 	       boolStr(Electron_hoe[i] < 0.08).c_str(),
-    // 	       boolStr(abs(Electron_eInvMinusPInv[i]) < 0.01).c_str(),
-    // 	       boolStr(Electron_dr03EcalRecHitSumEt[i]/Electron_pt[i] < 0.45).c_str(),
-    // 	       boolStr(Electron_dr03HcalDepth1TowerSumEt[i]/Electron_pt[i] < 0.25).c_str(),
-    // 	       boolStr(Electron_dr03TkSumPt[i]/Electron_pt[i] < 0.2).c_str()
-    // 	       );
+    num=0;
+    printf("-----loose-elec-------\n");
+    for(auto lep : looseLeptons) {
+	if(lep.Id() != PID_ELECTRON) continue;
+	int i = lep.index;
+	LorentzVector v = lep.v;
+	//for(int i = 0; i < (int)nElectron; i++) {
+	 num++;
+	 int closeIdx = getCloseJetIndex(v);
+	 LorentzVector closeJet = get4Vector(PID_JET, closeIdx);
+	 //closeJet += (1-Jet_L2L3[closeIdx])*v;
+	 closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-v)*Jet_L2L3[closeIdx]+v;
 	
-    // }
+	 //LorentzVector v = get4Vector(PID_ELECTRON, i);
+	 //int i = lep.index;
+    	printf("%2d: %6.2f %+3.2f %+3.2f %+d", num, Electron_pt[i], Electron_eta[i], Electron_phi[i], -1*Electron_charge[i]);
+    	printf(" %4.2f  %d %5.3f %+5.3f %+5.3f %5.3f %5.3f %6.3f\n", Electron_MVA[i], Electron_cutBased[i], Electron_miniPFRelIso_all[i], Electron_dz[i], Electron_dxy[i], Electron_sip3d[i], v.Pt()/closeJet.Pt(), LepRelPt(v));
+	int DEtaInCut = READFROM(Electron_vidBitmap[i], 6, 3);
+	int DPhiInCut = READFROM(Electron_vidBitmap[i], 9, 3);
 
+    	printf(" %6.4f %6.4f %+6.4f %6.4f %6.4f %6.4f, %5d, %5d\n",  Electron_sieie[i],
+    	       Electron_hoe[i],
+    	       Electron_eInvMinusPInv[i],
+    	       Electron_dr03EcalRecHitSumEt[i],
+    	       Electron_dr03HcalDepth1TowerSumEt[i],
+    	       Electron_dr03TkSumPt[i],
+	       DEtaInCut, DPhiInCut
+	       
+    	       );
+
+	printf(" %6s %6s %7s %6s %6s %6s, %5s, %5s\n",
+    	       boolStr(Electron_sieie[i] < 0.031).c_str(),
+    	       boolStr(Electron_hoe[i] < 0.08).c_str(),
+    	       boolStr(abs(Electron_eInvMinusPInv[i]) < 0.01).c_str(),
+    	       boolStr(Electron_dr03EcalRecHitSumEt[i]/Electron_pt[i] < 0.45).c_str(),
+    	       boolStr(Electron_dr03HcalDepth1TowerSumEt[i]/Electron_pt[i] < 0.25).c_str(),
+    	       boolStr(Electron_dr03TkSumPt[i]/Electron_pt[i] < 0.2).c_str(),
+	       boolStr(DEtaInCut >=1).c_str(),
+	       boolStr(DPhiInCut >=3).c_str()
+    	       );
+	printf(" %5s %5s %5s %5s %5s %5s %5s %5s %5s\n", "pt", "convV", "missV", "tChar", "dz", "d0", "sip3d", "mva", "iso");
+	printf(" %5s %5s %5s %5s %5s %5s %5s %5s %5s\n", boolStr(Electron_pt[i] > 20).c_str(),
+	       boolStr(Electron_convVeto[i]).c_str(),
+	       boolStr(Electron_lostHits[i] == 0).c_str(),
+	       boolStr(Electron_tightCharge[i] == 2).c_str(),
+	       boolStr(abs(Electron_dz[i]) < 0.1).c_str(),
+	       boolStr(abs(Electron_dxy[i]) < 0.05).c_str(),
+	       boolStr(Electron_sip3d[i] < 4).c_str(),
+	       boolStr(passMVACut(mvaValues[CBID_TIGHT], i)).c_str(),
+	       boolStr(Electron_miniPFRelIso_all[i] < 0.12).c_str());
+
+	printf("\n");
+    }
+    
+    
     num=0;
     printf("-------Jets-----------\n");
     for(auto lep : goodJets) {
     	if(!lep.isBTagged) {
     	    num++;
-            printf("%2d: %6.2f %+4.2f %5.3f %5.3f\n", num, lep.Pt(), lep.Eta(), Jet_btagDeepB[lep.index], Jet_btagCSVV2[lep.index]);
+            printf("%2d: %6.2f %+4.2f %+4.2f %5.3f %5.3f\n", num, lep.Pt(), lep.Eta(), lep.Phi(), Jet_btagDeepB[lep.index], Jet_btagCSVV2[lep.index]);
     	}
     }
     // for(size_t i = 0; i < nJet; i++) {
-    // 	printf("%2d: %6.2f %+4.2f %4.2f\n", (int)i, Jet_pt[i], Jet_eta[i], Jet_btagDeepB[i]);
+    // 	printf("%2d: %6.2f %+4.2f %+4.2f %+4.2f\n", (int)i, Jet_pt[i], Jet_eta[i], Jet_phi[i], Jet_btagDeepB[i]);
     // }
     num=0;
     printf("-------BJets------------\n");
     for(auto lep : goodJets) {
 	if(lep.isBTagged) {
 	    num++;
-	    printf("%2d: %6.2f %+4.2f %5.3f %5.3f\n", num, lep.Pt(), lep.Eta(), Jet_btagDeepB[lep.index], Jet_btagCSVV2[lep.index]);
+	    printf("%2d: %6.2f %+4.2f %+4.2f %5.3f %5.3f\n", num, lep.Pt(), lep.Eta(), lep.Phi(), Jet_btagDeepB[lep.index], Jet_btagCSVV2[lep.index]);
 	}
     }
     printf("-------MET------------\n");
@@ -384,19 +442,17 @@ void ThreeLepSelector::setupMuons() {
 
     for (size_t i = 0; i < nMuon; ++i) {
 	if(isGoodMuon(i)) {
-	    goodLeptons.push_back(GoodPart(SetupPtEtaPhiM(Muon, i)));
-	    goodLeptons.back().SetPdgId(PID_MUON * Muon_charge[i]);
+	    goodLeptons.push_back(GoodPart(get4Vector(PID_MUON, i), PID_MUON * Muon_charge[i]));
 	    goodLeptons.back().index = i;
-	    looseMuons.push_back(goodLeptons.back());
+	    looseLeptons.push_back(goodLeptons.back());
 		
-	    if(!passFullIso(goodLeptons.back().v, 0.76, 7.2, 1/(Muon_jetRelIso[i]+1))) {    // Extra Iso requirement
+	    if(!passFullIso(goodLeptons.back().v, 0.76, 7.2)) {    // Extra Iso requirement
 	    	goodLeptons.pop_back();
 	    }
 	}
 	else if(isLooseMuon(i)) {
-	    looseMuons.push_back(GoodPart(SetupPtEtaPhiM(Muon, i)));
-	    looseMuons.back().SetPdgId(PID_MUON * Muon_charge[i]);
-	    looseMuons.back().index = i;
+            looseLeptons.push_back(GoodPart(get4Vector(PID_MUON, i), PID_MUON * Muon_charge[i]));
+	    looseLeptons.back().index = i;
 	}
     }
 
@@ -405,36 +461,33 @@ void ThreeLepSelector::setupMuons() {
 void ThreeLepSelector::setupElectrons() {
     for (size_t i = 0; i < nElectron; ++i) {
 	if( isGoodElectron(i) && passTriggerEmu(i) ) {
-
-	    goodLeptons.push_back(GoodPart(SetupPtEtaPhiM(Electron, i)));
-	    goodLeptons.back().SetPdgId(PID_ELECTRON * Electron_charge[i]);
+            goodLeptons.push_back(GoodPart(get4Vector(PID_ELECTRON, i), PID_ELECTRON * Electron_charge[i]));
 	    goodLeptons.back().index = i;
-	    looseElectrons.push_back(goodLeptons.back());
+	    looseLeptons.push_back(goodLeptons.back());
 
-	    if(!passFullIso(goodLeptons.back().v, 0.8, 7.2, 1/(Electron_jetRelIso[i]+1))) {   // Extra Iso requirement
+	    if(!passFullIso(goodLeptons.back().v, 0.8, 7.2)) {   // Extra Iso requirement
 	    	goodLeptons.pop_back();
 	    }
 	}
 	else if(isLooseElectron(i)) {
-	    looseElectrons.push_back(GoodPart(SetupPtEtaPhiM(Electron, i)));
-	    looseElectrons.back().SetPdgId(PID_ELECTRON * Electron_charge[i]);
-	    looseElectrons.back().index = i;
+	    looseLeptons.push_back(GoodPart(get4Vector(PID_ELECTRON, i), PID_ELECTRON * Electron_charge[i]));
+	    looseLeptons.back().index = i;
 	}
     }
 }
 
 void ThreeLepSelector::setupJets() {
     std::vector<size_t> closeJet;
-    for(auto lep : goodLeptons)
-	closeJet.push_back(getCloseJetIndex(lep.v, 0.4));
+    for(auto lep : looseLeptons) {
+    	if(passFakeableCuts(lep)) closeJet.push_back(getCloseJetIndex(lep.v, 0.4));
+    }
 
     for(size_t i = 0; i < nJet; ++i) {
 	// if(goodLeptons.size() < 2) break;  // only try to find jets if have leptons
 	if(std::find(closeJet.begin(), closeJet.end(), i) != closeJet.end()) continue;
 	/// jet
 	if(isGoodJet(i)) {
-	    goodJets.push_back(GoodPart(SetupPtEtaPhiM(Jet, i)));
-	    goodJets.back().SetPdgId(Jet_hadronFlavour[i]);
+            goodJets.push_back(GoodPart(get4Vector(PID_JET, i), Jet_hadronFlavour[i]));
 	    goodJets.back().isBTagged = false;
 	    goodJets.back().index = i;
 	    nJets++;
@@ -443,8 +496,7 @@ void ThreeLepSelector::setupJets() {
 	}
 	// bjet
 	if(isGoodBJet(i)) {
-	    goodJets.push_back(GoodPart(SetupPtEtaPhiM(Jet, i)));
-	    goodJets.back().SetPdgId(Jet_hadronFlavour[i]);
+	    goodJets.push_back(GoodPart(get4Vector(PID_BJET, i), Jet_hadronFlavour[i]));
 	    goodJets.back().isBTagged = true;
 	    goodJets.back().index = i;
 	    nBJets++;
@@ -487,22 +539,21 @@ void ThreeLepSelector::setupChannel() {
 }
 
 
+LorentzVector ThreeLepSelector::get4Vector(PID pid, int idx) {
+    if(pid == PID_MUON)
+	return LorentzVector(Muon_pt[idx], Muon_eta[idx], Muon_phi[idx], Muon_mass[idx]);
+    else if(pid == PID_ELECTRON)
+	return LorentzVector(Electron_pt[idx], Electron_eta[idx], Electron_phi[idx], Electron_mass[idx]);
+    else
+	return LorentzVector(Jet_pt[idx], Jet_eta[idx], Jet_phi[idx], Jet_mass[idx]);
+}
+
 
 bool ThreeLepSelector::doesPassZVeto(GoodPart& lep, std::vector<GoodPart>& looseList) {
-    bool debug = false;
-#ifdef DEBUG
-    debug = true;
-#endif
-
-
     for (auto lLep : looseList) {
-	if((lep.Charge()*lLep.Charge() < 0) &&
-	   ((abs((lLep.v + lep.v).M() - 91.188) < 15)
-	    || ((lLep.v + lep.v).M() < 12)
-	    )  ) {
-	    if(debug)
-		std::cout << "Fail: " << lLep.Pt() << " " << lep.Pt() << std::endl;
-
+	if( lep.Charge() == -1*lLep.Charge() &&  //opposite charge, same ID
+	    (abs((lLep.v + lep.v).M() - 91.188) < 15 || (lLep.v + lep.v).M() < 12)) {
+            
 	    return false;
 	}
     }
@@ -547,6 +598,25 @@ void ThreeLepSelector::ApplyScaleFactors() {
     return;
 }
 
+bool ThreeLepSelector::passFakeableCuts(GoodPart& lep) {
+    int index = lep.index;
+    if(lep.Pt() < 10) return false;
+    if(lep.Id() == PID_MUON) {
+	return (Muon_mediumId[index] 
+		&& Muon_sip3d[index] < 4
+		&& Muon_tightCharge[index] == 2
+		);
+    }
+    else {
+	return (Electron_sip3d[index] < 4
+		&& Electron_tightCharge[index] == 2
+		&& Electron_lostHits[index] == 0
+		&& passTriggerEmu(index)
+		);
+    }
+}
+
+
 bool ThreeLepSelector::isGoodMuon(size_t index) {
     bool yearCuts = true;
     if(year_ == yr2016) yearCuts = (Muon_miniPFRelIso_all[index] < 0.16);
@@ -563,41 +633,40 @@ bool ThreeLepSelector::isGoodMuon(size_t index) {
 	     );
 }
 
+bool ThreeLepSelector::passMVACut(std::vector<std::vector<double> > mvaCuts, int index) {
+    int caseIndex = 0;
+    //// PT Splitting
+    if(Electron_pt[index] < 5)       return false;
+    else if(Electron_pt[index] < 10) caseIndex += 0;
+    else if(Electron_pt[index] < 15) caseIndex += 1;
+    else if(Electron_pt[index] < 25) caseIndex += 2;
+    else                             caseIndex += 3;
+    //// ETA Splitting
+    if(abs(Electron_eta[index]) < 0.8)        caseIndex += 0;
+    else if(abs(Electron_eta[index]) < 1.479) caseIndex += 4;
+    else if(abs(Electron_eta[index]) < 2.5)   caseIndex += 8;
+
+    if(caseIndex % 4 != 2) return Electron_MVA[index] > mvaCuts[caseIndex/4][caseIndex%4];
+    else                  return Electron_MVA[index] > mvaInterpolate(Electron_pt[index], mvaCuts[caseIndex/4]);
+}
+
+double ThreeLepSelector::mvaInterpolate(double pt, std::vector<double> cuts) {
+    return cuts[1] + cuts[2]*(pt-15);
+}
+
+
 bool ThreeLepSelector::isGoodElectron(size_t index) {
     if(abs(Electron_eta[index]) > 2.5) return false;
     bool passId = false;
-    double ptCut = 20;
-
-
+    
     if(selection_ == FourTopMVAEl || selection_ != FourTopCutBasedEl) {
-	int caseIndex = 0;
-
-	if(Electron_pt[index] < ptCut)       return false;
-	else if(Electron_pt[index] < 25) caseIndex += 0;
-	else                             caseIndex += 1;
-	//// ETA Splitting
-	if(abs(Electron_eta[index]) < 0.8)        caseIndex += 0;
-	else if(abs(Electron_eta[index]) < 1.479) caseIndex += 2;
-	else if(abs(Electron_eta[index]) < 2.5)   caseIndex += 4;
-	/// MVA numbers. May generalize.
 	if(year_ == yr2016 || year_ == yrdefault) {
-
-	    if(caseIndex == 0)          passId = Electron_MVA[index] >  0.77 - 0.025*(Electron_pt[index]-15);
-	    else if(caseIndex == 1)     passId = Electron_MVA[index] >  0.52;
-	    else if(caseIndex == 2)     passId = Electron_MVA[index] >  0.56 - 0.045*(Electron_pt[index]-15);
-	    else if(caseIndex == 3)     passId = Electron_MVA[index] >  0.11;
-	    else if(caseIndex == 4)     passId = Electron_MVA[index] >  0.48 - 0.049*(Electron_pt[index]-15);
-	    else if(caseIndex == 5)     passId = Electron_MVA[index] > -0.01;
+            passId = passMVACut(mvaValues[CBID_TIGHT], index);
 	    passId = passId && (Electron_miniPFRelIso_all[index] < 0.12);
-
 	}
 	else if(year_ == yr2017) {
-	    if(caseIndex == 0)          passId = Electron_MVA[index] >  0.2 - 0.032*(Electron_pt[index]-10);
-	    else if(caseIndex == 1)     passId = Electron_MVA[index] >  0.68;
-	    else if(caseIndex == 2)     passId = Electron_MVA[index] >  0.1 - 0.025*(Electron_pt[index]-10);
-	    else if(caseIndex == 3)     passId = Electron_MVA[index] >  0.475;
-	    else if(caseIndex == 4)     passId = Electron_MVA[index] > -0.1 - 0.028*(Electron_pt[index]-10);
-	    else if(caseIndex == 5)     passId = Electron_MVA[index] >  0.32;
+	    ///// NEED to fix mva values for 2017
+	    passId = passMVACut(mvaValues[CBID_TIGHT], index);
 	    passId = passId && (Electron_miniPFRelIso_all[index] < 0.07);
 	}
     } else {
@@ -606,14 +675,14 @@ bool ThreeLepSelector::isGoodElectron(size_t index) {
 	else if(year_ == yr2017)       passId = passId && (Electron_miniPFRelIso_all[index] < 0.07);
     }
 
-    return ((Electron_pt[index] > ptCut)                 &&
-	    (passId)                                  &&
-	    (Electron_convVeto[index])                &&
-	    (Electron_lostHits[index] == 0)           &&
-	    (Electron_tightCharge[index] == 2)   &&
-	    (abs(Electron_dz[index]) < 0.1)                &&
-	    (abs(Electron_dxy[index]) < 0.05)              &&
-	    (Electron_sip3d[index] < 4)
+    return ((Electron_pt[index] > 20)
+	    && (passId)
+	    && (Electron_convVeto[index]) 
+	    && (Electron_lostHits[index] == 0) 
+	    && (Electron_tightCharge[index] == 2) 
+	    && (abs(Electron_dz[index]) < 0.1) 
+	    && (abs(Electron_dxy[index]) < 0.05) 
+	    && (Electron_sip3d[index] < 4)
 	    );
 }
 
@@ -624,6 +693,7 @@ bool ThreeLepSelector::isLooseMuon(size_t index) {
 	    && (Muon_miniPFRelIso_all[index] < 0.4)
 	    && (abs(Muon_dz[index]) < 0.1)
 	    && (abs(Muon_dxy[index]) < 0.05)
+	    && (Muon_pt[index] > 5)
 	    );
 }
 
@@ -631,40 +701,18 @@ bool ThreeLepSelector::isLooseElectron(size_t index) {
     bool passId = false;
 
     if(selection_ == FourTopMVAEl || selection_ != FourTopCutBasedEl) {
-	int caseIndex = 0;
-	//// PT Splitting
-	if(Electron_pt[index] < 5)       return false;
-	else if(Electron_pt[index] < 10) caseIndex += 0;
-	else if(Electron_pt[index] < 15) caseIndex += 1;
-	else if(Electron_pt[index] < 25) caseIndex += 2;
-	else                             caseIndex += 3;
-	//// ETA Splitting
-	if(abs(Electron_eta[index]) < 0.8)        caseIndex += 0;
-	else if(abs(Electron_eta[index]) < 1.479) caseIndex += 4;
-	else if(abs(Electron_eta[index]) < 2.5)   caseIndex += 8;
-	/// MVA numbers. May generalize.
-	if(caseIndex == 0)          passId = Electron_MVA[index] > -0.46;
-	else if(caseIndex == 1)     passId = Electron_MVA[index] > -0.48;
-	else if(caseIndex == 2)     passId = Electron_MVA[index] > -0.48 - 0.037*(Electron_pt[index]-15);
-	else if(caseIndex == 3)     passId = Electron_MVA[index] > -0.85;
-	else if(caseIndex == 4)     passId = Electron_MVA[index] > -0.03;
-	else if(caseIndex == 5)     passId = Electron_MVA[index] > -0.67;
-	else if(caseIndex == 6)     passId = Electron_MVA[index] > -0.67 - 0.024*(Electron_pt[index]-15);
-	else if(caseIndex == 7)     passId = Electron_MVA[index] > -0.91;
-	else if(caseIndex == 8)     passId = Electron_MVA[index] > 0.06;
-	else if(caseIndex == 9)     passId = Electron_MVA[index] > -0.49;
-	else if(caseIndex == 10)    passId = Electron_MVA[index] > -0.49 - 0.034*(Electron_pt[index]-15);
-	else if(caseIndex == 11)    passId = Electron_MVA[index] > -0.83;
+	passId = passMVACut(mvaValues[CBID_LOOSE], index);
     }
     else {
 	passId = (Electron_cutBased[index] >= CBID_LOOSE);
     }
-    return ((passId) &&
-	    (Electron_convVeto[index]) &&
-	    (Electron_lostHits[index] <= 1) &&
-	    (Electron_miniPFRelIso_all[index] < 0.4) &&
-	    (abs(Electron_dz[index]) < 0.1) &&
-	    (abs(Electron_dxy[index]) < 0.05)
+    return ((passId)
+	    && (Electron_pt[index] > 7)
+	    && (Electron_convVeto[index]) 
+	    && (Electron_lostHits[index] <= 1) 
+	    && (Electron_miniPFRelIso_all[index] < 0.4) 
+	    && (abs(Electron_dz[index]) < 0.1) 
+	    && (abs(Electron_dxy[index]) < 0.05)
 	    );
 }
 
@@ -676,7 +724,7 @@ bool ThreeLepSelector::isGoodJet(size_t index) {
     return ((Jet_pt[index] > ptCut)      &&
 	    (abs(Jet_eta[index]) < 2.4) &&
 	    (yearCut)
-	    //	    && (doesNotOverlap(index))
+	    // && (doesNotOverlap(index))
 	    );
 }
 
@@ -692,38 +740,47 @@ bool ThreeLepSelector::isGoodBJet(size_t index) {
 	    && (abs(Jet_eta[index]) < 2.4)
 	    // (Jet_btagCSVV2[index] > 0.8484) &&
 	    && (yearCut)
-	    //	    && (doesNotOverlap(index))
+	    // && (doesNotOverlap(index))
 	    );
 }
 
 size_t ThreeLepSelector::getCloseJetIndex(LorentzVector& lep, double minDR ) {
     size_t minIndex = -1;
+    
     for(size_t index = 0; index < nJet; ++index) {
-
-	LorentzVector jet(SetupPtEtaPhiM(Jet, index));
+	LorentzVector jet = get4Vector(PID_JET, index);
 	double dr = reco::deltaR(jet, lep);
 	if(minDR > dr) {
 	    minDR = dr;
 	    minIndex = index;
 	}
     }
+    
     return minIndex;
 }
 
-bool ThreeLepSelector::passFullIso(LorentzVector& lep, double I2, double I3, double ptRatio) {
-    if(ptRatio > I2 ) return true;
-    return LepRelPt(lep) > I3;
+bool ThreeLepSelector::passFullIso(LorentzVector& lep, double I2, double I3) {
+    // return true;
+    int closeIdx = getCloseJetIndex(lep);
+    LorentzVector closeJet  = get4Vector(PID_JET, closeIdx);
+    // closeJet += (1-Jet_L2L3[closeIdx])*lep;
+    closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-lep)*Jet_L2L3[closeIdx]+lep;
+    return (lep.Pt()/closeJet.Pt() > I2) || (LepRelPt(lep) > I3);
+    
 }
 
 
 double ThreeLepSelector::LepRelPt(LorentzVector& lep) {
-    LorentzVector closeJet(SetupPtEtaPhiM(Jet, getCloseJetIndex(lep)));
+    int closeIdx = getCloseJetIndex(lep);
+    LorentzVector closeJet  = get4Vector(PID_JET, closeIdx);
+    //    closeJet += (1-Jet_L2L3[closeIdx])*lep;
+    closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-lep)*Jet_L2L3[closeIdx]+lep;
+    
     auto diff = closeJet.Vect() - lep.Vect();
     auto cross = diff.Cross(lep.Vect());
     return std::sqrt(cross.Mag2()/diff.Mag2());
 
 }
-
 
 // Need to include DeltaPhi Ieta
 // Also need isolation criteria (need HLT isolated legs only?)
@@ -749,12 +806,22 @@ bool ThreeLepSelector::passTriggerEmu(size_t index) {
 
 
 bool ThreeLepSelector::doesNotOverlap(size_t index) {
-    LorentzVector tmp(SetupPtEtaPhiM(Jet, index));
+    LorentzVector tmp = get4Vector(PID_JET, index);
     double dR = 0.4;
     for(auto lep: goodLeptons) {
 	if(reco::deltaR(tmp, lep.v) < dR) return false;
     }
     return true;
+}
+
+bool ThreeLepSelector::MetFilter() {
+    return Flag_goodVertices
+	&& Flag_globalSuperTightHalo2016Filter
+	&& Flag_HBHENoiseFilter
+	&& Flag_HBHENoiseIsoFilter
+	&& Flag_EcalDeadCellTriggerPrimitiveFilter
+	&& Flag_BadPFMuonFilter
+	&& Flag_ecalBadCalibFilter;
 }
 
 void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) {
@@ -765,21 +832,25 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
 #endif
 
     if(debug && ! eventVec[event]) return;
-
+    
     int step = 0;
     Fill1D("CutFlow", 0);
 
     if(debug) printf("trig \n");
     /// Trigger
     if(((channel_ == mm && !HLT_DoubleMu8_Mass8_PFHT300) ||
-    	(channel_ == em && !HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300) ||
-    	(channel_ == ee && !HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300))
+	(channel_ == em && !HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300) ||
+	(channel_ == ee && !HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300))
        && !HLT_AK8PFJet450 && !HLT_PFJet450
        ) return;
     Fill1D("CutFlow", ++step);
 
+    if(debug) printf("met filter \n");
+    if(!MetFilter()) return;
+    Fill1D("CutFlow", ++step);
 
     /// 2 good leptons
+    if(debug) printf("nlep %d\n", (int)goodLeptons.size());
     if(goodLeptons.size() < 2) return;
     Fill1D("CutFlow", ++step);
 
@@ -791,12 +862,13 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
 
     // same sign requirement
     if((goodLeptons.size() == 2 && goodLeptons[0].Charge() * goodLeptons[1].Charge() < 0)
-           || (goodLeptons.size() == 3 && goodLeptons[0].Charge() * goodLeptons[2].Charge() > 0)
+       || (goodLeptons.size() == 3 && goodLeptons[0].Charge() * goodLeptons[2].Charge() > 0)
        )
 	return;
     Fill1D("CutFlow", ++step);
 
     // jet cut
+    if(debug) printf("j %d, b %d\n", nJets, nBJets);
     if(nJets < 2) return;
     Fill1D("CutFlow", ++step);
 
@@ -811,19 +883,20 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
     Fill1D("CutFlow", ++step);
 
     // met cut
+    if(debug) printf("met %f\n", MET);
     if (MET < 50) return;
     Fill1D("CutFlow", ++step);
 
     if(debug) printf("zveto %d\n", passZVeto);
     if(!passZVeto) return;
-    if(goodLeptons.size() == 2 && !passZVeto) return;
+    // if(goodLeptons.size() == 2 && !passZVeto) return;
     Fill1D("CutFlow", ++step);
 
     if(debug)   printf("passed\n\n");
 
     if(debug)   return;
 
-    printf("1,%d,%d,%d,%d,%f,%d,%f,%f,%d,%d,%d,%d,%d\n", nJets, nBJets, (int)goodLeptons.size(), (int)event, weight,lumi, goodLeptons[0].Pt(), goodLeptons[1].Pt(), goodLeptons[0].Charge(), goodLeptons[1].Charge(), (int)looseMuons.size(), (int)looseElectrons.size(), passZVeto);
+    printf("1,%d,%d,%d,%d,%f,%d,%f,%f,%d,%d,%d\n", nJets, nBJets, (int)goodLeptons.size(), (int)event, weight,lumi, goodLeptons[0].Pt(), goodLeptons[1].Pt(), goodLeptons[0].Charge(), goodLeptons[1].Charge(), passZVeto);
 
 
 
@@ -854,8 +927,8 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
     }
     else if(getSRBin() == 0) {
 	Fill1D("CRW_njet", nJets);
-     Fill1D("CRW_nbjet", nBJets);
-     return;
+	Fill1D("CRW_nbjet", nBJets);
+	return;
     }
     else if(getSRBin() == 9) {
 	Fill1D("CRZ_njet", nJets);
