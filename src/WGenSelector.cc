@@ -31,8 +31,17 @@ void WGenSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std
 }
 
 void WGenSelector::SetComposite() {
+    if (leptons.size() == 0) {
+        wCandMet = LorentzVector();
+        wCand = LorentzVector();
+        return;
+    }
+    else if (neutrinos.size() == 0) {
+        wCand = LorentzVector();
+        return;
+    }
     wCandMet = leptons.at(0).polarP4() + genMet;
-    wCand = leptons.at(0).polarP4() + neutrinos.at(0).polarP4();
+    wCand = neutrinos.size() > 0 ? leptons.at(0).polarP4() + neutrinos.at(0).polarP4() : LorentzVector();
 }
 
 
@@ -45,6 +54,10 @@ void WGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (leptons.size() < 1)
+        return;
+    SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+
+    if (neutrinos.size() < 1)
         return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
