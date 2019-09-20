@@ -74,6 +74,7 @@ public :
     Float_t   Electron_dr03TkSumPt[N_KEEP_MU_E_];
     Int_t     Electron_vidBitmap[N_KEEP_MU_E_];
     Float_t   Electron_jetRelIso[N_KEEP_MU_E_];
+    Float_t   Electron_eCorr[N_KEEP_MU_E_];
   
     UInt_t    nMuon;
     Float_t   Muon_pt[N_KEEP_MU_E_];

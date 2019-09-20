@@ -11,7 +11,7 @@ realetaBin = [1, 3, 6, 9, 11]
 bmap = {"Beff_b": ["Beff_b_btag_all", "Beff_b_all"],
         "Beff_j": ["Beff_j_btag_all", "Beff_j_all"],}
 
-infileName="test.root"
+infileName="bEff_0920.root"
 infile = TFile(infileName)
 
 outfileName="BEff.root"
