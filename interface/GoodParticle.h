@@ -5,6 +5,7 @@
 
 // Wrapper for lepton objects so to ignore problems with
 // accessing data if particle is muon vs electron
+enum Match {NONE = 0, GEN_ONLY =1, RECO_ONLY =2, MATCHED =3};
 
 struct GoodPart {
     LorentzVector v;
@@ -33,29 +34,24 @@ struct GoodPart {
     int Id() {return std::abs(pdgId);}
 };
 
-//Seems a little less clunky
-//Can also add some help functions as time goes on
 struct GenPart {
   GoodPart gen;
   GoodPart reco;
-  GoodPart match;
-    
-   
+     
+  int status = NONE;
+  
   void SetupGen(double pt, double eta, double phi, double m, int pdg) {
     gen = GoodPart(pt, eta, phi, m);
     gen.SetPdgId(pdg);
+    status += GEN_ONLY;
   }
 
   void SetupReco(double pt, double eta, double phi, double m, int pdg) {
     reco = GoodPart(pt, eta, phi, m);
     reco.SetPdgId(pdg);
+    status += RECO_ONLY;
   }
 
-  void SetupMatched(double pt, double eta, double phi, double m, int pdg) {
-    match = GoodPart(pt, eta, phi, m);
-    match.SetPdgId(pdg);
-  }
-  
   int gId() {return gen.Id();}
   double gPt() {return gen.Pt();}
   double gEta() {return gen.Eta();}
@@ -70,13 +66,9 @@ struct GenPart {
   double rM() {return reco.M();}
   LorentzVector rVector(){return reco.v;}
 
-  int mId() {return match.Id();}
-  double mPt() {return match.Pt();}
-  double mEta() {return match.Eta();}
-  double mPhi() {return match.Phi();}
-  double mM() {return match.M();}
-  LorentzVector mVector(){return match.v;}
-  
+  bool isMatched() {return status == MATCHED;}
+  bool isFaked() {return status ==RECO_ONLY;}
+  bool noMatched() {return status ==GEN_ONLY;}
   
 };
 
