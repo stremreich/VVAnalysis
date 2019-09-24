@@ -33,33 +33,34 @@ class Efficiency : public SelectorBase {
   //  //NanoAOD variables //keep mu e was 15 --> bumped it up to 35
   // static const unsigned int N_KEEP_MU_E_ = 35;
   static const unsigned int N_KEEP_JET_ = 35;
-  static const unsigned int N_KEEP_GEN_ = 250;
+    static const unsigned int N_KEEP_GEN_ = 300;
 
-  //// gen branches ///////////////////////////
+    //// gen branches ///////////////////////////
 
-  Float_t GenMET_pt;
+    Float_t GenMET_pt;
 
-  UInt_t nGenPart;
-  Float_t GenPart_pt[N_KEEP_GEN_];
-  Int_t   GenPart_pdgId[N_KEEP_GEN_];
-  Float_t GenPart_eta[N_KEEP_GEN_];
-  Float_t GenPart_phi[N_KEEP_GEN_];
-  Float_t GenPart_mass[N_KEEP_GEN_];
-
-  // any other functions??
-  BranchManager b;
-  Float_t weight_g;
-  std::vector<GenPart> Leptons;
-  //std::vector<RecoPart> recoLeptons;
-  // std::vector<FakePart> fakeLeptons;
+    UInt_t nGenPart;
+    Float_t GenPart_pt[N_KEEP_GEN_];
+    Int_t   GenPart_pdgId[N_KEEP_GEN_];
+    Float_t GenPart_eta[N_KEEP_GEN_];
+    Float_t GenPart_phi[N_KEEP_GEN_];
+    Float_t GenPart_mass[N_KEEP_GEN_];
+    Int_t GenPart_statusFlags[N_KEEP_GEN_];
+    
+    // any other functions??
+    BranchManager b;
+    Float_t weight_g;
+    std::vector<GenPart> Leptons;
+    //std::vector<RecoPart> recoLeptons;
+    // std::vector<FakePart> fakeLeptons;
   
-  void clearValues();
+    void clearValues();
   
-  // overloaded or necessary functions
-  virtual void    SetBranchesNanoAOD() override;
-  void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
-  void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
-  virtual void    SetupNewDirectory() override;
+    // overloaded or necessary functions
+    virtual void    SetBranchesNanoAOD() override;
+    void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+    void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+    virtual void    SetupNewDirectory() override;
     virtual std::string GetNameFromFile() override {return "";}
     // Readers to access the data (delete the ones you do not need).
     virtual void    SlaveBegin(TTree *tree) override {return;}

@@ -394,7 +394,7 @@ void ThreeLepSelector::setupMuons() {
 	    looseMuons.push_back(goodLeptons.back());
 		
 	    if(!passFullIso(goodLeptons.back().v, 0.76, 7.2, 1/(Muon_jetRelIso[i]+1))) {    // Extra Iso requirement
-		goodLeptons.pop_back();
+	    	goodLeptons.pop_back();
 	    }
 	}
 	else if(isLooseMuon(i)) {
@@ -556,7 +556,7 @@ bool ThreeLepSelector::isGoodMuon(size_t index) {
     if(year_ == yr2016) yearCuts = (Muon_miniPFRelIso_all[index] < 0.16);
     else                yearCuts = (Muon_miniPFRelIso_all[index] < 0.11);
     //was 20 changing for efficiency plotting purposes
-    return ( (Muon_pt[index] > 0) 
+    return ( (Muon_pt[index] > 5) 
 	     && (Muon_tightCharge[index] == 2) 
 	     && (abs(Muon_eta[index]) < 2.4) 
 	     && (Muon_mediumId[index]) 

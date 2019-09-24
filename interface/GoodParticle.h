@@ -1,4 +1,4 @@
-0#ifndef _GOOD_PARTICLE_H_
+#ifndef _GOOD_PARTICLE_H_
 #define _GOOD_PARTICLE_H_
 
 #include "helpers.h"
@@ -14,11 +14,11 @@ struct GoodPart {
   
     GoodPart(){}
   
-    GoodPart(double pt, double eta, double phi, double m ) : v(pt, eta, phi, m) {}
+GoodPart(double pt, double eta, double phi, double m ) : v(pt, eta, phi, m) {}
 
-  void SetLorentzV(double pt, double eta, double phi, double m ) {
-    v = LorentzVector(pt, eta, phi, m);
-  }
+    void SetLorentzV(double pt, double eta, double phi, double m ) {
+	v = LorentzVector(pt, eta, phi, m);
+    }
 
     void SetPdgId(int pdg) {
 	pdgId = pdg;
@@ -33,14 +33,16 @@ struct GoodPart {
     int Id() {return std::abs(pdgId);}
 };
 
-enum MATCHED = {NONE=0, GEN_ONLY=1, RECO_ONLY=2, MATCHED=3};
+
 
 //Seems a little less clunky
 //Can also add some help functions as time goes on
 struct GenPart {
+    enum Match {NONE=0, GEN_ONLY=1, RECO_ONLY=2, MATCHED=3};
+    
     GoodPart gen;
     GoodPart reco;
-    MATCHED status = NONE;
+    int status = NONE;
     
    
     void SetupGen(double pt, double eta, double phi, double m, int pdg) {
@@ -49,17 +51,11 @@ struct GenPart {
 	status += GEN_ONLY;
     }
 
-    void SetupReco(double pt, double eta, double phi, double m, int pdg) {
-	reco = GoodPart(pt, eta, phi, m);
-	reco.SetPdgId(pdg);
+    void SetupReco(GoodPart& reco_) {
+	reco = reco_;
 	status += RECO_ONLY;
     }
 
-    void SetupMatched(double pt, double eta, double phi, double m, int pdg) {
-	match = GoodPart(pt, eta, phi, m);
-	match.SetPdgId(pdg);
-    }
-  
     int gId() {return gen.Id();}
     double gPt() {return gen.Pt();}
     double gEta() {return gen.Eta();}
@@ -76,6 +72,8 @@ struct GenPart {
 
     bool isMatched() {return status == MATCHED;}
     bool isFaked() {return status == RECO_ONLY;}
+    bool noMatched() {return status ==GEN_ONLY;}
+  
 };
 
 #endif
