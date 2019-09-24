@@ -11,14 +11,11 @@ struct GoodPart {
     int pdgId;
     bool isBTagged;
     int index;
-  
     GoodPart(){}
   
-GoodPart(double pt, double eta, double phi, double m ) : v(pt, eta, phi, m) {}
-
-    void SetLorentzV(double pt, double eta, double phi, double m ) {
-	v = LorentzVector(pt, eta, phi, m);
-    }
+    GoodPart(double pt, double eta, double phi, double m, int pdg=0 ) : v(pt, eta, phi, m), pdgId(pdg) {}
+    GoodPart(LorentzVector v_, int pdg=0 ) : v(v_), pdgId(pdg) {}
+    
 
     void SetPdgId(int pdg) {
 	pdgId = pdg;
@@ -46,8 +43,7 @@ struct GenPart {
     
    
     void SetupGen(double pt, double eta, double phi, double m, int pdg) {
-	gen = GoodPart(pt, eta, phi, m);
-	gen.SetPdgId(pdg);
+	gen = GoodPart(pt, eta, phi, m, pdg);
 	status += GEN_ONLY;
     }
 

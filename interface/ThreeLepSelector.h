@@ -23,6 +23,8 @@
 #include "CondTools/BTau/interface/BTagCalibrationReader.h"
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
 
+enum PID {PID_MUON = 13, PID_ELECTRON = 11, PID_BJET = 5, PID_JET};
+
 class ThreeLepSelector : public SelectorBase {
 public :
     /*****************************************/
@@ -44,8 +46,8 @@ public :
     Float_t MET;
     Float_t type1_pfMETPhi;
 
-    //NanoAOD variables n keep mu e was 15 -> now 35..?
-    static const unsigned int N_KEEP_MU_E_ = 35;
+    //NanoAOD variables
+    static const unsigned int N_KEEP_MU_E_ = 15;
     static const unsigned int N_KEEP_JET_ = 35;
 
     UInt_t    nElectron;
@@ -72,6 +74,7 @@ public :
     Float_t   Electron_dr03TkSumPt[N_KEEP_MU_E_];
     Int_t     Electron_vidBitmap[N_KEEP_MU_E_];
     Float_t   Electron_jetRelIso[N_KEEP_MU_E_];
+    Float_t   Electron_eCorr[N_KEEP_MU_E_];
   
     UInt_t    nMuon;
     Float_t   Muon_pt[N_KEEP_MU_E_];
@@ -95,38 +98,51 @@ public :
     Float_t   Muon_jetRelIso[N_KEEP_MU_E_];
 
   
-  Int_t     numPU;
+    Int_t     numPU;
 
-  UInt_t    nJet;
-  Float_t   Jet_btagCSVV2[N_KEEP_JET_];
-  Float_t   Jet_btagDeepB[N_KEEP_JET_];
-  Float_t   Jet_eta[N_KEEP_JET_];
-  Float_t   Jet_phi[N_KEEP_JET_];
-  Float_t   Jet_pt[N_KEEP_JET_];
-  Float_t   Jet_mass[N_KEEP_JET_];
-  Float_t   Jet_neHEF[N_KEEP_JET_];
-  Float_t   Jet_neEmEF[N_KEEP_JET_];
-  Int_t     Jet_nConstituents[N_KEEP_JET_];
-  Float_t   Jet_chHEF[N_KEEP_JET_];  
-  Float_t   Jet_chEmEF[N_KEEP_JET_];
-  Int_t     Jet_jetId[N_KEEP_JET_];
-  Int_t     Jet_hadronFlavour[N_KEEP_JET_];
+    UInt_t    nJet;
+    Float_t   Jet_btagCSVV2[N_KEEP_JET_];
+    Float_t   Jet_btagDeepB[N_KEEP_JET_];
+    Float_t   Jet_eta[N_KEEP_JET_];
+    Float_t   Jet_phi[N_KEEP_JET_];
+    Float_t   Jet_pt[N_KEEP_JET_];
+    Float_t   Jet_mass[N_KEEP_JET_];
+    Float_t   Jet_neHEF[N_KEEP_JET_];
+    Float_t   Jet_neEmEF[N_KEEP_JET_];
+    Int_t     Jet_nConstituents[N_KEEP_JET_];
+    Float_t   Jet_chHEF[N_KEEP_JET_];  
+    Float_t   Jet_chEmEF[N_KEEP_JET_];
+    Int_t     Jet_jetId[N_KEEP_JET_];
+    Int_t     Jet_hadronFlavour[N_KEEP_JET_];
+    Float_t   Jet_rawFactor[N_KEEP_JET_];
+    Float_t   Jet_L1[N_KEEP_JET_];
+    Float_t   Jet_L2L3[N_KEEP_JET_];
+    
 
     
-  ClassDefOverride(ThreeLepSelector,0);
 
-  /*******************************************************/
-  /* __ __  ___  ____  __  ___  ____  __     ____  __    */
-  /* || || // \\ || \\ || // \\ || )) ||    ||    (( \   */
-  /* \\ // ||=|| ||_// || ||=|| ||=)  ||    ||==   \\    */
-  /*  \V/  || || || \\ || || || ||_)) ||__| ||___ \_))   */
-  /*******************************************************/
+    Bool_t Flag_goodVertices;
+    Bool_t Flag_globalSuperTightHalo2016Filter;
+    Bool_t Flag_HBHENoiseFilter;
+    Bool_t Flag_HBHENoiseIsoFilter;
+    Bool_t Flag_EcalDeadCellTriggerPrimitiveFilter;
+    Bool_t Flag_BadPFMuonFilter;
+    Bool_t Flag_ecalBadCalibFilter;
+    
+    
+    ClassDefOverride(ThreeLepSelector,0);
+
+    /*******************************************************/
+    /* __ __  ___  ____  __  ___  ____  __     ____  __    */
+    /* || || // \\ || \\ || // \\ || )) ||    ||    (( \   */
+    /* \\ // ||=|| ||_// || ||=|| ||=)  ||    ||==   \\    */
+    /*  \V/  || || || \\ || || || ||_)) ||__| ||___ \_))   */
+    /*******************************************************/
   
     Float_t weight;
     BranchManager b;
     std::vector<GoodPart> goodLeptons;
-    std::vector<GoodPart> looseMuons;
-    std::vector<GoodPart> looseElectrons;
+    std::vector<GoodPart> looseLeptons;
     std::vector<GoodPart> goodJets;
     double HT;
     int nJets, nBJets;
@@ -145,6 +161,7 @@ public :
     Bool_t HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300;
     Bool_t HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300;
     Bool_t HLT_AK8PFJet450;
+    Bool_t HLT_PFJet450;
 
     Float_t PV_x;
     Float_t PV_y;
@@ -169,15 +186,24 @@ public :
     bool isGoodBJet(size_t);
     bool isGoodElectron(size_t);
     bool isLooseElectron(size_t);
+
+    bool passMVACut(std::vector<std::vector<double> >, int);
+    double mvaInterpolate(double pt, std::vector<double> );
+    std::map<int, std::vector<std::vector<double> > >  mvaValues;
+
+    
     bool isLooseMVAElectron(size_t);
 
     size_t getCloseJetIndex(LorentzVector&, double minDR=10);
     bool doesNotOverlap(size_t);
-    bool passFullIso(LorentzVector&, double, double, double);
+    bool passFullIso(LorentzVector&, double, double);
     bool doesPassZVeto(GoodPart&, std::vector<GoodPart>&);
     bool passTriggerEmu(size_t);
     double LepRelPt(LorentzVector&);
-  
+    LorentzVector get4Vector(PID, int);
+    bool passFakeableCuts(GoodPart&);
+    bool MetFilter();
+    
     //// General Functions
     int getSRBin() const;
     void clearValues();
