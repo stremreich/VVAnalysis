@@ -76,7 +76,7 @@ void Efficiency::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::
 
   for (auto& lep: Leptons) {
     for (auto goodlep : TTTAna.goodLeptons) {
-      if (reco::deltaR(lep.gVector(), goodlep.v)<0.4 && lep.gId() == goodlep.Id()) {
+      if (reco::deltaR(lep.gVector(), goodlep.v)<0.1 && lep.gId() == goodlep.Id()) {
 	lep.SetupReco(goodlep.Pt(), goodlep.Eta(), goodlep.Phi(), goodlep.M(), goodlep.Id());
       }
     }
@@ -92,7 +92,9 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   int nGenMuon = 0;
   int nRecoElec = 0;
   int nRecoMuon = 0;
-      
+  int nFakeElec = 0;
+  int nFakeMuon = 0;
+  
   for (auto part: Leptons) {
     if (part.isMatched()) {
       if (part.gId() == PID_ELECTRON) {
@@ -118,12 +120,24 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
 	nGenMuon ++;
       }
     }
+    else if (part.isFaked()) {
+      if (part.rId() == PID_MUON) {
+	nFakeMuon ++;
+      }
+      else if (part.rId() == PID_ELECTRON) {
+	nFakeElec ++;
+      }
+    }
+      
   }
   
   Fill1D("nGenElec", nGenElec);
   Fill1D("nGenMuon", nGenMuon);
   Fill1D("nRecoElec", nRecoElec);
   Fill1D("nRecoMuon", nRecoMuon);
+  Fill1D("nFakeMuon", nFakeMuon);
+  Fill1D("nFakeElec", nFakeElec);
+  
   return;
 }
 

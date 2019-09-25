@@ -393,9 +393,9 @@ void ThreeLepSelector::setupMuons() {
 	    goodLeptons.back().index = i;
 	    looseMuons.push_back(goodLeptons.back());
 		
-	    if(!passFullIso(goodLeptons.back().v, 0.76, 7.2, 1/(Muon_jetRelIso[i]+1))) {    // Extra Iso requirement
-		goodLeptons.pop_back();
-	    }
+	    // if(!passFullIso(goodLeptons.back().v, 0.76, 7.2, 1/(Muon_jetRelIso[i]+1))) {    // Extra Iso requirement
+	    //	goodLeptons.pop_back();
+	    // }
 	}
 	else if(isLooseMuon(i)) {
 	    looseMuons.push_back(GoodPart(SetupPtEtaPhiM(Muon, i)));
@@ -415,9 +415,9 @@ void ThreeLepSelector::setupElectrons() {
 	    goodLeptons.back().index = i;
 	    looseElectrons.push_back(goodLeptons.back());
 
-	    if(!passFullIso(goodLeptons.back().v, 0.8, 7.2, 1/(Electron_jetRelIso[i]+1))) {   // Extra Iso requirement
-	    	goodLeptons.pop_back();
-	    }
+	    // if(!passFullIso(goodLeptons.back().v, 0.8, 7.2, 1/(Electron_jetRelIso[i]+1))) {   // Extra Iso requirement
+	    //	goodLeptons.pop_back();
+	    // }
 	}
 	else if(isLooseElectron(i)) {
 	    looseElectrons.push_back(GoodPart(SetupPtEtaPhiM(Electron, i)));
@@ -552,18 +552,18 @@ void ThreeLepSelector::ApplyScaleFactors() {
 }
 
 bool ThreeLepSelector::isGoodMuon(size_t index) {
-    bool yearCuts = true;
-    if(year_ == yr2016) yearCuts = (Muon_miniPFRelIso_all[index] < 0.16);
-    else                yearCuts = (Muon_miniPFRelIso_all[index] < 0.11);
-    //was 20 changing for efficiency plotting purposes
+  //bool yearCuts = false;
+  //  if(year_ == yr2016) yearCuts = (Muon_miniPFRelIso_all[index] < 0.16);
+  // else                yearCuts = (Muon_miniPFRelIso_all[index] < 0.11);
+    //pt was 20 changing for efficiency plotting purposes
     return ( (Muon_pt[index] > 0) 
 	     && (Muon_tightCharge[index] == 2) 
 	     && (abs(Muon_eta[index]) < 2.4) 
 	     && (Muon_mediumId[index]) 
-	     && (yearCuts) 
-	     && (abs(Muon_dz[index]) < 0.1) 
-	     && (abs(Muon_dxy[index]) < 0.05) 
-	     && (Muon_sip3d[index] < 4)
+	     //	     && (yearCuts) 
+	     // && (abs(Muon_dz[index]) < 0.1) 
+	     // && (abs(Muon_dxy[index]) < 0.05) 
+	     // && (Muon_sip3d[index] < 4)
 	     );
 }
 
@@ -593,7 +593,7 @@ bool ThreeLepSelector::isGoodElectron(size_t index) {
 	    else if(caseIndex == 3)     passId = Electron_MVA[index] >  0.11;
 	    else if(caseIndex == 4)     passId = Electron_MVA[index] >  0.48 - 0.049*(Electron_pt[index]-15);
 	    else if(caseIndex == 5)     passId = Electron_MVA[index] > -0.01;
-	    passId = passId && (Electron_miniPFRelIso_all[index] < 0.12);
+	    passId = passId; // && (Electron_miniPFRelIso_all[index] < 0.12);
 
 	}
 	else if(year_ == yr2017) {
@@ -603,22 +603,22 @@ bool ThreeLepSelector::isGoodElectron(size_t index) {
 	    else if(caseIndex == 3)     passId = Electron_MVA[index] >  0.475;
 	    else if(caseIndex == 4)     passId = Electron_MVA[index] > -0.1 - 0.028*(Electron_pt[index]-10);
 	    else if(caseIndex == 5)     passId = Electron_MVA[index] >  0.32;
-	    passId = passId && (Electron_miniPFRelIso_all[index] < 0.07);
+	    passId = passId; //&& (Electron_miniPFRelIso_all[index] < 0.07);
 	}
     } else {
 	passId = (Electron_cutBased[index] >= CBID_MEDIUM);
-	if(year_ == yr2016)       passId = passId && (Electron_miniPFRelIso_all[index] < 0.12);
-	else if(year_ == yr2017)       passId = passId && (Electron_miniPFRelIso_all[index] < 0.07);
+	//	if(year_ == yr2016)       passId = passId && (Electron_miniPFRelIso_all[index] < 0.12);
+	//	else if(year_ == yr2017)       passId = passId && (Electron_miniPFRelIso_all[index] < 0.07);
     }
 
     return ((Electron_pt[index] > ptCut)                 &&
 	    (passId)                                  &&
 	    (Electron_convVeto[index])                &&
 	    (Electron_lostHits[index] == 0)           &&
-	    (Electron_tightCharge[index] == 2)   &&
-	    (abs(Electron_dz[index]) < 0.1)                &&
-	    (abs(Electron_dxy[index]) < 0.05)              &&
-	    (Electron_sip3d[index] < 4)
+	    (Electron_tightCharge[index] == 2)  // &&
+	    // (abs(Electron_dz[index]) < 0.1)                &&
+	    // (abs(Electron_dxy[index]) < 0.05)              &&
+	    // (Electron_sip3d[index] < 4)
 	    );
 }
 
