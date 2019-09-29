@@ -7,11 +7,13 @@
 #include "Analysis/VVAnalysis/interface/ZGenSelector.h"
 #include "Analysis/VVAnalysis/interface/NanoGenSelectorBase.h"
 #include "Analysis/VVAnalysis/interface/WZSelector.h"
+#include "Analysis/VVAnalysis/interface/ThreeLepSelector.h"
 #include "Analysis/VVAnalysis/interface/WZSelectorBase.h"
 #include "Analysis/VVAnalysis/interface/WZBackgroundSelector.h"
 #include "Analysis/VVAnalysis/interface/ScaleFactor.h"
 #include "Analysis/VVAnalysis/interface/disambiguateFinalStates.h"
 #include "Analysis/VVAnalysis/interface/disambiguateFinalStatesZZ.h"
+
 
 namespace{
   namespace{
@@ -29,5 +31,6 @@ namespace{
     ScaleFactor pScaleFactor;
     disambiguateFinalStates pDisambiguator;
     disambiguateFinalStates pDisambiguatorZZ;
+    ThreeLepSelector pThreeLepSelector;
   }
 }

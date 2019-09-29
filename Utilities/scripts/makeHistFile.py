@@ -6,6 +6,7 @@ from python import OutputTools
 from python import ConfigureJobs
 from python import HistTools
 import os
+import logging
 import sys
 
 def getComLineArgs():
@@ -119,6 +120,7 @@ def makeHistFile(args):
     if args['uwvv']:
         selector.setNtupeType("UWVV")
         selector.setChannels(args['channels'])
+        logging.debug("Processing channels " % args['channels'])
     elif args['bacon']:
         selector.setNtupeType("Bacon")
         selector.setAddSumWeights(False)

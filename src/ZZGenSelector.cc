@@ -84,7 +84,6 @@ void ZZGenSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::
     b_GenPt->GetEntry(entry);
     b_GenEta->GetEntry(entry);
     //std::cout<<"channel in LoadBranches function: "<<channel_<<std::endl;
-    return;
     if(channel_ == eemm || channel_ == mmee){
       SetVariables(entry);
     } 
@@ -108,8 +107,7 @@ void ZZGenSelector::SetBranchesNanoAOD() {
 }
 
 void ZZGenSelector::SetBranchesUWVV() {
-    if (channelName_ == "eeee") {
-        channel_ = eeee;
+    if (channel_ == eeee) {
         //std::cout<<"enum channel_: "<<channel_<<std::endl;
         fChain->SetBranchAddress("e1_e2_Mass", &GenZ1mass, &b_GenZ1mass);
         fChain->SetBranchAddress("e3_e4_Mass", &GenZ2mass, &b_GenZ2mass);
@@ -132,8 +130,7 @@ void ZZGenSelector::SetBranchesUWVV() {
     }
     //Add 2e2mu channel also but it still needs to differentiate which one is Z1Mass and which one is Z2Mass leptons
     //This is done with a flag at the time of Process for each event on the fly
-    else if (channelName_ == "eemm") {
-        channel_ = eemm;
+    else if (channel_ == eemm) {
         fChain->SetBranchAddress("e1_e2_Mass", &GenZ1mass, &b_GenZ1mass);
         fChain->SetBranchAddress("m1_m2_Mass", &GenZ2mass, &b_GenZ2mass);
         fChain->SetBranchAddress("e1_e2_Pt", &GenZ1pt, &b_GenZ1pt);
@@ -153,8 +150,7 @@ void ZZGenSelector::SetBranchesUWVV() {
         fChain->SetBranchAddress("m1Phi", &Genl3Phi, &b_Genl3Phi);
         fChain->SetBranchAddress("m2Phi", &Genl4Phi, &b_Genl4Phi);
     }
-    else if (channelName_ == "mmee") {
-        channel_ = mmee;
+    else if (channel_ == mmee) {
         fChain->SetBranchAddress("e1_e2_Mass", &GenZ1mass, &b_GenZ1mass);
         fChain->SetBranchAddress("m1_m2_Mass", &GenZ2mass, &b_GenZ2mass);
         fChain->SetBranchAddress("e1_e2_Pt", &GenZ1pt, &b_GenZ1pt);
@@ -174,8 +170,7 @@ void ZZGenSelector::SetBranchesUWVV() {
         fChain->SetBranchAddress("m1Phi", &Genl3Phi, &b_Genl3Phi);
         fChain->SetBranchAddress("m2Phi", &Genl4Phi, &b_Genl4Phi);
     }
-    else if (channelName_ == "mmmm") {
-        channel_ = mmmm;
+    else if (channel_ == mmmm) {
         fChain->SetBranchAddress("m1_m2_Mass", &GenZ1mass, &b_GenZ1mass);
         fChain->SetBranchAddress("m3_m4_Mass", &GenZ2mass, &b_GenZ2mass);
         fChain->SetBranchAddress("m1_m2_Pt", &GenZ1pt, &b_GenZ1pt);
@@ -204,7 +199,6 @@ void ZZGenSelector::SetBranchesUWVV() {
 }
 
 void ZZGenSelector::SetVariables(Long64_t entry) {
-    std::cout << "We inside SetVariables" << std::endl;
     if(!(e1e2IsZ1())){
       float tempMass = GenZ1mass;
       GenZ1mass = GenZ2mass;
@@ -257,6 +251,8 @@ bool ZZGenSelector::e1e2IsZ1(){
 }
 
 void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
+    if (!ZZSelection())
+        return;
     SafeHistFill(histMap1D_, getHistName("Genyield", variation.second), 1, Genweight);
     SafeHistFill(histMap1D_, getHistName("GenMass", variation.second), GenMass,Genweight);
     SafeHistFill(histMap1D_, getHistName("GenZMass", variation.second), GenZ1mass, Genweight);
