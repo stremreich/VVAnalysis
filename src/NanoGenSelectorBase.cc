@@ -83,14 +83,17 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
     std::sort(leptons.begin(), leptons.end(), 
         [](const reco::GenParticle& a, const reco::GenParticle& b) { return a.pt() > b.pt(); });
 
+    ht = 0;
     for (size_t i = 0; i < nGenJet; i++) {
         LorentzVector jet;
         jet.SetPt(GenJet_pt[i]);
         jet.SetEta(GenJet_eta[i]);
         jet.SetPhi(GenJet_phi[i]);
         jet.SetM(GenJet_mass[i]);
-        if (jet.pt() > 30 && !helpers::overlapsCollection(jet, leptons, 0.4, nLeptons_))
+        if (jet.pt() > 30 && !helpers::overlapsCollection(jet, leptons, 0.4, nLeptons_)) {
+            ht += jet.pt();
             jets.push_back(jet);
+        }
     } // No need to sort jets, they're already pt sorted
 
     genMet.SetPt(GenMET_pt);

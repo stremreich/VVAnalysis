@@ -8,6 +8,7 @@ import json
 import array
 import string
 import socket
+import logging
 #try:
 import configparser
 #except:
@@ -45,13 +46,33 @@ def getChannels(analysis='WZ'):
     if analysis == 'WZ':
         return ["eee", "eem", "emm", "mmm"]
 
-def getManagerPath():
-    config_name = "Templates/config"
-    # User env variable isn't defined for cluster machines
-    if "USER" in os.environ.keys():
-        config_name = '.'.join([config_name, os.environ["USER"]])
+def getManagerName():
+    config_name = ""
+    try:
+        config_name = "Templates/config.%s" % os.getlogin()
+    except OSError:
+        pass
+    default_name = "AnalysisDatasetManager"
     if not os.path.isfile(config_name):
-        if os.path.isdir('AnalysisDatasetManager'):
+        logging.warning("dataset_manager_name not specified in config file %s" % config_name)
+        logging.warning("Using default '%s'" % default_name)
+        return default_name
+    config = configparser.ConfigParser()
+    config.read_file(open(config_name))
+    if "dataset_manager_name" not in config['Setup']:
+        logging.warning("dataset_manager_name not specified in config file %s" % config_name)
+        logging.warning("Using default '%s'" % default_name)
+        return default_name
+    return config['Setup']['dataset_manager_name']
+
+def getManagerPath():
+    config_name = ""
+    try:
+        config_name = "Templates/config.%s" % os.getlogin()
+    except OSError:
+        pass
+    if not os.path.isfile(config_name):
+        if os.path.isdir(getManagerName()):
             return '.'
         else:
             raise IOError("Failed to find valid config file. Looking for %s" 
@@ -70,7 +91,18 @@ def getCombinePath():
         raise ValueError("dataset_manager_path not specified in config file Template/config.%s" 
                             % os.environ["USER"])
     return config['Setup']['combine_path'] + "/"
-def getListOfEWKFilenames():
+def getListOfEWKFilenames(analysis=""):
+    if "ZZ4l" in analysis:
+        return [
+            "zz4l-powheg",
+            "ggZZ4e",
+            "ggZZ4m",
+            "ggZZ4t",
+            "ggZZ2e2mu",
+            "ggZZ2e2tau",
+            "ggZZ2mu2tau",
+        ]
+    # TODO: This is obviously WZ specific and should be updated
     return [
     #    "wz3lnu-powheg",
     # Use jet binned WZ samples for subtraction by default
@@ -151,7 +183,7 @@ def getListOfHDFSFiles(file_path):
 def getListOfFiles(filelist, selection, manager_path="", analysis=""):
     if manager_path is "":
         manager_path = getManagerPath()
-    data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
+    data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
     data_info = UserInput.readAllInfo("/".join([data_path, "data/*"]))
     mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
     analysis_info = UserInput.readInfo("/".join([data_path, analysis, selection])) \
@@ -163,7 +195,7 @@ def getListOfFiles(filelist, selection, manager_path="", analysis=""):
             names.append(name)
         elif "WZxsec2016" in name:
             dataset_file = manager_path + \
-                "AnalysisDatasetManager/FileInfo/WZxsec2016/%s.json" % selection
+                "%s/FileInfo/WZxsec2016/%s.json" % (getManagerPath(), selection)
             allnames = json.load(open(dataset_file)).keys()
             if "nodata" in name:
                 nodata = [x for x in allnames if "data" not in x]
@@ -177,7 +209,7 @@ def getListOfFiles(filelist, selection, manager_path="", analysis=""):
         else:
             if name.split("__")[0] not in valid_names:
                 print "%s is not a valid name" % name
-                print "Valid names are", valid_names
+                print "Valid names must be defined in AnalysisDatasetManager/FileInfo/(data/montecarlo)*"
                 continue
             names += [name]
     return [str(i) for i in names]
@@ -198,15 +230,15 @@ def fillTemplatedFile(template_file_name, out_file_name, template_dict):
     with open(out_file_name, "w") as outFile:
         outFile.write(result)
 
-def getListOfFilesWithXSec(filelist, manager_path=""):
+def getListOfFilesWithXSec(filelist, manager_path="", selection="ntuples"):
     if manager_path is "":
         manager_path = getManagerPath()
-    data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
-    files = getListOfFiles(filelist, "ntuples", manager_path)
+    data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
+    files = getListOfFiles(filelist, selection, manager_path)
     mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
     info = {}
     for file_name in files:
-        if "data" in file_name:
+        if "data" in file_name.lower() or "nonprompt" in file_name.lower():
             info.update({file_name : 1})
         else:
             file_info = mc_info[file_name.split("__")[0]]
@@ -217,7 +249,7 @@ def getListOfFilesWithXSec(filelist, manager_path=""):
 def getListOfFilesWithDASPath(filelist, analysis, selection, manager_path=""):
     if manager_path is "":
         manager_path = getManagerPath()
-    data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
+    data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
     files = getListOfFiles(filelist, selection, manager_path, analysis)
     selection_info = UserInput.readInfo("/".join([data_path, analysis, selection]))
     info = {}
@@ -279,7 +311,7 @@ def getInputFilesPath(sample_name, selection, analysis, manager_path=""):
     if ".root" in sample_name:
         print "INFO: using simple file %s" % sample_name
         return sample_name
-    data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
+    data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
     input_file_base_name = "/".join([data_path, analysis, selection])
     input_file_name = getConfigFileName(input_file_base_name)
     input_files = UserInput.readInfo(input_file_name)
