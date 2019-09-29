@@ -207,11 +207,25 @@ protected:
     std::vector<std::string> systHists2D_ = {};
 
     void    SetBranches();
-    virtual void    SetBranchesUWVV() { }
-    virtual void    SetBranchesNanoAOD() { }
     void    LoadBranches(Long64_t entry, std::pair<Systematic, std::string> variation);
-    virtual void    LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) { }
-    virtual void    LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) { }
+    virtual void    SetBranchesNanoAOD() {
+        throw std::domain_error("NanoAOD ntuples not supported for selector!");
+    }
+    virtual void    LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) {
+        throw std::domain_error("NanoAOD ntuples not supported for selector!");
+    }
+    virtual void    SetBranchesUWVV() {
+        throw std::domain_error("UWVV ntuples not supported for selector!");
+    }
+    virtual void    LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) { 
+        throw std::domain_error("UWVV ntuples not supported for selector!");
+    }
+    virtual void    SetBranchesBacon() {
+        throw std::domain_error("Bacon ntuples not supported for selector!");
+    }
+    virtual void    LoadBranchesBacon(Long64_t entry, std::pair<Systematic, std::string> variation) {
+        throw std::domain_error("Bacon ntuples not supported for selector!");
+    }
     virtual void    FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { }
     std::string name_ = "Unnamed";
     std::string channelName_ = "Unnamed";
