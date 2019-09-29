@@ -16,9 +16,8 @@ void LowPileupZSelector::Init(TTree *tree)
 
 void LowPileupZSelector::SetBranchesBacon() {
     b.CleanUp();
-    b.SetBranch("zCand", zCand);
-    b.SetBranch("lep1", lep1);
-    b.SetBranch("lep2", lep2);
+    //b.SetBranch("lep1", lep1);
+    //b.SetBranch("lep2", lep2);
     b.SetBranch("genVPt", genVPt);
     b.SetBranch("genVPhi", genVPhi);
     b.SetBranch("genVy", genVy);
@@ -42,17 +41,17 @@ void LowPileupZSelector::LoadBranchesBacon(Long64_t entry, std::pair<Systematic,
 }
 
 void LowPileupZSelector::SetComposite() {
-    zCand = lep1+lep2;
+    //zCand = *lep1+*lep2;
 }
 
 void LowPileupZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
-    SafeHistFill(histMap1D_, getHistName("mZ", variation.second), zCand.M(), weight);
-    SafeHistFill(histMap1D_, getHistName("ptZ", variation.second), zCand.Pt(), weight);
-    SafeHistFill(histMap1D_, getHistName("yZ", variation.second), zCand.Rapidity(), weight);
-    SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), lep1.Pt(), weight);
-    SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), lep2.Pt(), weight);
-    SafeHistFill(histMap1D_, getHistName("etal1", variation.second), lep1.Eta(), weight);
-    SafeHistFill(histMap1D_, getHistName("etal2", variation.second), lep2.Eta(), weight);
+    //SafeHistFill(histMap1D_, getHistName("mZ", variation.second), zCand.M(), weight);
+    //SafeHistFill(histMap1D_, getHistName("ptZ", variation.second), zCand.Pt(), weight);
+    //SafeHistFill(histMap1D_, getHistName("yZ", variation.second), zCand.Rapidity(), weight);
+    //SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), lep1->Pt(), weight);
+    //SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), lep2->Pt(), weight);
+    //SafeHistFill(histMap1D_, getHistName("etal1", variation.second), lep1->Eta(), weight);
+    //SafeHistFill(histMap1D_, getHistName("etal2", variation.second), lep2->Eta(), weight);
     SafeHistFill(histMap1D_, getHistName("MET", variation.second), met, weight);
 }
 

@@ -23,8 +23,9 @@ public :
     
     TTree          *fChain = 0;   //!pointer to the analyzed TTree or TChain
     enum NtupleType {
-        UWVV,
         NanoAOD,
+        UWVV,
+        Bacon,
     };
 
     std::vector<std::string> allChannels_ = {};

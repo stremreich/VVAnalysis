@@ -25,8 +25,8 @@ public :
     float weight;
     TLorentzVector zCand;
 
-    TLorentzVector lep1;
-    TLorentzVector lep2;
+    TLorentzVector* lep1;
+    TLorentzVector* lep2;
     Float_t met;
     Float_t genVPt;
     Float_t genVPhi;

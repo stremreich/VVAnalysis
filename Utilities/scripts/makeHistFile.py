@@ -16,8 +16,11 @@ def getComLineArgs():
         default="test.root", help="Output file name")
     parser.add_argument("--test", action='store_true',
         help="Run test job (no background estimate)")
-    parser.add_argument("--uwvv", action='store_true',
+    ntuple_group = parser.add_mutually_exclusive_group(required=True)
+    ntuple_group.add_argument("--uwvv", action='store_true',
         help="Use UWVV format ntuples in stead of NanoAOD")
+    ntuple_group.add_argument("--bacon", action='store_true',
+        help="Use Bacon format ntuples in stead of NanoAOD")
     parser.add_argument("--noHistConfig", action='store_true',
         help="Don't rely on config file to specify hist info")
     parser.add_argument("-j", "--numCores", type=int, default=1,
@@ -113,11 +116,14 @@ def makeHistFile(args):
     selector.setOutputfile(fOut.GetName())
     selector.setInputs(sf_inputs+hist_inputs)
 
-    selector.setNtupeType("UWVV" if args['uwvv'] else "NanoAOD")
     if args['uwvv']:
-        print "Channels", args['channels']
+        selector.setNtupeType("UWVV")
         selector.setChannels(args['channels'])
-    selector.setNumCores(args['numCores'])
+    elif args['bacon']:
+        selector.setNtupeType("Bacon")
+        selector.setAddSumWeights(False)
+    else:
+        selector.setNtupeType("NanoAOD")
 
     if args['filenames']:
         selector.setDatasets(args['filenames'])

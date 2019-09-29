@@ -39,6 +39,8 @@ void SelectorBase::Init(TTree *tree)
 		ntupleType_ = NanoAOD;
 	    else if (ntupleName  == "UWVV")
 		ntupleType_ = UWVV;
+	    else if (ntupleName  == "Bacon")
+		ntupleType_ = Bacon;
 	    else
 		throw std::invalid_argument("Unsupported ntuple type!");
 	}
@@ -105,7 +107,7 @@ void SelectorBase::Init(TTree *tree)
         size_t existingObjectPtrsSize = allObjects_.size();
         SetupNewDirectory();
         if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
-            std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
+            throw std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
         }
     }
     UpdateDirectory();
@@ -122,6 +124,11 @@ void SelectorBase::SetBranches() {
         SetBranchesUWVV();
     else if (ntupleType_ == NanoAOD)
         SetBranchesNanoAOD();
+    else if (ntupleType_ == Bacon)
+        SetBranchesBacon();
+    else 
+        throw std::invalid_argument("Undefined ntuple type!");
+        
 }
 
 void SelectorBase::LoadBranches(Long64_t entry, std::pair<Systematic, std::string> variation) {
@@ -130,6 +137,8 @@ void SelectorBase::LoadBranches(Long64_t entry, std::pair<Systematic, std::strin
     }
     else if (ntupleType_ == NanoAOD)
         LoadBranchesNanoAOD(entry, variation);
+    else if (ntupleType_ == Bacon)
+        LoadBranchesBacon(entry, variation);
 }
 
 Bool_t SelectorBase::Process(Long64_t entry)

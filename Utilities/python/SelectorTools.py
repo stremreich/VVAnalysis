@@ -16,6 +16,7 @@ class SelectorDriver(object):
         selector_map = {
             "WZxsec2016" : "WZSelector",
             "Zstudy" : "ZSelector",
+            "LowPileupZ" : "LowPileupZSelector",
             "Zstudy_2016" : "ZSelector",
             "Zstudy_2017" : "ZSelector",
             "ZZGen" : "ZZGenSelector",
@@ -49,6 +50,9 @@ class SelectorDriver(object):
 
     def setChannels(self, channels):
         self.channels = channels
+
+    def setAddSumWeights(self, addSumWeights):
+        self.addSumweights = addSumWeights
 
     def setOutputfile(self, outfile_name):
         self.outfile_name = outfile_name
@@ -152,7 +156,7 @@ class SelectorDriver(object):
             sumweights_hist = self.outfile.Get("%s/sumweights" % dataset)
             if not sumweights_hist:
                 sumweights_hist = ROOT.TH1D("sumweights", "sumweights", 100, 0, 100)
-        sumweights_hist.SetDirectory(ROOT.gROOT)
+            sumweights_hist.SetDirectory(ROOT.gROOT)
         self.processLocalFiles(select, file_path, addSumweights, chan)
         output_list = select.GetOutputList()
         name = self.inputs.FindObject("name").GetTitle()
@@ -199,7 +203,7 @@ class SelectorDriver(object):
         # TODO: Fix this! This is an extremely ineffient way to separate the eemm and mmee
         # since it involves reading the file an extra time
         channel = chan if chan != "mmee" else "eemm"
-        return "Events" if self.ntupleType == "NanoAOD" else ("%s/ntuple" % channel)
+        return ("%s/ntuple" % channel) if self.ntupleType == "UWVV" else "Events"
 
     def combineParallelFiles(self, tempfiles, chan):
         tempfiles = filter(os.path.isfile, tempfiles)
