@@ -1,5 +1,5 @@
-#ifndef LowPileupZSelector_h
-#define LowPileupZSelector_h
+#ifndef LowPileupSelector_h
+#define LowPileupSelector_h
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -16,38 +16,43 @@
 #include "Analysis/VVAnalysis/interface/ScaleFactor.h"
 #include "Analysis/VVAnalysis/interface/SelectorBase.h"
 #include "Analysis/VVAnalysis/interface/BranchManager.h"
-#include "Analysis/VVAnalysis/interface/LowPileupSelector.h"
 
 #include "Analysis/VVAnalysis/interface/helpers.h"
 
-class LowPileupZSelector : public LowPileupSelector {
+class LowPileupSelector : public SelectorBase {
 public :
     // Derived values
-    TLorentzVector zCand;
+    float weight;
 
-    TLorentzVector* lep1;
-    TLorentzVector* lep2;
+    Float_t pfMet;
+    Float_t genVPt;
+    Float_t genVPhi;
+    Float_t genVy;
+    Float_t genVMass;
+    Float_t genWeight;
+    Float_t PUWeight;
+    Float_t scale1fb;
 
-    TBranch* lep1_b;
-    TBranch* lep2_b;
+    UInt_t category;
 
-    enum { eMuMu2HLT=1, eMuMu1HLT, eMuMuNoSel, eMuSta, eMuTrk };
-    
+    BranchManager b;
+
     // Readers to access the data (delete the ones you do not need).
     virtual void    Init(TTree *tree) override;
-    LowPileupZSelector(TTree * /*tree*/ =0) { }
-    ~LowPileupZSelector() { }
+    LowPileupSelector(TTree * /*tree*/ =0) { }
+    ~LowPileupSelector() { }
+    virtual void    SetupNewDirectory() override;
 
-    ClassDefOverride(LowPileupZSelector,0);
+    ClassDefOverride(LowPileupSelector,0);
 
 protected:
     virtual void    SetBranchesBacon() override;
     void LoadBranchesBacon(Long64_t entry, std::pair<Systematic, std::string> variation) override;
-    virtual void SetComposite() override;
-    void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
+    virtual void SetComposite() {}
 };
 
 #endif
+
 
 
 

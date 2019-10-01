@@ -1,6 +1,7 @@
 #include "Analysis/VVAnalysis/interface/FakeRateSelector.h"
 #include "Analysis/VVAnalysis/interface/SelectorBase.h"
 #include "Analysis/VVAnalysis/interface/ZSelector.h"
+#include "Analysis/VVAnalysis/interface/LowPileupSelector.h"
 #include "Analysis/VVAnalysis/interface/LowPileupZSelector.h"
 #include "Analysis/VVAnalysis/interface/ZZGenSelector.h"
 #include "Analysis/VVAnalysis/interface/WGenSelector.h"
@@ -22,6 +23,7 @@ namespace{
     SelectorBase pSelectorBase;
     ZSelector pZSelector;
     LowPileupZSelector pLowPileupZSelector;
+    LowPileupSelector pLowPileupSelector;
     WZSelector pWZSelector;
     NanoGenSelectorBase pNanoGenSelectorBase;
     ZZGenSelector pZZGenSelector;

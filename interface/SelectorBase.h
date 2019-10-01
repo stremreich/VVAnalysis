@@ -132,7 +132,6 @@ class SelectorBase : public TSelector {
 
 
     std::vector<std::string> allChannels_ = {};
-    std::vector<std::string> hists1D_ = {};
     std::map<Systematic, std::string> variations_ = {{Central, ""}};
     std::map<Systematic, std::string> systematics_ = {};
 

@@ -4,60 +4,43 @@
 
 void LowPileupZSelector::Init(TTree *tree)
 {
-    allChannels_ = {"ee", "mm"};
-    // Add CutFlow for Unknown to understand when channels aren't categorized
-    hists1D_ = {"CutFlow", "ZMass", "ZEta", "yZ", "ZPt", "ptl1", "etal1", "ptl2", "etal2",
-        "ptj1", "ptj2", "ptj3", "etaj1", "etaj2", "etaj3", "phij1", "phij2", "phij3", "nJets",
-        "MET",};
+    allChannels_ = {"mm"};
+    hists1D_ = {"CutFlow", "mZ", "yZ", "ptZ", "ptl1", "etal1", "ptl2", "etal2", "pfMet",};
 
-    b.SetTree(tree);
-    SelectorBase::Init(tree);
+    LowPileupSelector::Init(tree);
 }
 
 void LowPileupZSelector::SetBranchesBacon() {
-    b.CleanUp();
-    //b.SetBranch("lep1", lep1);
-    //b.SetBranch("lep2", lep2);
-    b.SetBranch("genVPt", genVPt);
-    b.SetBranch("genVPhi", genVPhi);
-    b.SetBranch("genVy", genVy);
-    b.SetBranch("genVMass", genVMass);
-    b.SetBranch("met", met);
-
-    if (isMC_) {
-        b.SetBranch("genWeight", genWeight);
-        b.SetBranch("PUWeight", PUWeight);
-    }
+    channel_ = mm;
+    channelName_ = "mm";
+    lep1 = nullptr;
+    lep2 = nullptr;
+    fChain->SetBranchAddress("lep1", &lep1, &lep1_b);
+    fChain->SetBranchAddress("lep2", &lep2, &lep2_b);
+    LowPileupSelector::SetBranchesBacon();
 }
 
 void LowPileupZSelector::LoadBranchesBacon(Long64_t entry, std::pair<Systematic, std::string> variation) { 
-    weight = 1;
-    b.SetEntry(entry);
-
-    if (isMC_) {
-        weight = genWeight*PUWeight;
-    }
-    SetComposite();
+    lep1_b->GetEntry(entry);
+    lep2_b->GetEntry(entry);
+    LowPileupSelector::LoadBranchesBacon(entry, variation);
 }
 
 void LowPileupZSelector::SetComposite() {
-    //zCand = *lep1+*lep2;
+    zCand = *lep1+*lep2;
 }
 
 void LowPileupZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
-    //SafeHistFill(histMap1D_, getHistName("mZ", variation.second), zCand.M(), weight);
-    //SafeHistFill(histMap1D_, getHistName("ptZ", variation.second), zCand.Pt(), weight);
-    //SafeHistFill(histMap1D_, getHistName("yZ", variation.second), zCand.Rapidity(), weight);
-    //SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), lep1->Pt(), weight);
-    //SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), lep2->Pt(), weight);
-    //SafeHistFill(histMap1D_, getHistName("etal1", variation.second), lep1->Eta(), weight);
-    //SafeHistFill(histMap1D_, getHistName("etal2", variation.second), lep2->Eta(), weight);
-    SafeHistFill(histMap1D_, getHistName("MET", variation.second), met, weight);
+    if (zCand.M() < 60 || zCand.M() > 120)
+        return;
+    if (category != eMuMu1HLT && category != eMuMu2HLT)
+        return;
+    SafeHistFill(histMap1D_, getHistName("mZ", variation.second), zCand.M(), weight);
+    SafeHistFill(histMap1D_, getHistName("ptZ", variation.second), zCand.Pt(), weight);
+    SafeHistFill(histMap1D_, getHistName("yZ", variation.second), zCand.Rapidity(), weight);
+    SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), lep1->Pt(), weight);
+    SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), lep2->Pt(), weight);
+    SafeHistFill(histMap1D_, getHistName("etal1", variation.second), lep1->Eta(), weight);
+    SafeHistFill(histMap1D_, getHistName("etal2", variation.second), lep2->Eta(), weight);
+    SafeHistFill(histMap1D_, getHistName("pfMet", variation.second), pfMet, weight);
 }
-
-void LowPileupZSelector::SetupNewDirectory() {
-    SelectorBase::SetupNewDirectory();
-
-    InitializeHistogramsFromConfig();
-}
-
