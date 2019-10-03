@@ -11,17 +11,13 @@ void LowPileupSelector::Init(TTree *tree)
 void LowPileupSelector::SetBranchesBacon() {
     b.CleanUp();
     b.SetBranch("genVPt", genVPt);
-    b.SetBranch("category", category);
     b.SetBranch("genVPhi", genVPhi);
     b.SetBranch("genVy", genVy);
     b.SetBranch("genVMass", genVMass);
     b.SetBranch("met", pfMet);
+    b.SetBranch("met", pfMet);
+    b.SetBranch("metPhi", pfMetPhi);
     b.SetBranch("scale1fb", scale1fb);
-
-    if (isMC_) {
-        b.SetBranch("genWeight", genWeight);
-        b.SetBranch("PUWeight", PUWeight);
-    }
 }
 
 void LowPileupSelector::LoadBranchesBacon(Long64_t entry, std::pair<Systematic, std::string> variation) { 
@@ -29,7 +25,7 @@ void LowPileupSelector::LoadBranchesBacon(Long64_t entry, std::pair<Systematic, 
     b.SetEntry(entry);
 
     if (isMC_) {
-        weight = PUWeight*scale1fb;
+        weight = scale1fb;
         //weight = genWeight*PUWeight*scale1fb;
     }
     SetComposite();

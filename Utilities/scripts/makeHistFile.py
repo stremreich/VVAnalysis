@@ -116,6 +116,7 @@ def makeHistFile(args):
     #            )
 
     selector = SelectorTools.SelectorDriver(args['analysis'], args['selection'], args['input_tier'], args['year'])
+    selector.setNumCores(args['numCores'])
     selector.setOutputfile(fOut.GetName())
     selector.setInputs(sf_inputs+hist_inputs)
 

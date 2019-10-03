@@ -15,8 +15,13 @@ void LowPileupZSelector::SetBranchesBacon() {
     channelName_ = "mm";
     lep1 = nullptr;
     lep2 = nullptr;
+    b.SetBranch("category", category);
     fChain->SetBranchAddress("lep1", &lep1, &lep1_b);
     fChain->SetBranchAddress("lep2", &lep2, &lep2_b);
+    if (isMC_) {
+        b.SetBranch("genWeight", genWeight);
+        b.SetBranch("PUWeight", PUWeight);
+    }
     LowPileupSelector::SetBranchesBacon();
 }
 

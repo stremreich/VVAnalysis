@@ -4,15 +4,14 @@
 
 void LowPileupWSelector::Init(TTree *tree)
 {
-    allChannels_ = {"m"};
-    hists1D_ = {"CutFlow", "mV", "yW", "ptW", "ptl", "etal", "pfMet",};
+    allChannels_ = {"mp", "mn"};
+    hists1D_ = {"CutFlow", "mW", "yW", "ptW", "ptl", "etal", "pfMet",};
 
+    fReader.SetTree(tree);
     LowPileupSelector::Init(tree);
 }
 
 void LowPileupWSelector::SetBranchesBacon() {
-    channel_ = mm;
-    channelName_ = "mm";
     lep = nullptr;
     fChain->SetBranchAddress("lep", &lep, &lep_b);
     LowPileupSelector::SetBranchesBacon();
@@ -20,10 +19,24 @@ void LowPileupWSelector::SetBranchesBacon() {
 
 void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, std::pair<Systematic, std::string> variation) { 
     lep_b->GetEntry(entry);
+    fReader.SetLocalEntry(entry);
     LowPileupSelector::LoadBranchesBacon(entry, variation);
+    if (isMC_)
+        weight = evtWeight[0]*1000.;
+    if (*charge > 0) {
+        channel_ = mp;
+        channelName_ = "mp";
+    }
+    else {
+        channel_ = mn;
+        channelName_ = "mn";
+    }
 }
 
 void LowPileupWSelector::SetComposite() {
+    pfMetVec = TLorentzVector();
+    pfMetVec.SetPtEtaPhiM(pfMet, 0., pfMetPhi, 0.);
+    wCand = *lep + pfMetVec;
 }
 
 void LowPileupWSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 

@@ -23,17 +23,15 @@ class LowPileupSelector : public SelectorBase {
 public :
     // Derived values
     float weight;
+    TLorentzVector pfMetVec;
 
     Float_t pfMet;
+    Float_t pfMetPhi;
     Float_t genVPt;
     Float_t genVPhi;
     Float_t genVy;
     Float_t genVMass;
-    Float_t genWeight;
-    Float_t PUWeight;
     Float_t scale1fb;
-
-    UInt_t category;
 
     BranchManager b;
 

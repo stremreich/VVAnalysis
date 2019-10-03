@@ -19,6 +19,7 @@ class SelectorDriver(object):
             "WZxsec2016" : "WZSelector",
             "Zstudy" : "ZSelector",
             "LowPileupZ" : "LowPileupZSelector",
+            "LowPileupW" : "LowPileupWSelector",
             "Zstudy_2016" : "ZSelector",
             "Zstudy_2017" : "ZSelector",
             "ZZGen" : "ZZGenSelector",
@@ -137,6 +138,7 @@ class SelectorDriver(object):
             self.addTNamed("channel", chan)
             logging.info("Processing channel %s" % chan)
             if self.numCores > 1:
+                print "Processing parallel"
                 self.processParallelByDataset(self.datasets, chan)
             else: 
                 for dataset, file_path in self.datasets.iteritems():
@@ -223,6 +225,7 @@ class SelectorDriver(object):
             raise RuntimeError("Failed to collect data from parallel run")
 
     def processParallelByDataset(self, datasets, chan):
+        print "Processing"
         numCores = min(self.numCores, len(datasets))
         p = multiprocessing.Pool(processes=self.numCores)
         p.map(self, [[dataset, f, chan] for dataset, f in datasets.iteritems()])

@@ -42,6 +42,7 @@ class SelectorBase : public TSelector {
 
     enum Channel {
         e,           m,         
+        ep,          en,        mp,     mn,
         ee,          em,        mm,     
         eee,         eem,       emm,    mmm,
         eeee,        eemm,      mmee,   mmmm,
@@ -124,6 +125,7 @@ class SelectorBase : public TSelector {
     
     std::map<std::string, Channel> channelMap_ = {
         {"e", e},                   {"m", m},         
+        {"ep", ep},                 {"mp", mp},       {"ep", ep},       {"mn", mn},  
         {"ee", ee},                 {"em", em},       {"mm", mm},
         {"eee", eee},               {"eem", eem},     {"emm", emm},     {"mmm", mmm},
         {"eeee", eeee},             {"eemm", eemm},   {"mmee", mmee},   {"mmmm", mmmm},

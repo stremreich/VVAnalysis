@@ -19,6 +19,7 @@
 #include "Analysis/VVAnalysis/interface/LowPileupSelector.h"
 
 #include "Analysis/VVAnalysis/interface/helpers.h"
+#include <TSelector.h>
 
 class LowPileupZSelector : public LowPileupSelector {
 public :
@@ -27,6 +28,10 @@ public :
 
     TLorentzVector* lep1;
     TLorentzVector* lep2;
+    Float_t genWeight;
+    Float_t PUWeight;
+
+    UInt_t category;
 
     TBranch* lep1_b;
     TBranch* lep2_b;

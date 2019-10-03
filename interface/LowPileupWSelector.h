@@ -10,6 +10,9 @@
 #include <TLorentzVector.h>
 #include <exception>
 #include <iostream>
+#include <TTreeReader.h>
+#include <TTreeReaderValue.h>
+#include <TTreeReaderArray.h>
 
 // Headers needed by this particular selector
 #include <vector>
@@ -29,7 +32,10 @@ public :
 
     TBranch* lep_b;
 
-    enum { eMuMu2HLT=1, eMuMu1HLT, eMuMuNoSel, eMuSta, eMuTrk };
+    // Mixing quite a lot of things here, but it makes it easier
+    TTreeReader     fReader;
+    TTreeReaderArray<double> evtWeight = {fReader, "evtWeight"};
+    TTreeReaderValue<int> charge = {fReader, "q"};
     
     // Readers to access the data (delete the ones you do not need).
     virtual void    Init(TTree *tree) override;
