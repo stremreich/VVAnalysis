@@ -23,7 +23,7 @@ class SelectorDriver(object):
             "ZGen" : "ZGenSelector",
             "TTT" : "TTTSelector",
             "ThreeLep" : "ThreeLepSelector",
-            "Efficiency" : "Efficiency",
+            "Eff" : "Efficiency",
         }
 
         self.analysis = analysis

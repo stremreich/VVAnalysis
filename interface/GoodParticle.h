@@ -72,4 +72,41 @@ struct GenPart {
   
 };
 
+struct GenJet {
+  enum Jet_Match {J_NONE=0, GEN_J_ONLY=1, RECO_J_ONLY=2, MATCHED_J=3};
+
+  GoodPart genjet;
+  GoodPart recojet;
+  int j_status = J_NONE;
+     
+  void SetupGenJet(double pt, double eta, double phi, double m, int pdg) {
+    genjet=GoodPart(pt, eta, phi, m, pdg);
+    j_status +=GEN_J_ONLY;
+  }
+  
+  // gj for gen jet
+  double gjId() {return genjet.Id();}
+  double gjPt() {return genjet.Pt();}
+  double gjEta() {return genjet.Eta();}
+  double gjPhi() {return genjet.Phi();}
+  double gjM() {return genjet.M();}
+  LorentzVector gjVector(){return genjet.v;}
+
+  void SetupRecoJet(GoodPart& recojet_) {
+    recojet = recojet_;
+    j_status +=RECO_J_ONLY;
+  }
+
+  double rjId() {return recojet.Id();}
+  double rjPt() {return recojet.Pt();}
+  double rjEta() {return recojet.Eta();}
+  double rjPhi() {return recojet.Phi();}
+  double rjM() {return recojet.M();}
+  LorentzVector rjVector(){return recojet.v;}
+
+  bool isJMatched() {return j_status == MATCHED_J;}
+  bool isJFaked() {return j_status == RECO_J_ONLY;}
+  bool noJMATCHED() {return j_status == GEN_J_ONLY;}
+};
+
 #endif

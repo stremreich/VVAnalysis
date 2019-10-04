@@ -3,15 +3,16 @@
 #include "TLorentzVector.h"
 #define Fill1D(NAME, VALUE_) HistFullFill(histMap1D_, NAME, variation.second, VALUE_, weight_g);
 
+#define Fill2D(NAME, VALUE1_, VALUE2_) HistFullFill(histMap2D_, NAME, variation.second, VALUE1_, VALUE2_, weight_g);
+
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>>LorentzVector;
 
-enum PID {PID_MUON = 13, PID_ELECTRON = 11, PID_BJET = 5};
-enum TYPE {RECO =1, FAKE = 2, NOT_RECO = 3};
 
 void Efficiency::Init(TTree *tree) {
 
     hists1D_ = {"GenElecPt", "GenMuonPt", "MatchElecPt", "MatchMuonPt",
-		"FakeElecPt", "FakeMuonPt", "NGenElec", "NGenMuon", };
+		"FakeElecPt", "FakeMuonPt", "NGenElec", "NGenMuon","GenJetPt", "GenBJetPt", "MatchJetPt", "MatchBJetPt", "FakeJetPt", "FakeBJetPt", "NGenBJets", "NGenJets"};
+    hists2D_ = {"BEff_b_btag", "BEff_j_btag", "GenbJetsvsJets"};
     b.SetTree(tree);
 
     allChannels_ = {"all"};
@@ -23,7 +24,7 @@ void Efficiency::Init(TTree *tree) {
     TTTAna.SetInputList(slaveClassList);
     TTTAna.Init(tree);
     TTTAna.SetBranches();
-    std::cout << "start" << "\n";
+    // std::cout << "start" << "\n";
 }
 
 void Efficiency::SetupNewDirectory() {
@@ -33,7 +34,7 @@ void Efficiency::SetupNewDirectory() {
 }
 
 void Efficiency::SetBranchesNanoAOD() {
-    std::cout << "begin" << "\n";
+  // std::cout << "begin" << "\n";
     b.CleanUp();
     
     b.SetBranch("nGenPart", nGenPart);
@@ -43,12 +44,22 @@ void Efficiency::SetBranchesNanoAOD() {
     b.SetBranch("GenPart_phi", GenPart_phi);
     b.SetBranch("GenPart_mass",GenPart_mass);
     b.SetBranch("GenPart_genPartIdxMother", GenPart_statusFlags);
-    std::cout << "before this" << "\n";
+
+    b.SetBranch("nGenJet", nGenJet);
+    b.SetBranch("GenJet_eta", GenJet_eta);
+    b.SetBranch("GenJet_phi", GenJet_phi);
+    b.SetBranch("GenJet_pt", GenJet_pt);
+    b.SetBranch("GenJet_mass", GenJet_mass);
+    b.SetBranch("GenJet_partonFlavour", GenJet_partonFlavour);
+
+    
+    // std::cout << "before this" << "\n";
 }
 
 void Efficiency::clearValues() {
     weight_g=1;
     Leptons.clear();
+    Jets.clear();
 }
 
 void Efficiency::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) {
@@ -57,26 +68,29 @@ void Efficiency::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::
     
     TTTAna.LoadBranchesNanoAOD(entry,variation);
 
-    if (nGenPart > N_KEEP_GEN_) {
-	std::string message = "Found more Gen particles than max read number. \n Found" ;
-	message += std::to_string(nGenPart);
+    if (nGenJet > N_KEEP_GEN_JET) {
+	std::string message = "Found more Gen jets than max read number. \n Found" ;
+	message += std::to_string(nGenJet);
 	message += " particles\n  --> Max read number was ";
-	message += std::to_string(N_KEEP_GEN_);
-	message += "\nExiting because this can cause problems. Increase N_KEEP_GEN_ to avoid this error.\n";
+	message += std::to_string(N_KEEP_GEN_JET);
+	message += "\nExiting because this can cause problems. Increase N_KEEP_GEN_JET to avoid this error.\n";
 	throw std::domain_error(message);
     }
-  
+   
+    
     for (size_t i=0; i< nGenPart; i++) {
 	if (std::abs(GenPart_pdgId[i]) == PID_ELECTRON || std::abs(GenPart_pdgId[i]) == PID_MUON) {
 	    if (GenPart_pt[i]< 5 || abs(GenPart_pdgId[GenPart_statusFlags[i]]) != 24) continue;
 	    Leptons.push_back(GenPart());
 	    Leptons.back().SetupGen(GenPart_pt[i], GenPart_eta[i], GenPart_phi[i], GenPart_mass[i],
 				    GenPart_pdgId[i]);
-	    //}
-
 	}
     }
-
+    
+    for (size_t j=0; j<nGenJet; j++) {
+      Jets.push_back(GenJet());
+      Jets.back().SetupGenJet(GenJet_pt[j], GenJet_eta[j], GenJet_phi[j], GenJet_mass[j], GenJet_partonFlavour[j]);
+    }
     // std::cout << "gen" << "\n";
     // for(auto lep: Leptons) {
     //     if(lep.gId() == PID_MUON) std::cout << lep.gPt() << " " << lep.gEta()  << "\n";
@@ -100,7 +114,27 @@ void Efficiency::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::
 	    Leptons.back().SetupReco(reco);
 	}
     }
-
+    
+    for(auto reco_jet : TTTAna.goodJets) {
+      bool isJetMatched = false;
+      for(auto& gen_jet : Jets) {
+    	if (reco::deltaR(gen_jet.gjVector(), reco_jet.v)<0.4) {
+    	  if (reco_jet.Id() ==PID_BJET) {
+    	    gen_jet.SetupRecoJet(reco_jet);
+    	  }
+    	  else {
+     	    gen_jet.SetupRecoJet(reco_jet);
+    	  }
+    	  isJetMatched = true;
+    	  break;
+    	}
+      }
+      if(!isJetMatched) {
+     	Jets.push_back(GenJet());
+     	Jets.back().SetupRecoJet(reco_jet);
+      }
+    }
+	
     weight_g = TTTAna.weight;
     
     channelName_ = "all";
@@ -110,9 +144,9 @@ void Efficiency::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::
 void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) {
     int nGenElec = 0;
     int nGenMuon = 0;
-    int nRecoElec = 0;
-    int nRecoMuon = 0;
-      
+    int nGenBJet = 0;
+    int nGenJet = 0;
+
     for (auto part: Leptons) {
         if (part.gId() == PID_ELECTRON || part.rId() == PID_ELECTRON) {
 
@@ -137,11 +171,51 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
 	
                         
     }
-  
+
+    for (auto jet: Jets) {
+      if (jet.gjId() ==PID_BJET || jet.rjId() == PID_BJET) {
+	if(jet.isJMatched()) {
+	  Fill1D("MatchBJetPt", jet.gjPt());
+	}
+	else if(jet.isJFaked()) {
+	  Fill1D("FakeBJetPt", jet.rjPt());
+	}
+	Fill1D("GenBJetPt", jet.gjPt());
+	Fill2D("BEff_b_btag", jet.gjPt(), jet.gjEta());
+	nGenBJet ++;
+      }
+      else {
+	if(jet.isJMatched()) {
+	  Fill1D("MatchJetPt", jet.gjPt());
+	}
+	else if(jet.isJFaked()) {
+	  Fill1D("FakeJetPt", jet.rjPt());
+	}
+	Fill1D("GenJetPt", jet.gjPt());
+	Fill2D("BEff_j_btag", jet.gjPt(), jet.gjEta());
+	nGenJet ++;
+      }
+    }
+    
+    // for (auto jet: Jets) {
+    //   if (jet.gjId()==PID_BJET) {
+    // 	nBJets ++;
+    // 	Fill2D("BEff_b_btag", jet.gjPt(), jet.gjEta());
+    // 	Fill1D("GenBJetPt", jet.gjPt());
+    //   }
+    //   else {
+    // 	nJets ++;
+    // 	Fill2D("BEff_j_btag", jet.gjPt(), jet.gjEta());
+    // 	Fill1D("GenJetPt", jet.gjPt());
+    //   }
+    // }
+    
+    Fill2D("GenbJetsvsJets", nGenJet, nGenBJet);
+
+    Fill1D("NGenBJet", nGenBJet);
+    Fill1D("NGenJet", nGenJet);
     Fill1D("NGenElec", nGenElec);
     Fill1D("NGenMuon", nGenMuon);
-    // Fill1D("nRecoElec", nRecoElec);
-    // Fill1D("nRecoMuon", nRecoMuon);
     return;
 }
 

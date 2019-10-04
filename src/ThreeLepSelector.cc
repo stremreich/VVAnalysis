@@ -201,7 +201,7 @@ void ThreeLepSelector::SetBranchesNanoAOD() {
     b.SetBranch("Flag_BadPFMuonFilter", Flag_BadPFMuonFilter);
     b.SetBranch("Flag_ecalBadCalibFilter", Flag_ecalBadCalibFilter);
 
-    if(true) {
+    if(false) {
         b.SetBranch("Jet_L1", Jet_L1);
 	b.SetBranch("Jet_L2L3", Jet_L2L3);
     }
@@ -325,7 +325,7 @@ void ThreeLepSelector::printInfo() {
 	int closeIdx = getCloseJetIndex(v);
 	LorentzVector closeJet = get4Vector(PID_JET, closeIdx);
 	//closeJet += (1-Jet_L2L3[closeIdx])*v;
-        closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-v)*Jet_L2L3[closeIdx]+v;
+	// closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-v)*Jet_L2L3[closeIdx]+v;
 	
     	//int i = lep.index;
     	printf("%2d: %6.2f %+3.2f %+3.2f %+d", num, Muon_pt[i], Muon_eta[i], Muon_phi[i], -1*Muon_charge[i]);
@@ -352,7 +352,7 @@ void ThreeLepSelector::printInfo() {
 	 int closeIdx = getCloseJetIndex(v);
 	 LorentzVector closeJet = get4Vector(PID_JET, closeIdx);
 	 //closeJet += (1-Jet_L2L3[closeIdx])*v;
-	 closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-v)*Jet_L2L3[closeIdx]+v;
+	 //closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-v)*Jet_L2L3[closeIdx]+v;
 	
 	 //LorentzVector v = get4Vector(PID_ELECTRON, i);
 	 //int i = lep.index;
@@ -762,7 +762,7 @@ bool ThreeLepSelector::passFullIso(LorentzVector& lep, double I2, double I3) {
     int closeIdx = getCloseJetIndex(lep);
     LorentzVector closeJet  = get4Vector(PID_JET, closeIdx);
     // closeJet += (1-Jet_L2L3[closeIdx])*lep;
-    closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-lep)*Jet_L2L3[closeIdx]+lep;
+    //closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-lep)*Jet_L2L3[closeIdx]+lep;
     return (lep.Pt()/closeJet.Pt() > I2) || (LepRelPt(lep) > I3);
     
 }
@@ -772,7 +772,7 @@ double ThreeLepSelector::LepRelPt(LorentzVector& lep) {
     int closeIdx = getCloseJetIndex(lep);
     LorentzVector closeJet  = get4Vector(PID_JET, closeIdx);
     //    closeJet += (1-Jet_L2L3[closeIdx])*lep;
-    closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-lep)*Jet_L2L3[closeIdx]+lep;
+    // closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-lep)*Jet_L2L3[closeIdx]+lep;
     
     auto diff = closeJet.Vect() - lep.Vect();
     auto cross = diff.Cross(lep.Vect());
