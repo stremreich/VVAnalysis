@@ -125,7 +125,11 @@ def getLHEWeightHists(init2D_hist, entries, name, variation_name, rebin=None):
     for i in entries:
         hist = getWeightHistProjection(init2D_hist, name, i, rebin)
         hists.append(hist)
-    hist_name = init2D_hist.GetName().replace("lheWeights", "%s_%sUp" % (variation_name, name))
+    hist_name = init2D_hist.GetName()
+    if "lheWeights" in hist_name:
+        hist_name = hist_name.replace("lheWeights", "%s_%sUp" % (variation_name, name))
+    else:
+        hist_name = "_".join([hist_name, variation_name, name+"Up"])
     return hists, hist_name
 
 def getMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):

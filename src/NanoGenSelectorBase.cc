@@ -11,7 +11,6 @@ void NanoGenSelectorBase::Init(TTree *tree)
 
 void NanoGenSelectorBase::SetBranchesNanoAOD() {
     b.SetBranch("genWeight", genWeight);
-    //b.SetBranch("LHEWeight", LHEWeight);
     b.SetBranch("nLHEScaleWeight", nLHEScaleWeight);
     b.SetBranch("nLHEPdfWeight", nLHEPdfWeight);
     b.SetBranch("LHEScaleWeight", LHEScaleWeight);

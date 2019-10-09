@@ -19,7 +19,7 @@ def getComLineArgs():
         default="test.root", help="Output file name")
     parser.add_argument("--test", action='store_true',
         help="Run test job (no background estimate)")
-    ntuple_group = parser.add_mutually_exclusive_group(required=True)
+    ntuple_group = parser.add_mutually_exclusive_group(required=False)
     ntuple_group.add_argument("--uwvv", action='store_true',
         help="Use UWVV format ntuples in stead of NanoAOD")
     ntuple_group.add_argument("--bacon", action='store_true',

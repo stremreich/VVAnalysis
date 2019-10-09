@@ -22,7 +22,7 @@ void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, std::pair<Systematic,
     fReader.SetLocalEntry(entry);
     LowPileupSelector::LoadBranchesBacon(entry, variation);
     if (isMC_)
-        weight = evtWeight[0]*1000.;
+        weight = evtWeight[0];
     if (*charge > 0) {
         channel_ = mp;
         channelName_ = "mp";
