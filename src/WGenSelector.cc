@@ -99,15 +99,15 @@ void WGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
         for (size_t i = 0; i < nLHEScaleWeight+nLHEPdfWeight; i++) {
             float thweight = i < nLHEScaleWeight ? LHEScaleWeight[i] : LHEPdfWeight[i-nLHEScaleWeight];
             thweight *= weight;
-            SafeHistFill(weighthistMap1D_, getHistName("mW", variation.second), wCand.pt(), i, weight);
-            SafeHistFill(weighthistMap1D_, getHistName("yW", variation.second), wCand.Rapidity(), i, weight);
-            SafeHistFill(weighthistMap1D_, getHistName("ptW", variation.second), wCand.pt(), i, weight);
-            SafeHistFill(weighthistMap1D_, getHistName("MET", variation.second), genMet.pt(), i, weight);
-            SafeHistFill(weighthistMap1D_, getHistName("MET_phi", variation.second), genMet.phi(), i, weight);
-            SafeHistFill(weighthistMap1D_, getHistName("ptl", variation.second), lep.pt(), i, weight);
-            SafeHistFill(weighthistMap1D_, getHistName("etal", variation.second), lep.eta(), i, weight);
-            SafeHistFill(weighthistMap1D_, getHistName("phil", variation.second), lep.phi(), i, weight);
-            SafeHistFill(weighthistMap1D_, getHistName("nJets", variation.second), jets.size(), i, weight);
+            SafeHistFill(weighthistMap1D_, getHistName("mW", variation.second), wCand.pt(), i, thweight);
+            SafeHistFill(weighthistMap1D_, getHistName("yW", variation.second), wCand.Rapidity(), i, thweight);
+            SafeHistFill(weighthistMap1D_, getHistName("ptW", variation.second), wCand.pt(), i, thweight);
+            SafeHistFill(weighthistMap1D_, getHistName("MET", variation.second), genMet.pt(), i, thweight);
+            SafeHistFill(weighthistMap1D_, getHistName("MET_phi", variation.second), genMet.phi(), i, thweight);
+            SafeHistFill(weighthistMap1D_, getHistName("ptl", variation.second), lep.pt(), i, thweight);
+            SafeHistFill(weighthistMap1D_, getHistName("etal", variation.second), lep.eta(), i, thweight);
+            SafeHistFill(weighthistMap1D_, getHistName("phil", variation.second), lep.phi(), i, thweight);
+            SafeHistFill(weighthistMap1D_, getHistName("nJets", variation.second), jets.size(), i, thweight);
         }
     }
 }

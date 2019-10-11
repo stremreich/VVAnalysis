@@ -25,7 +25,7 @@ void LowPileupSelector::LoadBranchesBacon(Long64_t entry, std::pair<Systematic, 
     b.SetEntry(entry);
 
     if (isMC_) {
-        weight = scale1fb;
+        weight = scale1fb*1000;
         //weight = genWeight*PUWeight*scale1fb;
     }
     SetComposite();

@@ -40,6 +40,8 @@ void LowPileupWSelector::SetComposite() {
 }
 
 void LowPileupWSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
+    if (lep->Pt() < 25)
+        return;
     SafeHistFill(histMap1D_, getHistName("mW", variation.second), wCand.M(), weight);
     SafeHistFill(histMap1D_, getHistName("ptW", variation.second), wCand.Pt(), weight);
     SafeHistFill(histMap1D_, getHistName("yW", variation.second), wCand.Rapidity(), weight);

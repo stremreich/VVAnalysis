@@ -61,8 +61,8 @@ for year in fileMap.keys():
     #cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZZ/%s%sFit" % (fitvar, year))
     for process in plot_groups:
         if process not in ["nonprompt", "data"] and "atgc" not in process: 
-            cardtool.addTheoryVar(process, 'scale', range(1, 10), exclude=[6, 8], central=0)
-            cardtool.addTheoryVar(process, 'pdf_hessian' if year != "2016" else 'pdf_mc', [1]+[i for i in range(10, 111)], central=0)
+            cardtool.addTheoryVar(process, 'scale', range(1, 10), exclude=[6, 8], central=4)
+            cardtool.addTheoryVar(process, 'pdf_hessian' if year != "2016" else 'pdf_mc', [4]+[i for i in range(10, 111)], central=0)
         cardtool.loadHistsForProcess(process)
         cardtool.writeProcessHistsToOutput(process)
 
