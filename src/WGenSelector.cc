@@ -5,9 +5,13 @@
 
 void WGenSelector::Init(TTree *tree)
 {
-    allChannels_ = {"e", "m", "Unknown"};
-    hists1D_ = {"CutFlow", "mW", "yW", "ptW", "ptl", "etal", "phil", "ptnu", "etanu", "phinu", "MET", "MET_phi",};
-    weighthists1D_ = {"CutFlow", "mW", "yW", "ptW", "ptl", "etal", "phil", "ptnu", "etanu", "phinu", "MET", "MET_phi",};
+    histMap1D_["CutFlow_Unknown"] = {};
+    allChannels_ = {"ep", "en", "mp", "mn"};
+    hists1D_ = {"CutFlow", "mWmet", "yWmet", "ptWmet", "mW", "yW", "ptW", 
+        "ptl", "etal", "phil", "ptnu", "etanu", "phinu", "MET", "MET_phi",
+        "ptj1", "ptj2", "etaj1", "etaj2", "nJets"};
+    weighthists1D_ = {"mWmet", "yWmet", "ptWmet", "mW", "yW", "ptW", 
+        "ptl", "etal", "phil", "ptnu", "etanu", "phinu", "MET", "MET_phi", "nJets"};
 
     nLeptons_ = 1;
     NanoGenSelectorBase::Init(tree);
@@ -18,12 +22,24 @@ void WGenSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std
     NanoGenSelectorBase::LoadBranchesNanoAOD(entry, variation);
 
     if (leptons.size() > 0 && std::abs(leptons.at(0).pdgId()) == 11) {
-        channel_ = e;
-        channelName_ = "e";
+        if (leptons.at(0).pdgId() < 0) {
+            channel_ = en;
+            channelName_ = "en";
+        }
+        else {
+            channel_ = ep;
+            channelName_ = "ep";
+        }
     }
     else if (leptons.size() > 0 && std::abs(leptons.at(0).pdgId()) == 13) {
-        channel_ = m;
-        channelName_ = "m";
+        if (leptons.at(0).pdgId() < 0) {
+            channel_ = mn;
+            channelName_ = "mn";
+        }
+        else {
+            channel_ = mp;
+            channelName_ = "mp";
+        }
     }
     else {
         channel_ = Unknown;
@@ -51,7 +67,7 @@ void WGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
     int step = 0;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
-    if (channel_ != m && channel_ != e) 
+    if (channel_ != mn && channel_ != en && channel_ != mp && channel_ != ep) 
         return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
@@ -80,6 +96,9 @@ void WGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
     SafeHistFill(histMap1D_, getHistName("mW", variation.second), wCand.pt(), weight);
     SafeHistFill(histMap1D_, getHistName("yW", variation.second), wCand.Rapidity(), weight);
     SafeHistFill(histMap1D_, getHistName("ptW", variation.second), wCand.pt(), weight);
+    SafeHistFill(histMap1D_, getHistName("mWmet", variation.second), wCandMet.pt(), weight);
+    SafeHistFill(histMap1D_, getHistName("yWmet", variation.second), wCandMet.Rapidity(), weight);
+    SafeHistFill(histMap1D_, getHistName("ptWmet", variation.second), wCandMet.pt(), weight);
     SafeHistFill(histMap1D_, getHistName("MET", variation.second), genMet.pt(), weight);
     SafeHistFill(histMap1D_, getHistName("MET_phi", variation.second), genMet.phi(), weight);
     SafeHistFill(histMap1D_, getHistName("ptl", variation.second), lep.pt(), weight);
@@ -102,6 +121,9 @@ void WGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
             SafeHistFill(weighthistMap1D_, getHistName("mW", variation.second), wCand.pt(), i, thweight);
             SafeHistFill(weighthistMap1D_, getHistName("yW", variation.second), wCand.Rapidity(), i, thweight);
             SafeHistFill(weighthistMap1D_, getHistName("ptW", variation.second), wCand.pt(), i, thweight);
+            SafeHistFill(weighthistMap1D_, getHistName("mWmet", variation.second), wCand.pt(), i, thweight);
+            SafeHistFill(weighthistMap1D_, getHistName("yWmet", variation.second), wCand.Rapidity(), i, thweight);
+            SafeHistFill(weighthistMap1D_, getHistName("ptWmet", variation.second), wCand.pt(), i, thweight);
             SafeHistFill(weighthistMap1D_, getHistName("MET", variation.second), genMet.pt(), i, thweight);
             SafeHistFill(weighthistMap1D_, getHistName("MET_phi", variation.second), genMet.phi(), i, thweight);
             SafeHistFill(weighthistMap1D_, getHistName("ptl", variation.second), lep.pt(), i, thweight);
