@@ -43,22 +43,30 @@ struct GoodPart {
 //Can also add some help functions as time goes on
 struct GenPart {
     enum Match {NONE=0, GEN_ONLY=1, RECO_ONLY=2, MATCHED=3};
+    enum BMatch {bNONE=0, bGEN_ONLY=1, bRECO_ONLY=2, bMATCHED=3};
     
     GoodPart gen;
     GoodPart reco;
     int status = NONE;
-    
+    int bstatus = bNONE;
    
     void SetupGen(double pt, double eta, double phi, double m, int pdg) {
 	gen = GoodPart(pt, eta, phi, m, pdg);
 	status += GEN_ONLY;
+	if(pdg == 5) bstatus += bGEN_ONLY;
     }
 
     void SetupReco(GoodPart& reco_) {
 	reco = reco_;
 	status += RECO_ONLY;
+	if(reco.passedBJetSel()) bstatus += bRECO_ONLY;
     }
 
+    int Id() {
+	if(status % 2 == 1) return gId();
+	else return rId();
+    }
+    
     int gId() {return gen.Id();}
     double gPt() {return gen.Pt();}
     double gEta() {return gen.Eta();}
@@ -75,45 +83,12 @@ struct GenPart {
 
     bool isMatched() {return status == MATCHED;}
     bool isFaked() {return status == RECO_ONLY;}
-    bool noMatched() {return status ==GEN_ONLY;}
-  
-};
-
-struct GenJet {
-  enum Jet_Match {J_NONE=0, GEN_J_ONLY=1, RECO_J_ONLY=2, MATCHED_J=3};
-
-  GoodPart genjet;
-  GoodPart recojet;
-  int j_status = J_NONE;
-     
-  void SetupGenJet(double pt, double eta, double phi, double m, int pdg) {
-    genjet=GoodPart(pt, eta, phi, m, pdg);
-    j_status +=GEN_J_ONLY;
-  }
-  
-  // gj for gen jet
-  double gjId() {return genjet.Id();}
-  double gjPt() {return genjet.Pt();}
-  double gjEta() {return genjet.Eta();}
-  double gjPhi() {return genjet.Phi();}
-  double gjM() {return genjet.M();}
-  LorentzVector gjVector(){return genjet.v;}
-
-  void SetupRecoJet(GoodPart& recojet_) {
-    recojet = recojet_;
-    j_status +=RECO_J_ONLY;
-  }
-
-  double rjId() {return recojet.Id();}
-  double rjPt() {return recojet.Pt();}
-  double rjEta() {return recojet.Eta();}
-  double rjPhi() {return recojet.Phi();}
-  double rjM() {return recojet.M();}
-  LorentzVector rjVector(){return recojet.v;}
-
-  bool isJMatched() {return j_status == MATCHED_J;}
-  bool isJFaked() {return j_status == RECO_J_ONLY;}
-  bool noJMATCHED() {return j_status == GEN_J_ONLY;}
+    bool noMatched() {return status == GEN_ONLY;}
+    
+    bool isBMatched() {return bstatus == bMATCHED;}
+    bool isBFaked() {return bstatus == bRECO_ONLY;}
+    bool noBMatched() {return bstatus == bGEN_ONLY;}
+    bool isGenB() {return bstatus % 2 == 1;}
 };
 
 #endif

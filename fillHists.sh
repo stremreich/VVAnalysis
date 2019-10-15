@@ -14,21 +14,22 @@ if [ "$modTime" -gt "$runTime"  ]; then
     echo
 fi
 
+# EXE=./Utilities/scripts/makeHistFile.py
+# ANA=ThreeLep
+# YEAR=2016
+# INP=TwoLep_Met40
+# # SEL=FourTopCutBasedEl
+# SEL=FourTopMVAEl
+
+
 EXE=./Utilities/scripts/makeHistFile.py
-ANA=ThreeLep
+ANA=Efficiency:ThreeLep
+# ANA=ThreeLep
 YEAR=2016
 INP=TwoLep_Met40
 # SEL=FourTopCutBasedEl
-SEL=FourTopMVAEl
-# SEL=BEfficiency
+SEL=test
 
-# EXE=./Utilities/scripts/makeHistFile.py
-# ANA=Efficiency
-# YEAR=2016
-# INP=4TopSkims
-# # SEL=FourTopCutBasedEl
-# SEL=test
-# #SEL=BEfficiency
 
 
 

@@ -95,7 +95,7 @@ def makeHistFile(args):
     if selection == "Inclusive2Jet":
         selection = "Wselection"
         print "Info: Using Wselection for hist defintions"
-    analysis = "/".join([args['analysis'], selection])
+    analysis = "/".join([args['analysis'].split(':')[0], selection])
     hists, hist_inputs = UserInput.getHistInfo(analysis, args['hist_names'], args['noHistConfig'])
 
     selector = SelectorTools.SelectorDriver(args['analysis'], args['selection'], args['input_tier'], args['year'])

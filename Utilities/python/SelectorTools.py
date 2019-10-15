@@ -24,8 +24,15 @@ class SelectorDriver(object):
             "TTT" : "TTTSelector",
             "ThreeLep" : "ThreeLepSelector",
             "Eff" : "Efficiency",
+            "Efficiency" : "Efficiency",
         }
 
+        if analysis.find(":") != -1:
+            subAna = analysis.split(':')
+            self.subanalysis = subAna[1]
+            analysis = subAna[0]
+        else:
+            self.subanalysis = None
         self.analysis = analysis
         self.selection = selection
         self.input_tier = input_tier
@@ -115,18 +122,24 @@ class SelectorDriver(object):
                 self.datasets[dataset].append(file_path)
 
     def setDatasets(self, datalist):
-        datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=self.analysis)
+        if self.subanalysis:
+            datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=self.subanalysis)
+        else:
+            datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=self.analysis)
         
         for dataset in datasets:
             if "@" in dataset:
                 dataset, file_path = [f.strip() for f in dataset.split("@")]
             else:
                 try:
-                    file_path = ConfigureJobs.getInputFilesPath(dataset, 
-                        self.input_tier, self.analysis)
+                    if self.subanalysis:
+                        file_path = ConfigureJobs.getInputFilesPath(dataset, self.input_tier, self.subanalysis)
+                    else:
+                        file_path = ConfigureJobs.getInputFilesPath(dataset, self.input_tier, self.analysis)
                 except ValueError as e:
                     logging.warning(e)
                     continue
+            print file_path
             self.datasets[dataset] = [file_path]
 
     def applySelector(self):

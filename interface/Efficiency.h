@@ -24,27 +24,27 @@ typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector
 
 
 class Efficiency : public SelectorBase {
- public:
-  ThreeLepSelector TTTAna;
-  ClassDefOverride(Efficiency, 0);
+public:
+    ThreeLepSelector TTTAna;
+    ClassDefOverride(Efficiency, 0);
   
   
-  // NanoAOD variables
-  // static const unsigned int N_KEEP_MU_E_ = 35;
-  //static const unsigned int N_KEEP_JET_ = 35;
+    // NanoAOD variables
+    // static const unsigned int N_KEEP_MU_E_ = 35;
+    //static const unsigned int N_KEEP_JET_ = 35;
     static const unsigned int N_KEEP_GEN_ = 300;
     static const unsigned int N_KEEP_GEN_JET = 35;
   
-  //// gen branches ///////////////////////////
-  
+    //// gen branches ///////////////////////////
     Float_t GenMET_pt;
+
     UInt_t nGenPart;
     Float_t GenPart_pt[N_KEEP_GEN_];
     Int_t   GenPart_pdgId[N_KEEP_GEN_];
     Float_t GenPart_eta[N_KEEP_GEN_];
     Float_t GenPart_phi[N_KEEP_GEN_];
     Float_t GenPart_mass[N_KEEP_GEN_];
-    Int_t GenPart_statusFlags[N_KEEP_GEN_];
+    Int_t GenPart_mother[N_KEEP_GEN_];
   
     Float_t GenJet_eta[N_KEEP_GEN_JET];
     Float_t GenJet_phi[N_KEEP_GEN_JET];
@@ -55,16 +55,18 @@ class Efficiency : public SelectorBase {
    
   
     BranchManager b;
-    Float_t weight_g;
+    double weight;
     std::vector<GenPart> Leptons;
-    std::vector<GenJet> Jets;
+    std::vector<GenPart> Jets;
 
+    std::map<int, std::string> lepNameMap = {{PID_MUON, "Muon"}, {PID_ELECTRON, "Elec"}};
 
-  TH2D* Beff_b;
-  TH2D* Beff_j;
+    TH2D* Beff_b;
+    TH2D* Beff_j;
    
-   void clearValues();
-  
+    void clearValues();
+    void fillReco(std::vector<GenPart>& genList, const std::vector<GoodPart>& recoList);
+    
     // overloaded or necessary functions
     virtual void    SetBranchesNanoAOD() override;
     void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;

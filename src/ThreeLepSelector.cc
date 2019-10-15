@@ -11,6 +11,7 @@
 #define READFROM(data, index, size) (((data) & GETMASK((index), (size))) >> (index))
 
 #define CHGPT(index) (Electron_eCorr[index])
+#define CLOSEJET_REWEIGHT
 #include "Analysis/VVAnalysis/interface/printInfo.h"
 // #define DEBUG
 
@@ -31,7 +32,6 @@ std::string ThreeLepSelector::GetNameFromFile() {
 }
 
 void ThreeLepSelector::SetScaleFactors() {
-    std::cout << applyScaleFactors_ << std::endl;
     calib = BTagCalibration("deepcsv", "data/btag_scales.csv");
     btag_reader = BTagCalibrationReader(BTagEntry::OP_MEDIUM, "central");
     btag_reader.load(calib, BTagEntry::FLAV_B, "comb");
@@ -121,8 +121,6 @@ void ThreeLepSelector::SetBranchesNanoAOD() {
 	b.SetBranch("Electron_mvaFall17V2noIso",     Electron_MVA);
 	b.SetBranch("Electron_cutBased",             Electron_cutBased);
     } else if(year_ == yr2017) {
-	//    b.SetBranch("Electron_mvaFall17V1noIso",     Electron_MVA);
-	//    b.SetBranch("Electron_cutBased_Fall17_V1",   Electron_cutBased);
 	b.SetBranch("Electron_mvaFall17noIso",     Electron_MVA);
 	b.SetBranch("Electron_cutBased",   Electron_cutBased);
     } else if(year_ == yr2016 || year_ == yrdefault) {
@@ -173,10 +171,12 @@ void ThreeLepSelector::SetBranchesNanoAOD() {
     b.SetBranch("event", event);
     b.SetBranch("luminosityBlock", lumi);
 
-    b.SetBranch("GenPart_pdgId",GenPart_pdgId);
-    b.SetBranch("GenPart_genPartIdxMother", GenPart_genPartIdxMother);
-    b.SetBranch("GenPart_status", GenPart_status);
-    b.SetBranch("nGenPart", nGenPart);
+    if(applyScaleFactors_) {
+	b.SetBranch("GenPart_pdgId",GenPart_pdgId);
+	b.SetBranch("GenPart_genPartIdxMother", GenPart_genPartIdxMother);
+	b.SetBranch("GenPart_status", GenPart_status);
+	b.SetBranch("nGenPart", nGenPart);
+    }
     
     b.SetBranch("Flag_goodVertices", Flag_goodVertices);
     b.SetBranch("Flag_globalSuperTightHalo2016Filter", Flag_globalSuperTightHalo2016Filter);
@@ -186,14 +186,10 @@ void ThreeLepSelector::SetBranchesNanoAOD() {
     b.SetBranch("Flag_BadPFMuonFilter", Flag_BadPFMuonFilter);
     b.SetBranch("Flag_ecalBadCalibFilter", Flag_ecalBadCalibFilter);
 
-    if(true) {
-	b.SetBranch("Jet_L1", Jet_L1);
-	b.SetBranch("Jet_L2L3", Jet_L2L3);
-    }
-    
-    b.SetBranch("PV_x", PV_x);
-    b.SetBranch("PV_y", PV_y);
-    b.SetBranch("PV_z", PV_z);
+#ifdef CLOSEJET_REWEIGHT
+    b.SetBranch("Jet_L1", Jet_L1);
+    b.SetBranch("Jet_L2L3", Jet_L2L3);
+#endif // CLOSEJET_REWEIGHT
 
     if (isMC_) {
 	b.SetBranch("genWeight",    genWeight);
@@ -461,10 +457,10 @@ bool ThreeLepSelector::isGoodMuon(size_t index) {
 	     && (Muon_tightCharge[index] == 2) 
 	     && (abs(Muon_eta[index]) < 2.4) 
 	     && (Muon_mediumId[index]) 
-	     //	     && (yearCuts) 
-	     // && (abs(Muon_dz[index]) < 0.1) 
-	     // && (abs(Muon_dxy[index]) < 0.05) 
-	     // && (Muon_sip3d[index] < 4)
+	     && (yearCuts) 
+	     && (abs(Muon_dz[index]) < 0.1) 
+	     && (abs(Muon_dxy[index]) < 0.05) 
+	     && (Muon_sip3d[index] < 4)
 	     );
 }
 
@@ -600,7 +596,10 @@ size_t ThreeLepSelector::getCloseJetIndex(LorentzVector& lep, double minDR ) {
 bool ThreeLepSelector::passFullIso(LorentzVector& lep, double I2, double I3) {
     int closeIdx = getCloseJetIndex(lep);
     LorentzVector closeJet  = get4Vector(PID_JET, closeIdx);
+#ifdef CLOSEJET_REWEIGHT
     closeJet = (Jet_L1[closeIdx]*(1-Jet_rawFactor[closeIdx])*closeJet-lep)*Jet_L2L3[closeIdx]+lep;
+#endif // CLOSEJET_REWEIGHT
+
     return (lep.Pt()/closeJet.Pt() > I2) || (LepRelPt(lep, closeJet) > I3);
 }
 
@@ -832,18 +831,18 @@ double ThreeLepSelector::getWDecayScaleFactor() {
     int nW = 0;
     
     for(size_t i=0; i < nGenPart; i++) {
-	if(abs(GenPart_pdgId[i]) == 24
-	   && (GenPart_status[i] == 22 || GenPart_status[i] == 52)
-	   && abs(GenPart_pdgId[GenPart_genPartIdxMother[i]]) != 24) {
-	    nW++;
-	}
-	else if((abs(GenPart_pdgId[i]) == 12
-		 || abs(GenPart_pdgId[i]) == 14
-		 || abs(GenPart_pdgId[i]) == 16)
-		&& abs(GenPart_pdgId[GenPart_genPartIdxMother[i]]) == 24) {
-	    nleptonicW++;
-	}
-	else continue;
+    	if(abs(GenPart_pdgId[i]) == 24
+    	   && (GenPart_status[i] == 22 || GenPart_status[i] == 52)
+    	   && abs(GenPart_pdgId[GenPart_genPartIdxMother[i]]) != 24) {
+    	    nW++;
+    	}
+    	else if((abs(GenPart_pdgId[i]) == 12
+    		 || abs(GenPart_pdgId[i]) == 14
+    		 || abs(GenPart_pdgId[i]) == 16)
+    		&& abs(GenPart_pdgId[GenPart_genPartIdxMother[i]]) == 24) {
+    	    nleptonicW++;
+    	}
+    	else continue;
     }
 
     int nhadronicW = nW - nleptonicW;
