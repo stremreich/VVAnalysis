@@ -142,6 +142,7 @@ def getListOfHDFSFiles(file_path):
 def getListOfFiles(filelist, selection, manager_path="", analysis=''):
     if manager_path is "":
         manager_path = getManagerPath()
+    
     data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
     group_path = "%s/AnalysisDatasetManager/PlotGroups" % manager_path
     data_info = UserInput.readAllInfo("/".join([data_path, "data/*"]))
@@ -242,7 +243,8 @@ def getInputFilesPath(sample_name, selection, analysis, manager_path=""):
     if ".root" in sample_name:
         print "INFO: using simple file %s" % sample_name
         return sample_name
-    data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
+    # could this be where the extra / is ? took the / from between %s ADM
+    data_path = "%sAnalysisDatasetManager/FileInfo" % manager_path
     input_file_base_name = "/".join([data_path, analysis, selection])
     input_file_name = getConfigFileName(input_file_base_name)
     input_files = UserInput.readInfo(input_file_name)

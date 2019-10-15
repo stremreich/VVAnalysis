@@ -1,0 +1,38 @@
+#!/bin/bash
+
+runTime=$(stat -c "%Y" .compile)
+modTime=$(ls  -tr src/* interface/* | tail -n 1 | xargs stat -c "%Y")
+
+if [ "$modTime" -gt "$runTime"  ]; then
+    echo Recompiling
+    scramv1 b -j 10 1>/dev/null
+    if [ $? != 0 ]; then
+	echo "Error"
+	exit 1
+    fi
+    touch .compile
+    echo
+fi
+
+EXE=./Utilities/scripts/makeHistFile.py
+ANA=ThreeLep
+YEAR=2016
+INP=TwoLep_Met40
+# SEL=FourTopCutBasedEl
+SEL=FourTopMVAEl
+# SEL=BEfficiency
+
+# EXE=./Utilities/scripts/makeHistFile.py
+# ANA=Efficiency
+# YEAR=2016
+# INP=4TopSkims
+# # SEL=FourTopCutBasedEl
+# SEL=test
+# #SEL=BEfficiency
+
+
+
+
+$EXE -a $ANA --input_tier $INP -s $SEL \
+     --year $YEAR --test ${@}
+

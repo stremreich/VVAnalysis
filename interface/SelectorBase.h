@@ -58,7 +58,7 @@ class SelectorBase : public TSelector {
     Inclusive2Jet,                Inclusive2Jet_Full,
     TightWithLooseVeto,           FourTopPlots,
     FourTopCutBasedEl,            FourTopMVAEl,
-    BEfficiency, 
+    BEfficiency,                  test,
   };
 
   enum Year {
@@ -99,7 +99,7 @@ class SelectorBase : public TSelector {
     PAIR(Inclusive2Jet),                PAIR(Inclusive2Jet_Full),
     PAIR(TightWithLooseVeto),           PAIR(FourTopPlots),
     PAIR(FourTopCutBasedEl),            PAIR(FourTopMVAEl),
-    PAIR(BEfficiency), 
+    PAIR(BEfficiency),                  PAIR(test),
   };
 
   std::map<std::string, Year> yearMap_ = {

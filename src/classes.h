@@ -13,6 +13,7 @@
 #include "Analysis/VVAnalysis/interface/ScaleFactor.h"
 #include "Analysis/VVAnalysis/interface/disambiguateFinalStates.h"
 #include "Analysis/VVAnalysis/interface/disambiguateFinalStatesZZ.h"
+#include "Analysis/VVAnalysis/interface/Efficiency.h"
 
 namespace{
   namespace{
@@ -31,5 +32,6 @@ namespace{
     ScaleFactor pScaleFactor;
     disambiguateFinalStates pDisambiguator;
     disambiguateFinalStates pDisambiguatorZZ;
+    Efficiency pEfficiency;
   }
 }
