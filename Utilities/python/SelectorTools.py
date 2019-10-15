@@ -114,7 +114,8 @@ class SelectorDriver(object):
                 self.datasets[dataset].append(file_path)
 
     def setDatasets(self, datalist):
-        datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier)
+        datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=self.analysis)
+        
         for dataset in datasets:
             if "@" in dataset:
                 dataset, file_path = [f.strip() for f in dataset.split("@")]

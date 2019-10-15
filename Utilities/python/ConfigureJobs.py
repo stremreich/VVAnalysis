@@ -138,30 +138,24 @@ def getListOfHDFSFiles(file_path):
         elif "root" in split[1]:
             files.append(split[1])
     return files
-def getListOfFiles(filelist, selection, manager_path=""):
+
+def getListOfFiles(filelist, selection, manager_path="", analysis=''):
     if manager_path is "":
         manager_path = getManagerPath()
     data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
+    group_path = "%s/AnalysisDatasetManager/PlotGroups" % manager_path
     data_info = UserInput.readAllInfo("/".join([data_path, "data/*"]))
     mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
     valid_names = data_info.keys() + mc_info.keys()
+    group_names = UserInput.readAllInfo("%s/%s.py" %(group_path, analysis)) if analysis else dict()
     names = []
     for name in filelist:
         if ".root" in name:
             names.append(name)
-        elif "WZxsec2016" in name:
-            dataset_file = manager_path + \
-                "AnalysisDatasetManager/FileInfo/WZxsec2016/%s.json" % selection
-            allnames = json.load(open(dataset_file)).keys()
-            if "nodata" in name:
-                nodata = [x for x in allnames if "data" not in x]
-                names += nodata
-            elif "data" in name:
-                names += [x for x in allnames if "data" in x]
-            else:
-                names += allnames
         elif "*" in name:
             names += fnmatch.filter(valid_names, name)
+        elif name in group_names:
+            names += group_names[name]['Members']
         else:
             if name.split("__")[0] not in valid_names:
                 print "%s is not a valid name" % name
