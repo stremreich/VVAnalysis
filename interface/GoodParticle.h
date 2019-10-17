@@ -78,13 +78,14 @@ struct GenJet {
   GoodPart genjet;
   GoodPart recojet;
   int j_status = J_NONE;
-     
+  bool isBJetMatched;
+  
   void SetupGenJet(double pt, double eta, double phi, double m, int pdg) {
     genjet=GoodPart(pt, eta, phi, m, pdg);
     j_status +=GEN_J_ONLY;
   }
   
-  // gj for gen jet
+  // gj for gen jet 
   double gjId() {return genjet.Id();}
   double gjPt() {return genjet.Pt();}
   double gjEta() {return genjet.Eta();}
@@ -106,7 +107,7 @@ struct GenJet {
 
   bool isJMatched() {return j_status == MATCHED_J;}
   bool isJFaked() {return j_status == RECO_J_ONLY;}
-  bool noJMATCHED() {return j_status == GEN_J_ONLY;}
+  bool noJMatched() {return j_status == GEN_J_ONLY;}
 };
 
 #endif

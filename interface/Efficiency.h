@@ -51,6 +51,7 @@ class Efficiency : public SelectorBase {
     Float_t GenJet_pt[N_KEEP_GEN_JET];
     UInt_t nGenJet;
     Int_t GenJet_partonFlavour[N_KEEP_GEN_JET];
+    Int_t GenJet_hadronFlavour[N_KEEP_GEN_JET];
     Float_t GenJet_mass[N_KEEP_GEN_JET];
    
   
