@@ -619,10 +619,10 @@ bool ThreeLepSelector::isGoodMuon(size_t index) {
 	     && (Muon_tightCharge[index] == 2) 
 	     && (abs(Muon_eta[index]) < 2.4) 
 	     && (Muon_mediumId[index]) 
-	     //	     && (yearCuts) 
-	     // && (abs(Muon_dz[index]) < 0.1) 
-	     // && (abs(Muon_dxy[index]) < 0.05) 
-	     // && (Muon_sip3d[index] < 4)
+	     && (yearCuts) 
+	     && (abs(Muon_dz[index]) < 0.1) 
+	     && (abs(Muon_dxy[index]) < 0.05) 
+	     && (Muon_sip3d[index] < 4)
 	     );
 }
 
