@@ -7,9 +7,10 @@
 // accessing data if particle is muon vs electron
 
 struct GoodPart {
+    enum JET_STATUS {NONE=0, PASS_JET=1, PASS_BJET=2, PASS_BOTH=3};
     LorentzVector v;
     int pdgId;
-    bool isBTagged;
+    int jetStatus=NONE;
     int index;
     GoodPart(){}
   
@@ -28,6 +29,12 @@ struct GoodPart {
 
     int Charge() {return pdgId;}
     int Id() {return std::abs(pdgId);}
+
+    void setPassJetSel() {jetStatus += PASS_JET;}
+    void setPassBJetSel() {jetStatus += PASS_BJET;}
+
+    bool passedJetSel() {return jetStatus % 2 == 1;}
+    bool passedBJetSel() {return jetStatus / 2 == 1;}
 };
 
 

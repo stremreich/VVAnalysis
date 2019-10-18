@@ -19,14 +19,17 @@
 #include "Analysis/VVAnalysis/interface/SelectorBase.h"
 #include "Analysis/VVAnalysis/interface/BranchManager.h"
 #include "Analysis/VVAnalysis/interface/GoodParticle.h"
+
 #include "CondFormats/BTauObjects/interface/BTagCalibration.h"
 #include "CondTools/BTau/interface/BTagCalibrationReader.h"
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
 
-enum PID {PID_MUON = 13, PID_ELECTRON = 11, PID_BJET = 5, PID_JET};
+enum PID {PID_MUON = 13, PID_ELECTRON = 11, PID_BJET = 5, PID_CJET = 4, PID_JET};
 
 class ThreeLepSelector : public SelectorBase {
 public :
+   #include "Analysis/VVAnalysis/interface/FourTopScales.h"
+    
     /*****************************************/
     /* ____  ____   ___  __  __   ___ __  __ */
     /* || )) || \\ // \\ ||\ ||  //   ||  || */
@@ -49,7 +52,9 @@ public :
     //NanoAOD variables
     static const unsigned int N_KEEP_MU_E_ = 15;
     static const unsigned int N_KEEP_JET_ = 35;
+    static const unsigned int N_KEEP_GEN_ = 300;
 
+    
     UInt_t    nElectron;
     Float_t   Electron_pt[N_KEEP_MU_E_];
     Float_t   Electron_eta[N_KEEP_MU_E_];
@@ -99,6 +104,7 @@ public :
 
   
     Int_t     numPU;
+    Float_t   Pileup_nTrueInt;
 
     UInt_t    nJet;
     Float_t   Jet_btagCSVV2[N_KEEP_JET_];
@@ -118,8 +124,10 @@ public :
     Float_t   Jet_L1[N_KEEP_JET_];
     Float_t   Jet_L2L3[N_KEEP_JET_];
     
-
-    
+    Int_t GenPart_pdgId[N_KEEP_GEN_];
+    Int_t GenPart_genPartIdxMother[N_KEEP_GEN_];
+    Int_t GenPart_status[N_KEEP_GEN_];
+    UInt_t nGenPart;
 
     Bool_t Flag_goodVertices;
     Bool_t Flag_globalSuperTightHalo2016Filter;
@@ -154,6 +162,11 @@ public :
     ULong64_t event;
     UInt_t lumi;
 
+    TH2D* h_btag_eff_b;
+    TH2D* h_btag_eff_c;
+    TH2D* h_btag_eff_udsg;
+
+    
     std::map<int, bool> eventVec;
     std::map<int, std::string> info;
 
@@ -199,10 +212,12 @@ public :
     bool passFullIso(LorentzVector&, double, double);
     bool doesPassZVeto(GoodPart&, std::vector<GoodPart>&);
     bool passTriggerEmu(size_t);
-    double LepRelPt(LorentzVector&);
+    double LepRelPt(LorentzVector&, LorentzVector&);
     LorentzVector get4Vector(PID, int);
     bool passFakeableCuts(GoodPart&);
     bool MetFilter();
+    float getBtagEffFromFile(double, double, int);
+    double getWDecayScaleFactor();
     
     //// General Functions
     int getSRBin() const;

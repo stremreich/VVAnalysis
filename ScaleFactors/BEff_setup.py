@@ -11,10 +11,10 @@ realetaBin = [1, 3, 6, 9, 11]
 bmap = {"Beff_b": ["Beff_b_btag_all", "Beff_b_all"],
         "Beff_j": ["Beff_j_btag_all", "Beff_j_all"],}
 
-infileName="bEff_0920.root"
+infileName="beff_test.root"
 infile = TFile(infileName)
 
-outfileName="BEff.root"
+outfileName="BEff_0926.root"
 outfile = TFile(outfileName, "RECREATE")
 
 for key in infile.GetListOfKeys():
@@ -23,6 +23,7 @@ for key in infile.GetListOfKeys():
     
     
     for newName, oldNames in bmap.iteritems():
+        print newName, oldNames
         infile.cd(key.GetTitle())
         oldHist_pass = gDirectory.Get(oldNames[0])
         oldHist_all = gDirectory.Get(oldNames[1])        
@@ -36,8 +37,9 @@ for key in infile.GetListOfKeys():
                 if oldHist_all.Integral(xlow, xhigh, ylow, yhigh) == 0:
                     ratio = 0
                 else:
+                    print oldHist_pass.Integral(xlow, xhigh, ylow, yhigh), oldHist_all.Integral(xlow, xhigh, ylow, yhigh)
                     ratio = oldHist_pass.Integral(xlow, xhigh, ylow, yhigh) / oldHist_all.Integral(xlow, xhigh, ylow, yhigh)
-                print ratio
+                #print ratio
                 newHist.SetBinContent(i + 1, j + 1, ratio)
         # exit(0)
         outfile.cd(key.GetTitle())
