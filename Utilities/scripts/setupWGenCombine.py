@@ -4,9 +4,22 @@ import sys
 import ROOT
 import logging
 import array
+import argparse
 
 ROOT.gROOT.SetBatch(True)
-logging.basicConfig(level=logging.DEBUG)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--debug", action='store_true',
+    help="Print debug info")
+parser.add_argument("-c", "--central", type=str, default="wlnu_jetbinned_nlo_cp5",
+    help="Sample to use as central value")
+parser.add_argument("-d", "--data", type=str, default="wlnu_nlo",
+    help="Sample to use as dummy data")
+parser.add_argument("-b", "--fitvar", type=str, default="ptWmet",
+    help="Variable to use in the fit")
+args = parser.parse_args()
+
+logging.basicConfig(level=(logging.DEBUG if args.debug else logging.INFO))
 
 cardtool = CombineCardTools.CombineCardTools()
 
@@ -20,40 +33,42 @@ config_factory = ConfigHistFactory(
     "WGen/NanoAOD",
 )
 
-#plot_groups = ["wlnu", "wlnu_nlo"]
-plot_groups = ["wlnu_nlo"]
+plot_groups = ["wlnu_lo", "wlnu_lo_cp5", "wlnu_nlo", "wlnu_jetbinned_nlo", "wlnu_jetbinned_nlo_cp5", ]
 plotGroupsMap = {name : config_factory.getPlotGroupMembers(name) for name in plot_groups}
 
 xsecs  = ConfigureJobs.getListOfFilesWithXSec([f for files in plotGroupsMap.values() for f in files])
 
-channels = ["e", "m"]
-fitvar = "ptW"
-rebin = array.array('d', [i for i in range(20, 120, 5)])
-cardtool.setFitVariable(fitvar)
+channels = ["ep", "en", "mp", "mn"]
+rebin = array.array('d', [i for i in range(0, 120, 2)])
+cardtool.setFitVariable(args.fitvar)
 cardtool.setRebin(rebin)
 cardtool.setProcesses(plotGroupsMap)
 cardtool.setChannels(channels)
 cardtool.setCrosSectionMap(xsecs)
 cardtool.setVariations([])
-cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/WGen/%s" % fitvar)
+cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/WGen/%s" % args.fitvar)
 
-cardtool.setLumi(35.9)
-cardtool.setInputFile("/eos/user/k/kelong/HistFiles/WGen/combined.root")
+#cardtool.setLumi(35.9)
+cardtool.setLumi(0.2)
+cardtool.setInputFile("/eos/user/k/kelong/HistFiles/WGen/combinedJetBinned.root")
 cardtool.setOutputFile("WGenCombineInput.root")
+cardtool.setCombineChannels({"all" : channels, "e" : ["ep", "en"], "m" : ["mp", "mn"]})
 for process in plot_groups:
     #Turn this back on when the theory uncertainties are added
     if process not in ["nonprompt", "data"]: #and False
-        cardtool.addTheoryVar(process, 'scale', range(1, 9), exclude=[6, 7], central=4)
-        pdf_entries = [4] + range(9, 109)
-        cardtool.addTheoryVar(process, 'pdf_mc', pdf_entries, central=0)
+        cardtool.addTheoryVar(process, 'scale', range(1, 10), exclude=[6, 7], central=4)
+        pdf_entries = [5] + (range(10, 110) if "cp5" not in process else range(10, 40))
+        cardtool.addTheoryVar(process, 'pdf_mc' if "cp5" not in process else "pdf_hessian", pdf_entries, central=0)
     cardtool.loadHistsForProcess(process)
     cardtool.writeProcessHistsToOutput(process)
 
-nuissance_map = {"e" : 3, "m" : 3 }
-for chan in channels: #+ ["all"]:
+nuissance_map = {"e" : 34, "m" : 34 }
+for chan in ["e", "m"]:
     cardtool.setTemplateFileName("Templates/CombineCards/VGen/WGen_template_{channel}.txt")
     logging.info("Writting cards for channel %s" % chan)
     cardtool.writeCards(chan, nuissance_map[chan], 
-        #extraArgs={"data_name" : "dy_lo", "dy_sample" : "dy_lo"})
-        extraArgs={"data_name" : "wlnu_nlo", "w_sample" : "wlnu_nlo"})
+        extraArgs={"data_name" : args.data, 
+            "w_sample" : args.central, "w_yield" : "yield:%s" % args.central, 
+        }
+    )
 

@@ -23,13 +23,17 @@ def getComLineArgs():
                         help="Just make the directory, don't submit")
     parser.add_argument("--input_tier", type=str,
         default="", help="Selection stage of input files")
+    parser.add_argument("--force", action='store_true',
+        help="Force overwrite of existing directories")
     return vars(parser.parse_args())
 
-def makeSubmitDir(submit_dir):
+def makeSubmitDir(submit_dir, force):
     log_dir = submit_dir + "/logs"
-    if os.path.isdir(submit_dir):
+    if os.path.isdir(submit_dir) and force:
         logging.warning("Overwriting directory %s" % submit_dir)
         shutil.rmtree(submit_dir)
+    elif os.path.isdir(submit_dir):
+       raise IOError("Submit directory %s already exists! Use --force to overrite." % submit_dir) 
     os.makedirs(log_dir)
 
 def copyLibs():
@@ -113,8 +117,8 @@ def writeWrapperFile(submit_dir, tarball_name):
     outfile = "/".join([submit_dir, "wrapRunSelector.sh"])
     ConfigureJobs.fillTemplatedFile(template, outfile, template_dict)
 
-def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tier, numPerJob):
-    makeSubmitDir(submit_dir)
+def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tier, numPerJob, force):
+    makeSubmitDir(submit_dir, force)
     copyLibs()
     copyDatasetManagerFiles(analysis)
     copyGridCertificate()
@@ -131,7 +135,7 @@ def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tie
 def main():
     args = getComLineArgs()
     submitDASFilesToCondor(args['filenames'], args['submit_dir'], args['analysis'], 
-        args['selection'], args['input_tier'], args['files_per_job'])
+        args['selection'], args['input_tier'], args['files_per_job'], args['force'])
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,5 @@
 import logging
+import re
 import ConfigureJobs
 import HistTools
 import OutputTools
@@ -23,6 +24,7 @@ class CombineCardTools(object):
         self.isUnrolledFit = False
         self.lumi = 1
         self.outputFolder = "."
+        self.channelsToCombine = {}
         self.theoryVariations = {}
 
     def setPlotGroups(self, xsecMap):
@@ -125,25 +127,34 @@ class CombineCardTools(object):
             return self.fitVariable 
         return "_".join([self.fitVariable, self.fitVariableAppend[process]])
 
-    def combineChannels(self, group, central=True):
+
+    def setCombineChannels(self, groups):
+        self.channelsToCombine = groups
+
+    def combineChannels(self, group, processName, central=True):
         variations = self.variations[group.GetName()][:]
         fitVariable = self.getFitVariable(group.GetName())
         if central:
             variations.append("")
-        for var in variations:
-            # TODO: Remove these two replace statements, it's WZ/ZZ specific
-            name = fitVariable if var is "" else "_".join([fitVariable, var])
-            hist_name = name + "_" + self.channels[0]
-            hist = group.FindObject(hist_name)
-            if not hist:
-                logging.warning("Failed to find hist %s in group %s. Skipping" % (hist_name, group.GetName()))
-                continue
-            hist = hist.Clone(name)
-            ROOT.SetOwnership(hist, False)
-            group.Add(hist) 
-            for chan in self.channels[1:]:
-                chan_hist = group.FindObject(name + "_" + chan)
-                hist.Add(chan_hist)
+        for label, channels in self.channelsToCombine.iteritems():
+            if label not in self.yields:
+                self.yields[label] = {}
+            for var in variations:
+                name = "_".join([fitVariable, var]) if var != "" else fitVariable
+                hist_name = name + "_" + channels[0]
+                tmphist = group.FindObject(hist_name)
+                if not tmphist:
+                    logging.warning("Failed to find hist %s in group %s. Skipping" % (hist_name, group.GetName()))
+                    continue
+                hist = tmphist.Clone("_".join([name, label]))
+                del tmphist
+                ROOT.SetOwnership(hist, False)
+                group.Add(hist) 
+                for chan in channels[1:]:
+                    chan_hist = group.FindObject(name + "_" + chan)
+                    hist.Add(chan_hist)
+                if var == "":
+                    self.yields[label][processName] = hist.Integral()
 
     def listOfHistsByProcess(self, processName):
         if self.fitVariable == "":
@@ -157,7 +168,7 @@ class CombineCardTools(object):
         return plots
 
     # processName needs to match a PlotGroup 
-    def loadHistsForProcess(self, processName, scaleNorm=1):
+    def loadHistsForProcess(self, processName, scaleNorm=1, expandedTheory=True):
         plotsToRead = self.listOfHistsByProcess(processName)
 
         group = HistTools.makeCompositeHists(self.inputFile, processName, 
@@ -184,23 +195,50 @@ class CombineCardTools(object):
 
             if processName in self.theoryVariations:
                 weightHist = group.FindObject(self.weightHistName(chan, processName))
+                # This is a hack, but LHE weights were off by a factor of 2 for these samples
+                if processName in ["wlnu_jetbinned_nlo_cp5"]:
+                    weightHist.Scale(2.)
                 if not weightHist:
                     logging.warning("Failed to find %s. Skipping" % self.weightHistName(chan, processName))
                     continue
                 theoryVars = self.theoryVariations[processName]
                 scaleHists = HistTools.getScaleHists(weightHist, processName, self.rebin, 
-                        entries=theoryVars['scale']['entries'], central=theoryVars['scale']['central']) if 'scale' in theoryVars else []
+                    entries=theoryVars['scale']['entries'], 
+                    central=(theoryVars['scale']['central'] if 'scale' in theoryVars else -1))
                 pdfFunction = getattr(HistTools, "get%sPDFVariationHists" % ("Hessian" if "hessian" in theoryVars['pdf']['combine'] else "MC"))
                 pdfHists = pdfFunction(weightHist, theoryVars['pdf']['entries'], processName, 
-                        self.rebin, central=theoryVars['pdf']['central']) if 'pdf' in theoryVars else []
+                        self.rebin, central=(theoryVars['pdf']['central'] if 'pdf' in theoryVars else -1))
+                if expandedTheory:
+                    expandedScaleHists = HistTools.getExpandedScaleHists(weightHist, processName, self.rebin, 
+                        entries=theoryVars['scale']['entries'], 
+                        central=(theoryVars['scale']['central'] if 'scale' in theoryVars else -1))
+                    scaleHists.extend(expandedScaleHists)
+                    if "hessian" in theoryVars['pdf']['combine']:
+                        pdfFunction = getattr(HistTools, "get%sPDFVariationHists" % ("Hessian" if "hessian" in theoryVars['pdf']['combine'] else "MC"))
+                        allPdfHists = HistTools.getAllSymmetricHessianVariationHists(weightHist, theoryVars['pdf']['entries'], processName, 
+                            self.rebin, central=(theoryVars['pdf']['central'] if 'pdf' in theoryVars else -1))
+                        pdfHists.extend(allPdfHists)
                 group.extend(scaleHists+pdfHists)
-        #TODO: You may want to combine channels before removing zeros
-        self.combineChannels(group)
+
+                if chan == self.channels[0]:
+                    theoryVarLabels = []
+                    for h in group:
+                        theoryVarLabels.extend(re.findall("_".join([self.fitVariable, "(.*)", chan]), h.GetName()))
+                    self.variations[processName].extend(set(theoryVarLabels))
+
         #TODO: Make optional
         map(HistTools.addOverflow, filter(lambda x: (x.GetName() not in processedHists), group))
         if "data" not in group.GetName().lower():
             map(HistTools.removeZeros, filter(lambda x: (x.GetName() not in processedHists), group))
+        #TODO: You may want to combine channels before removing zeros
+        self.combineChannels(group, processName)
+
         self.histData[processName] = group
+
+    #def makeNuisanceShapeOnly(process, central_hist, uncertainty, channels):
+    #    for chan in channels:
+    #        central_hist = self.histData[process].FindObject("_".join([central_hist, chan]))
+    #        var_hist = self.histData[process].FindObject("_".join([central_hist, uncertainty, chan]))
 
     # It's best to call this function for process, otherwise you can end up
     # storing many large histograms in memory
@@ -214,13 +252,15 @@ class CombineCardTools(object):
     def writeCards(self, chan, nuisances, year="", extraArgs={}):
         chan_dict = self.yields[chan].copy()
         chan_dict.update(extraArgs)
+        for key, value in extraArgs.iteritems():
+            if "yield:" in value:
+                chan_dict[key] = chan_dict[value.replace("yield:", "")]
         chan_dict["nuisances"] = nuisances
         chan_dict["fit_variable"] = self.fitVariable
         chan_dict["output_file"] = self.outputFile.GetName()
         outputCard = self.templateName.split("/")[-1].format(channel=chan, year=year) 
         outputCard = outputCard.replace("template", "")
         outputCard = outputCard.replace("__", "_")
-        print "Writing card",self.templateName.format(channel=chan, year=year)
         ConfigureJobs.fillTemplatedFile(self.templateName.format(channel=chan, year=year),
             "/".join([self.outputFolder, outputCard]),
             chan_dict

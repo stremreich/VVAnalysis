@@ -145,6 +145,18 @@ def getMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
             upaction, downaction, central
     )
 
+def getAllSymmetricHessianVariationHists(init2D_hist, entries, name, rebin=None, central=0):
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
+    #centralIndex = central if central != -1 else int(len(entries)/2)
+    variationSet = []
+    for i, hist in enumerate(hists[0:central]+hists[central:]):
+        upaction = lambda x: x[1] if x[1] > x[0] else (x[0]**2/x[1] if x[1] > 0 else 0)
+        #downaction = lambda x: x[1] if x[1] < x[0] else float(x[0])/(x[1] if x[1] > 0 else 1)
+        downaction = lambda x: x[1] if x[1] < x[0] else (x[0]**2/x[1] if x[1] > 0 else 0)
+        variationSet.extend(getVariationHists([hists[central], hist], name, 
+            hist_name.replace("pdf_%s" % name, "pdf%i" %i), upaction, downaction, central))
+    return variationSet
+
 def getHessianPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
     hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
     #centralIndex = central if central != -1 else int(len(entries)/2)
@@ -154,10 +166,6 @@ def getHessianPDFVariationHists(init2D_hist, entries, name, rebin=None, central=
     return getVariationHists(hists, name, hist_name, 
             upaction, downaction, central, #downaction, central
     )
-
-def getAllHessianPDFHists():
-    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
-    return hists
 
 def getPDFPercentVariation(values):
     upvar = int(0.84*len(values))
@@ -171,8 +179,21 @@ def getScaleHists(scale_hist2D, name, rebin=None, entries=[i for i in range(1,10
     hists, hist_name = getLHEWeightHists(scale_hist2D, entries, name, "QCDscale", rebin)
     return getVariationHists(hists, name, hist_name, lambda x: x[-1], lambda x: x[1], central)
 
+# Pairs should correspond to muR, muF in (0.5, 1)
+# nano ordering is [0] is mur=0.5 muf=0.5 ; [1] is mur=0.5 muf=1 ; [2] is mur=0.5 muf=2 ; [3] is mur=1 muf=0.5 ; 
+# [4] is mur=1 muf=1 ; [5] is mur=1 muf=2 ; [6] is mur=2 muf=0.5 ; [7] is mur=2 muf=1 ; [8] is mur=2 muf=2 *
+def getExpandedScaleHists(scale_hist2D, name, rebin=None, entries=[i for i in range(1,10)], central=-1, 
+        pairs=[(1,7), (3,5), (0,8)]):
+    hists, hist_name = getLHEWeightHists(scale_hist2D, entries, name, "QCDscale", rebin)
+    variationSet = []
+    for label, indices in zip(["muR", "muF", "muRmuF"], pairs):
+        varhists = getVariationHists([hists[i] for i in indices], name,
+            hist_name.replace("QCDscale","QCDscale_"+label), lambda x: x[-1], lambda x: x[1], -1)
+        variationSet.extend(varhists)
+    return variationSet
+
 def getVariationHists(hists, process_name, histUp_name, up_action, down_action, central=0):
-    histUp = hists[central].Clone(histUp_name)
+    histUp = hists[0].Clone(histUp_name)
     histDown = histUp.Clone(histUp_name.replace("Up", "Down"))
     
     histCentral = hists.pop(central) if central != -1 else None
@@ -187,7 +208,8 @@ def getVariationHists(hists, process_name, histUp_name, up_action, down_action, 
         histDown.SetBinContent(i, down_action(vals))
         # For now, skip this check on aQGC for now, since they're screwed up
         if "aqgc" in process_name: continue
-    logging.debug("For process %s: Central, down, up: %s, %s, %s" % (process_name, histCentral.Integral() if histCentral else 0, histDown.Integral(), histUp.Integral()))
+    logging.debug("For process %s, hist %s: Central, down, up: %s, %s, %s" % \
+            (process_name, histUp_name, histCentral.Integral() if histCentral else 0, histDown.Integral(), histUp.Integral()))
     if histCentral and False: # Off for now, it can happen that groups have some hists with no weights which screws this up
         isValidVariation(process_name, histCentral, histUp, histDown)
     return [histUp, histDown]
@@ -329,7 +351,7 @@ def getTransformedHists(orig_file, folders, input_hists, transformation, transfo
             if not orig_hist:
                 if "Fakes" not in input_hist_name and \
                     "Up" not in input_hist_name and "Down" not in input_hist_name:
-                    print "WARNING: Histogram %s not found for dataset %s. Skipping." % (input_hist_name, folder)
+                    logging.warning("Histogram %s not found for dataset %s. Skipping." % (input_hist_name, folder))
                 continue
             new_hist = transformation(orig_hist, *transform_inputs)
             ROOT.SetOwnership(new_hist, False)

@@ -21,6 +21,8 @@ public :
     // Derived values
     LorentzVector wCand;
     LorentzVector wCandMet;
+    float mTtrue;
+    float mTmet;
     
     // Readers to access the data (delete the ones you do not need).
     virtual void    Init(TTree *tree) override;

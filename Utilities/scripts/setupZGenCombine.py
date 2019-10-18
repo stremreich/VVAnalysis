@@ -21,7 +21,7 @@ config_factory = ConfigHistFactory(
 )
 
 #plot_groups = ["nonprompt", "dy_lo", "dy_htbinned", "dy_htbinned_cp5", "dy_lo_2018"]
-plot_groups = ["nonprompt", "dy_htbinned_cp5", "dy_lo_2018", "dy_nlo_2018", "dy_lo", "dy_nlo"]
+plot_groups = ["dy_htbinned_cp5", "dy_lo_cp5", "dy_nlo_cp5", "dy_lo", "dy_nlo", "dy_nlo_jetbinned", "dy_nlo_jetbinned_cp5"]
 plotGroupsMap = {name : config_factory.getPlotGroupMembers(name) for name in plot_groups}
 
 xsecs  = ConfigureJobs.getListOfFilesWithXSec([f for files in plotGroupsMap.values() for f in files])
@@ -38,14 +38,14 @@ cardtool.setVariations([])
 cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZGen/%s" % fitvar)
 
 cardtool.setLumi(35.9)
-cardtool.setInputFile("/eos/user/k/kelong/HistFiles/ZGen/combined_withNonprompt.root")
+cardtool.setInputFile("/eos/user/k/kelong/HistFiles/ZGen/combined_withInclusiveAndHT.root")
 cardtool.setOutputFile("ZGenCombineInput.root")
 for process in plot_groups:
     #Turn this back on when the theory uncertainties are added
     if process not in ["nonprompt", "data"]: #and False
-        cardtool.addTheoryVar(process, 'scale', range(1, 9), exclude=[6, 7], central=-1)
-        pdf_entries = range(9, 40)
-        cardtool.addTheoryVar(process, 'pdf_mc', pdf_entries, central=-1)
+        cardtool.addTheoryVar(process, 'scale', range(1, 10), exclude=[6, 7], central=4)
+        pdf_entries = [4] + (range(10, 40) if "cp5" in process else range(10, 110))
+        cardtool.addTheoryVar(process, 'pdf_mc' if "cp5" in process else "pdf_hessian", pdf_entries, central=0)
     cardtool.loadHistsForProcess(process)
     cardtool.writeProcessHistsToOutput(process)
 
@@ -55,4 +55,4 @@ for chan in channels: #+ ["all"]:
     logging.info("Writting cards for channel %s" % chan)
     cardtool.writeCards(chan, nuissance_map[chan], 
         #extraArgs={"data_name" : "dy_lo", "dy_sample" : "dy_lo"})
-        extraArgs={"data_name" : "dy_lo_2018", "dy_sample" : "dy_lo_2018"})
+        extraArgs={"data_name" : "dy_lo_cp5", "dy_sample" : "dy_nlo_jetbinned_cp5"})
