@@ -17,6 +17,10 @@ parser.add_argument("-d", "--data", type=str, default="wlnu_nlo",
     help="Sample to use as dummy data")
 parser.add_argument("-b", "--fitvar", type=str, default="ptWmet",
     help="Variable to use in the fit")
+parser.add_argument("-r", "--rebin", 
+                    type=lambda x : [] if "," not in x else [float(i.strip()) for i in x.split(',')],
+                    default=[i for i in range(0, 120, 2)], help="Rebin array: "
+                    "values (bin edges) separated by commas.")
 args = parser.parse_args()
 
 logging.basicConfig(level=(logging.DEBUG if args.debug else logging.INFO))
@@ -39,9 +43,11 @@ plotGroupsMap = {name : config_factory.getPlotGroupMembers(name) for name in plo
 xsecs  = ConfigureJobs.getListOfFilesWithXSec([f for files in plotGroupsMap.values() for f in files])
 
 channels = ["ep", "en", "mp", "mn"]
-rebin = array.array('d', [i for i in range(0, 120, 2)])
+print args.rebin
+if args.rebin:
+    rebin = array.array('d', args.rebin)
+    cardtool.setRebin(rebin)
 cardtool.setFitVariable(args.fitvar)
-cardtool.setRebin(rebin)
 cardtool.setProcesses(plotGroupsMap)
 cardtool.setChannels(channels)
 cardtool.setCrosSectionMap(xsecs)

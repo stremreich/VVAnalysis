@@ -197,11 +197,13 @@ def getVariationHists(hists, process_name, histUp_name, up_action, down_action, 
     histDown = histUp.Clone(histUp_name.replace("Up", "Down"))
     
     histCentral = hists.pop(central) if central != -1 else None
-    # Include overflow
     for i in range(0, histUp.GetNbinsX()+2):
         vals = []
         for hist in hists:
             vals.append(hist.GetBinContent(i))
+        # This is a hack, but LHE weights were off by a factor of 2 for these samples
+        if process_name in ["wlnu_jetbinned_nlo_cp5"]:
+            vals = [x*2. for x in vals]
         vals.sort()
         vals.insert(0, histCentral.GetBinContent(i) if histCentral else 0)
         histUp.SetBinContent(i, up_action(vals))

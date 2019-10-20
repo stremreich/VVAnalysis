@@ -195,9 +195,6 @@ class CombineCardTools(object):
 
             if processName in self.theoryVariations:
                 weightHist = group.FindObject(self.weightHistName(chan, processName))
-                # This is a hack, but LHE weights were off by a factor of 2 for these samples
-                if processName in ["wlnu_jetbinned_nlo_cp5"]:
-                    weightHist.Scale(2.)
                 if not weightHist:
                     logging.warning("Failed to find %s. Skipping" % self.weightHistName(chan, processName))
                     continue
