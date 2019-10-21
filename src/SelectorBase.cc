@@ -86,8 +86,6 @@ void SelectorBase::Init(TTree *tree)
     if (doSystematics_ && isMC_) // isNonpromptEstimate?
         variations_.insert(systematics_.begin(), systematics_.end());
 
-    currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(name_.c_str()));
-
     if (channelMap_.find(channelName_) != channelMap_.end())
         channel_ = channelMap_[channelName_];
     else {
@@ -98,21 +96,47 @@ void SelectorBase::Init(TTree *tree)
             message += chan.first + ", " ;
         throw std::invalid_argument(message);
     }
-    
-    if ( currentHistDir_ == nullptr ) {
+
+    makeOutputDirs();
+    SetBranches();
+}
+
+void SelectorBase::addSubprocesses(std::vector<std::string> processes) {
+    subprocesses_ = processes;
+}
+
+void SelectorBase::setSubprocesses(std::string process) {
+    currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(process.c_str()));
+    if (currentHistDir_ == nullptr) {
         currentHistDir_ = new TList();
-        currentHistDir_->SetName(name_.c_str());
+        currentHistDir_->SetName(process.c_str());
         fOutput->Add(currentHistDir_);
-        // Watch for something that I hope never happens,
-        size_t existingObjectPtrsSize = allObjects_.size();
-        SetupNewDirectory();
-        if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
-            throw std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
+    }
+        //throw std::invalid_argument(process + " is not a valid subprocess for selector!");
+}
+
+void SelectorBase::makeOutputDirs() {
+    std::vector<std::string> allProcesses = {name_};
+    allProcesses.insert(allProcesses.begin(), subprocesses_.begin(), subprocesses_.end());
+    
+    for (auto& name : allProcesses) { 
+        currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(name.c_str()));
+        
+        if ( currentHistDir_ == nullptr ) {
+            currentHistDir_ = new TList();
+            currentHistDir_->SetName(name.c_str());
+            fOutput->Add(currentHistDir_);
+            if (name == name_)
+                SetupNewDirectory();
         }
     }
-    UpdateDirectory();
-
-    SetBranches();
+    //TODO: Determine why this fails and if it's really needed
+    //size_t existingObjectPtrsSize = allObjects_.size();
+    // Watch for something that I hope never happens,
+    //if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
+    //    throw std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
+    //}
+    //UpdateDirectory();
 }
 
 void SelectorBase::SetScaleFactors() {
@@ -175,11 +199,16 @@ void SelectorBase::SlaveTerminate()
 }
 void SelectorBase::UpdateDirectory()
 {
+    std::cout << "In";
   for(TNamed** objPtrPtr : allObjects_) {
+    std::cout << "Checking 1";
     if ( *objPtrPtr == nullptr ) std::invalid_argument("SelectorBase: Call to UpdateObject but existing pointer is null");
+    std::cout << "Checking 2";
+    std::cout << "Current hist dir is " << currentHistDir_->GetName() << std::endl;;
     *objPtrPtr = (TNamed *) currentHistDir_->FindObject((*objPtrPtr)->GetName());
     if ( *objPtrPtr == nullptr ) std::invalid_argument("SelectorBase: Call to UpdateObject but current directory has no instance");
   }
+    std::cout << "Out\n";
 }
 
 template<typename T>
@@ -199,13 +228,13 @@ void SelectorBase::InitializeHistMap(std::vector<std::string>& labels, std::map<
 }
 
 void SelectorBase::InitializeHistogramsFromConfig() {
+    std::cout << "CALLING FUNCTION!\n"; 
     TList* histInfo = (TList *) GetInputList()->FindObject("histinfo");
     if (histInfo == nullptr ) 
         throw std::domain_error("Can't initialize histograms without passing histogram information to TSelector");
 
-    InitializeHistMap(hists1D_, histMap1D_);
+    InitializeHistMap(hists1D_,histMap1D_);
     InitializeHistMap(weighthists1D_, weighthistMap1D_);
-
     for (auto && entry : *histInfo) {  
         TNamed* currentHistInfo = dynamic_cast<TNamed*>(entry);
         std::string name = currentHistInfo->GetName();
@@ -226,6 +255,21 @@ void SelectorBase::InitializeHistogramsFromConfig() {
                 std::cerr << "Skipping invalid histogram " << name << std::endl;
         }
     }
+
+    for (auto& subprocess : subprocesses_) {
+        setSubprocesses(subprocess);
+        auto& subprocessMap = subprocessHistMaps1D_[subprocess];
+        subprocessMap = {};
+        for (auto& hist : histMap1D_) {
+            subprocessMap[hist.first] = {};
+            if (hist.second == nullptr)
+                continue;
+            AddObject<TH1D>(subprocessMap[hist.first], const_cast<TH1D&>(*hist.second));
+            //subprocessWeightHistMaps1D_[subporcess] = weighthistMap1D_;
+        }
+    }
+
+    currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(name_.c_str()));
 }
 
 void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string channel, std::vector<std::string> histData) {

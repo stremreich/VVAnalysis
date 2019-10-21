@@ -17,7 +17,7 @@ void LowPileupWSelector::SetBranchesBacon() {
     LowPileupSelector::SetBranchesBacon();
 }
 
-void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, std::pair<Systematic, std::string> variation) { 
+void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) { 
     lep_b->GetEntry(entry);
     fReader.SetLocalEntry(entry);
     LowPileupSelector::LoadBranchesBacon(entry, variation);
@@ -39,7 +39,7 @@ void LowPileupWSelector::SetComposite() {
     wCand = *lep + pfMetVec;
 }
 
-void LowPileupWSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
+void LowPileupWSelector::FillHistograms(Long64_t entry, SystPair variation) { 
     if (lep->Pt() < 25)
         return;
     SafeHistFill(histMap1D_, getHistName("mW", variation.second), wCand.M(), weight);
@@ -48,5 +48,6 @@ void LowPileupWSelector::FillHistograms(Long64_t entry, std::pair<Systematic, st
     SafeHistFill(histMap1D_, getHistName("ptl", variation.second), lep->Pt(), weight);
     SafeHistFill(histMap1D_, getHistName("etal", variation.second), lep->Eta(), weight);
     SafeHistFill(histMap1D_, getHistName("pfMet", variation.second), pfMet, weight);
-}
 
+    //SafeHistFill(subprocessHistMaps1D_.at(name_+"_GenPtW_0_50"), getHistName("ptW", variation.second), wCand.Pt(), weight);
+}

@@ -43,6 +43,7 @@ class SelectorDriver(object):
         self.channels = ["Inclusive"]
         self.outfile_name = "temp.root"
         self.datasets = {}
+        self.regions = {}
 
     # Needed to parallelize class member function, see
     # https://stackoverflow.com/questions/1816958/cant-pickle-type-instancemethod-when-using-multiprocessing-pool-map
@@ -119,6 +120,13 @@ class SelectorDriver(object):
             else:
                 self.datasets[dataset].append(file_path)
 
+    def setDatasetRegions(self, regions):
+        regionSets = [i.strip() for i in regions.split(";")]
+        print regionSets
+        for region in regionSets:
+            process, regions = [i.strip() for i in region.split("=")]
+            self.regions[process] = ["_".join([process, i.strip()]) for i in regions.split(",")]
+
     def setDatasets(self, datalist):
         datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier)
         for dataset in datasets:
@@ -152,6 +160,11 @@ class SelectorDriver(object):
         select = getattr(ROOT, self.selector_name)()
         select.SetInputList(self.inputs)
         self.addTNamed("name", dataset)
+        if dataset in self.regions:
+            vec = ROOT.std.vector("string")()
+            for i in self.regions[dataset]:
+                vec.push_back(i)
+            select.addSubprocesses(vec)
         # Only add for one channel
         addSumweights = self.addSumweights and self.channels.index(chan) == 0 and "data" not in dataset
         if addSumweights:
@@ -166,29 +179,40 @@ class SelectorDriver(object):
                 sumweights_hist = ROOT.TH1D("sumweights", "sumweights", 100, 0, 100)
             sumweights_hist.SetDirectory(ROOT.gROOT)
         self.processLocalFiles(select, file_path, addSumweights, chan)
+
         output_list = select.GetOutputList()
-        name = self.inputs.FindObject("name").GetTitle()
-        dataset_list = output_list.FindObject(name)
-        if not dataset_list or dataset_list.ClassName() != "TList":
-            logging.warning("No output found for dataset %s" % dataset)
-            dataset_list = output_list.FindObject("Unknown")
-            if dataset_list and dataset_list.ClassName() == "TList":
-                logging.warning('Falling back to dataset "Unknown"')
-            else:
-                logging.warning('Skipping dataset %s' % dataset)
-                return False
-        if addSumweights:
-            dataset_list.Add(ROOT.gROOT.FindObject("sumweights"))
+        print self.regions
+        processes = [dataset] + (self.regions[dataset] if dataset in self.regions else [])
+        print processes
+        print [i.GetName() for i in output_list]
+        self.writeOutput(output_list, processes, dataset, addSumweights)
+
+        if self.current_file != self.outfile:
+            self.current_file.Close()
+        return True
+
+    def writeOutput(self, output_list, processes, dataset, addSumweights):
         if self.numCores > 1:
             self.outfile.Close()
             chanNum = self.channels.index(chan)
             self.current_file = ROOT.TFile.Open(self.tempfileName(dataset), "recreate" if chanNum == 0 else "update")
-        OutputTools.writeOutputListItem(dataset_list, self.current_file)
+
+        for process in processes:
+            dataset_list = output_list.FindObject(process)
+            print dataset_list, [i.GetName() for i in dataset_list]
+            if not dataset_list or dataset_list.ClassName() != "TList":
+                logging.warning("No output found for process %s of dataset %s" % (process, dataset))
+                dataset_list = output_list.FindObject("Unknown") if process == dataset else None
+                if dataset_list and dataset_list.ClassName() == "TList":
+                    logging.warning('Falling back to dataset "Unknown"')
+                else:
+                    logging.warning('Skipping process %s for dataset %s' % (process, dataset))
+                    return False
+            if addSumweights:
+                dataset_list.Add(ROOT.gROOT.FindObject("sumweights"))
+            OutputTools.writeOutputListItem(dataset_list, self.current_file)
         dataset_list.Delete()
         output_list.Delete()
-        if self.current_file != self.outfile:
-            self.current_file.Close()
-        return True
 
     def getFileNames(self, file_path):
         xrootd = "/store" in file_path.split("/hdfs/")[0][:7]

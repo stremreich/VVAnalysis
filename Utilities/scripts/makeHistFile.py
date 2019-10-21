@@ -30,6 +30,8 @@ def getComLineArgs():
         help="Number of cores to use (parallelize by dataset)")
     parser.add_argument("--input_tier", type=str,
         default="", help="Selection stage of input files")
+    parser.add_argument("--regions", type=str,
+        default="", help="Define subregions for dataset, format 'dataset=region1,region2,...;'")
     parser.add_argument("--year", type=str,
         default="default", help="Year of Analysis")
     parser.add_argument("-c", "--channels", 
@@ -134,6 +136,9 @@ def makeHistFile(args):
         selector.setDatasets(args['filenames'])
     else:
         selector.setFileList(*args['inputs_from_file'])
+
+    if args['regions']:
+        selector.setDatasetRegions(args['regions'])
     mc = selector.applySelector()
 
     if args['test']:
