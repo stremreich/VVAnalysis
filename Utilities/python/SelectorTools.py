@@ -122,7 +122,6 @@ class SelectorDriver(object):
 
     def setDatasetRegions(self, regions):
         regionSets = [i.strip() for i in regions.split(";")]
-        print regionSets
         for region in regionSets:
             process, regions = [i.strip() for i in region.split("=")]
             self.regions[process] = ["_".join([process, i.strip()]) for i in regions.split(",")]
@@ -146,7 +145,6 @@ class SelectorDriver(object):
             self.addTNamed("channel", chan)
             logging.info("Processing channel %s" % chan)
             if self.numCores > 1:
-                print "Processing parallel"
                 self.processParallelByDataset(self.datasets, chan)
             else: 
                 for dataset, file_path in self.datasets.iteritems():
@@ -181,17 +179,14 @@ class SelectorDriver(object):
         self.processLocalFiles(select, file_path, addSumweights, chan)
 
         output_list = select.GetOutputList()
-        print self.regions
         processes = [dataset] + (self.regions[dataset] if dataset in self.regions else [])
-        print processes
-        print [i.GetName() for i in output_list]
-        self.writeOutput(output_list, processes, dataset, addSumweights)
+        self.writeOutput(output_list, chan, processes, dataset, addSumweights)
 
         if self.current_file != self.outfile:
             self.current_file.Close()
         return True
 
-    def writeOutput(self, output_list, processes, dataset, addSumweights):
+    def writeOutput(self, output_list, chan, processes, dataset, addSumweights):
         if self.numCores > 1:
             self.outfile.Close()
             chanNum = self.channels.index(chan)
@@ -199,7 +194,6 @@ class SelectorDriver(object):
 
         for process in processes:
             dataset_list = output_list.FindObject(process)
-            print dataset_list, [i.GetName() for i in dataset_list]
             if not dataset_list or dataset_list.ClassName() != "TList":
                 logging.warning("No output found for process %s of dataset %s" % (process, dataset))
                 dataset_list = output_list.FindObject("Unknown") if process == dataset else None
@@ -249,7 +243,6 @@ class SelectorDriver(object):
             raise RuntimeError("Failed to collect data from parallel run")
 
     def processParallelByDataset(self, datasets, chan):
-        print "Processing"
         numCores = min(self.numCores, len(datasets))
         p = multiprocessing.Pool(processes=self.numCores)
         p.map(self, [[dataset, f, chan] for dataset, f in datasets.iteritems()])

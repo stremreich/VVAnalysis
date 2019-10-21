@@ -139,6 +139,13 @@ def makeHistFile(args):
 
     if args['regions']:
         selector.setDatasetRegions(args['regions'])
+    elif args['analysis'] == 'LowPileupW':
+        regions = ["GenPtW_%i_%i" % (i, i+10) for i in range(0, 100, 10)]
+        regions += ["GenPtW_100"]
+        selector.setDatasetRegions("wmv_0j_nlo=" + ','.join(regions))
+        selector.setDatasetRegions("wmv_1j_nlo=" + ','.join(regions))
+        selector.setDatasetRegions("wmv_2j_nlo=" + ','.join(regions))
+
     mc = selector.applySelector()
 
     if args['test']:

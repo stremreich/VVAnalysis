@@ -199,16 +199,11 @@ void SelectorBase::SlaveTerminate()
 }
 void SelectorBase::UpdateDirectory()
 {
-    std::cout << "In";
   for(TNamed** objPtrPtr : allObjects_) {
-    std::cout << "Checking 1";
     if ( *objPtrPtr == nullptr ) std::invalid_argument("SelectorBase: Call to UpdateObject but existing pointer is null");
-    std::cout << "Checking 2";
-    std::cout << "Current hist dir is " << currentHistDir_->GetName() << std::endl;;
     *objPtrPtr = (TNamed *) currentHistDir_->FindObject((*objPtrPtr)->GetName());
     if ( *objPtrPtr == nullptr ) std::invalid_argument("SelectorBase: Call to UpdateObject but current directory has no instance");
   }
-    std::cout << "Out\n";
 }
 
 template<typename T>
@@ -228,7 +223,6 @@ void SelectorBase::InitializeHistMap(std::vector<std::string>& labels, std::map<
 }
 
 void SelectorBase::InitializeHistogramsFromConfig() {
-    std::cout << "CALLING FUNCTION!\n"; 
     TList* histInfo = (TList *) GetInputList()->FindObject("histinfo");
     if (histInfo == nullptr ) 
         throw std::domain_error("Can't initialize histograms without passing histogram information to TSelector");

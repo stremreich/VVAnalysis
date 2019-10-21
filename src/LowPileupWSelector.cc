@@ -49,5 +49,25 @@ void LowPileupWSelector::FillHistograms(Long64_t entry, SystPair variation) {
     SafeHistFill(histMap1D_, getHistName("etal", variation.second), lep->Eta(), weight);
     SafeHistFill(histMap1D_, getHistName("pfMet", variation.second), pfMet, weight);
 
-    //SafeHistFill(subprocessHistMaps1D_.at(name_+"_GenPtW_0_50"), getHistName("ptW", variation.second), wCand.Pt(), weight);
+    if (subprocessHistMaps1D_.empty())
+        return;
+
+    const int step = 10;
+    const int maxVal = 100;
+    int lowbin = genVPt + step/2;
+    lowbin -= lowbin % step;
+
+    std::string binname = name_+"_GenPtW_"+ (lowbin >= maxVal ? std::to_string(maxVal) :
+            std::to_string(lowbin)+"_"+std::to_string(lowbin+step));
+
+    if (subprocessHistMaps1D_.find(binname) == subprocessHistMaps1D_.end())
+        throw std::range_error("Could not find bin " + binname + " in subprocessMap!");
+    HistMap1D& subprocessMap = subprocessHistMaps1D_.at(binname);
+
+    SafeHistFill(subprocessMap, getHistName("mW", variation.second), wCand.M(), weight);
+    SafeHistFill(subprocessMap, getHistName("ptW", variation.second), wCand.Pt(), weight);
+    SafeHistFill(subprocessMap, getHistName("yW", variation.second), wCand.Rapidity(), weight);
+    SafeHistFill(subprocessMap, getHistName("ptl", variation.second), lep->Pt(), weight);
+    SafeHistFill(subprocessMap, getHistName("etal", variation.second), lep->Eta(), weight);
+    SafeHistFill(subprocessMap, getHistName("pfMet", variation.second), pfMet, weight);
 }
