@@ -11,8 +11,8 @@ import logging
 
 class SelectorDriver(object):
     def __init__(self, analysis, selection, input_tier, year):
-        logging.basicConfig(level=logging.DEBUG)
-
+        logging.basicConfig(level=logging.INFO)
+        
         selector_map = {
             "WZxsec2016" : "WZSelector",
             "Zstudy" : "ZSelector",
@@ -84,7 +84,11 @@ class SelectorDriver(object):
         self.addTNamed("ntupleType", self.ntupleType)
         self.addTNamed("selection", self.selection)
         self.addTNamed("year", self.year)
-        
+
+    def setDebugLevel(self, level):
+        debugLevelMap = {"INFO": logging.INFO, "DEBUG": logging.DEBUG, "WARNING": logging.WARNING}
+        logging.basicConfig(level=debugLevelMap[level])
+
     def setNtupeType(self, ntupleType):
         self.ntupleType = ntupleType
         self.addTNamed("ntupleType", self.ntupleType)
@@ -139,8 +143,7 @@ class SelectorDriver(object):
                 except ValueError as e:
                     logging.warning(e)
                     continue
-            print file_path
-            self.datasets[dataset] = [file_path]
+                self.datasets[dataset] = [file_path]
 
     def applySelector(self):
         for chan in self.channels:

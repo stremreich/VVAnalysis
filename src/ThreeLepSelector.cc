@@ -1,4 +1,5 @@
 #include "Analysis/VVAnalysis/interface/ThreeLepSelector.h"
+#include "Analysis/VVAnalysis/interface/HelperFunctions.h"
 
 #include <TStyle.h>
 #include <regex>
@@ -12,8 +13,6 @@
 
 #define CHGPT(index) (Electron_eCorr[index])
 #define CLOSEJET_REWEIGHT
-#include "Analysis/VVAnalysis/interface/printInfo.h"
-// #define DEBUG
 
 typedef std::bitset<sizeof(int)> IntBits;
 
@@ -42,11 +41,11 @@ void ThreeLepSelector::SetScaleFactors() {
     if (pileupSF_ == nullptr )
 	std::cout << "missing Pileup SF" << std::endl;
 
-    TFile* bFile = (TFile*) GetInputList()->FindObject("BScales");
-    name_ = GetInputList()->FindObject("name")->GetTitle();
+    // TFile* bFile = (TFile*) GetInputList()->FindObject("BScales");
+    // name_ = GetInputList()->FindObject("name")->GetTitle();
 
-    Beff_j = (TH2D*) bFile->Get((name_ + "/Beff_j").c_str());
-    Beff_b = (TH2D*) bFile->Get((name_ + "/Beff_b").c_str());
+    // Beff_j = (TH2D*) bFile->Get((name_ + "/Beff_j").c_str());
+    // Beff_b = (TH2D*) bFile->Get((name_ + "/Beff_b").c_str());
 
     eIdSF_ = (ScaleFactor *) GetInputList()->FindObject("electronTightIdSF");
     if (eIdSF_ == nullptr )
@@ -71,27 +70,12 @@ void ThreeLepSelector::Init(TTree *tree) {
     hists1D_ = {
 		"CutFlow",      "ZMass",       "ptl1",     "etal1",    "ptl2",     "etal2",        "SR",
 		"bjetpt",       "jetpt",       "nbjet",    "njet",     "nleps",    "CRW_nbjet",    "CRW_njet",
-		"CRZ_nbjet",    "CRZ_njet",    "Met",      "HT",       "weight",
+		"CRZ_nbjet",    "CRZ_njet",    "CRZ_HT",   "CRZ_Met",  "Met",      "HT",           "weight",
+		"CRW_HT",       "CRW_Met",     "CRZ_ptl3", "sphericity", "centrality",
     };
     hists2D_ = {"bJetvsJets",    "Beff_b_btag", "Beff_j_btag", "Beff_b", "Beff_j"};
 
     SelectorBase::Init(tree);
-
-    //DEBUG STUFF
-    std::string filename = "missingMine_0927.dat";
-    std::ifstream infile;
-    infile.open(filename);
-
-    int num=0;
-    std::string line;
-    while (getline(infile, line)) {
-	std::istringstream iss(line);
-	int event;
-	iss >> event;
-	eventVec[event] = true;
-	info[event] = line;
-	num++;
-    }
 
 }
 
@@ -243,12 +227,6 @@ void ThreeLepSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic,
 	throw std::domain_error(message);
     }
 
-    bool debug = false;
-#ifdef DEBUG
-    debug = true;
-#endif
-    if(debug && ! eventVec[event]) return;
-
     if(eventVec[event]) return;
     
     /// basic setups
@@ -261,8 +239,6 @@ void ThreeLepSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic,
 	ApplyScaleFactors();
     }
 
-    //if(debug)  printInfo();
-    
     if(goodLeptons.size() >= 2 && looseLeptons.size() >= 3) {
 	for(auto lep : goodLeptons) {
 	    passZVeto = doesPassZVeto(lep, looseLeptons);
@@ -649,18 +625,9 @@ bool ThreeLepSelector::MetFilter() {
 }
 
 void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) {
-    bool debug = false;
-
-#ifdef DEBUG
-    debug = true;
-#endif
-
-    if(debug && ! eventVec[event]) return;
-    
     int step = 0;
     Fill1D("CutFlow", 0);
 
-    if(debug) printf("trig \n");
     /// Trigger
     if(((channel_ == mm && !HLT_DoubleMu8_Mass8_PFHT300) ||
 	(channel_ == em && !HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300) ||
@@ -669,16 +636,13 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
        ) return;
     Fill1D("CutFlow", ++step);
 
-    if(debug) printf("met filter \n");
     if(!MetFilter()) return;
     Fill1D("CutFlow", ++step);
 
     /// 2 good leptons
-    if(debug) printf("nlep %d\n", (int)goodLeptons.size());
     if(goodLeptons.size() < 2) return;
     Fill1D("CutFlow", ++step);
 
-    if(debug) printf("leadpt %f\n", goodLeptons[0].Pt());
     // first lep requirement
     if(goodLeptons[0].Pt() < 25) return;
     Fill1D("CutFlow", ++step);
@@ -691,7 +655,6 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
     Fill1D("CutFlow", ++step);
 
     // jet cut
-    if(debug) printf("j %d, b %d\n", nJets, nBJets);
     if(nJets < 2) return;
     Fill1D("CutFlow", ++step);
 
@@ -700,26 +663,12 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
     Fill1D("CutFlow", ++step);
 
     // ht cut
-    if(debug) printf("ht %f\n", HT);
     if(HT < 300) return;
     Fill1D("CutFlow", ++step);
 
     // met cut
-    if(debug) printf("met %f\n", MET);
     if (MET < 50) return;
     Fill1D("CutFlow", ++step);
-
-    if(debug) printf("zveto %d\n", passZVeto);
-    if(!passZVeto) return;
-    // if(goodLeptons.size() == 2 && !passZVeto) return;
-    Fill1D("CutFlow", ++step);
-
-    if(debug)   printf("passed\n\n");
-
-    if(debug)   return;
-
-    // printf("1,%d,%d,%d,%d,%f,%d,%f,%f,%d,%d,%d\n", nJets, nBJets, (int)goodLeptons.size(), (int)event, weight,lumi, goodLeptons[0].Pt(), goodLeptons[1].Pt(), goodLeptons[0].Charge(), goodLeptons[1].Charge(), passZVeto);
-    // return;
 
     Fill1D("SR", getSRBin());
 
@@ -727,16 +676,23 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
 	return;
     }
     else if(getSRBin() == 0) {
+	Fill1D("CRW_Met", MET);
+	Fill1D("CRW_HT", HT);
 	Fill1D("CRW_njet", nJets);
 	Fill1D("CRW_nbjet", nBJets);
 	return;
     }
     else if(getSRBin() == 9) {
-	Fill1D("CRZ_njet", nJets);
+	Fill1D("CRZ_Met", MET);
+	Fill1D("CRZ_HT", HT);
+    	Fill1D("CRZ_njet", nJets);
 	Fill1D("CRZ_nbjet", nBJets);
+	Fill1D("CRZ_ptl3", goodLeptons[3].Pt());
 	return;
     }
 
+    Fill1D("CutFlow", ++step);
+    
     HistFullFill(histMap1D_, "weight", variation.second, abs(weight), 1);
     Fill1D("Met", MET);
     Fill1D("HT", HT);
@@ -747,9 +703,10 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
     Fill2D("bJetvsJets", nJets, nBJets);
     Fill1D("nleps", goodLeptons.size());
 
-    for(size_t i = 0; i < nJet; ++i) {
-	continue;
-    }
+    Fill1D("sphericity", JetSphericity(goodJets));
+    Fill1D("centrality", JetCentrality(goodJets,HT));
+    
+    
 }
 
 void ThreeLepSelector::SetupNewDirectory() {
@@ -783,31 +740,6 @@ int ThreeLepSelector::getSRBin() const {
 
     return -1;
 }
-
-// Int minPtCut = READFROM(Electron_vidBitmap[lep.index], 0, 3);
-// int SCEtaCut = READFROM(Electron_vidBitmap[lep.index], 3, 3);
-// int DEtaInCut = READFROM(Electron_vidBitmap[lep.index], 6, 3);
-// int DPhiInCut = READFROM(Electron_vidBitmap[lep.index], 9, 3);
-// int SInInCut = READFROM(Electron_vidBitmap[lep.index], 12, 3);
-// int HOECut = READFROM(Electron_vidBitmap[lep.index], 15, 3);
-// int EInvMinPInvCut = READFROM(Electron_vidBitmap[lep.index], 18, 3);
-// int PFIsoCut = READFROM(Electron_vidBitmap[lep.index], 21, 3);
-// int ConvVetoCut = READFROM(Electron_vidBitmap[lep.index], 24, 3);
-// int MissHitCut = READFROM(Electron_vidBitmap[lep.index], 27, 3);
-
-// printf("%d %d %d %d %d %d %d %d %d %d",
-//    minPtCut,
-//        SCEtaCut,
-//        DEtaInCut,
-//        DPhiInCut,
-//        SInInCut,
-//        HOECut,
-//        EInvMinPInvCut,
-//        PFIsoCut,
-//        ConvVetoCut,
-//        MissHitCut
-//        );
-
 
 float ThreeLepSelector::getBtagEffFromFile(double pt, double eta, int mcFlavour){
     float pt_cutoff = std::max(20.,std::min(399.,pt));

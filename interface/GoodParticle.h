@@ -16,7 +16,12 @@ struct GoodPart {
   
     GoodPart(double pt, double eta, double phi, double m, int pdg=0 ) : v(pt, eta, phi, m), pdgId(pdg) {}
     GoodPart(LorentzVector v_, int pdg=0 ) : v(v_), pdgId(pdg) {}
-    
+    double operator[](int index) {
+        if(index == 1) return v.Px();
+	else if(index == 2) return v.Py();
+	else if(index == 3) return v.Pz();
+	else return -1;	
+    }
 
     void SetPdgId(int pdg) {
 	pdgId = pdg;
@@ -26,7 +31,8 @@ struct GoodPart {
     double Eta() {return v.Eta();}
     double Phi() {return v.Phi();}
     double M() {return v.M();}
-
+    double E() {return v.E();}
+    
     int Charge() {return pdgId;}
     int Id() {return std::abs(pdgId);}
 

@@ -26,6 +26,8 @@ def getComLineArgs():
         default="", help="Selection stage of input files")
     parser.add_argument("--year", type=str,
         default="default", help="Year of Analysis")
+    parser.add_argument('-db', "--debug_level", type=str,
+        default="INFO", help="Debug for logger (default is info) [INFO, DEBUG, WARNING]")
     parser.add_argument("--scaleFactor", "-sf", action='store_true', help="Apply Scale Factors")
     parser.add_argument("-c", "--channels", 
                         type=lambda x : [i.strip() for i in x.split(',')],
@@ -99,6 +101,7 @@ def makeHistFile(args):
     hists, hist_inputs = UserInput.getHistInfo(analysis, args['hist_names'], args['noHistConfig'])
 
     selector = SelectorTools.SelectorDriver(args['analysis'], args['selection'], args['input_tier'], args['year'])
+    selector.setDebugLevel(args['debug_level'])
     selector.setOutputfile(fOut.GetName())
     selector.setInputs(sf_inputs+hist_inputs)
 
