@@ -12,7 +12,10 @@ typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>>LorentzVector;
 void Efficiency::Init(TTree *tree) {
 
     hists1D_ = {"GenElecPt", "GenMuonPt", "MatchElecPt", "MatchMuonPt",
-		"FakeElecPt", "FakeMuonPt", "NGenElec", "NGenMuon","GenJetPt", "GenBJetPt", "MatchJetPt", "MatchBJetPt", "FakeJetPt", "FakeBJetPt", "NGenBJets", "NGenJets"};
+		"FakeElecPt", "FakeMuonPt", "NGenElec", "NGenMuon","GenJetPt", "GenBJetPt",
+		"MatchJetPt", "MatchBJetPt", "FakeJetPt", "FakeBJetPt", "NGenBJet", "NGenJet",
+		"NMatchBJet", "NFakeBJet"};
+    
     hists2D_ = {"BEff_b_btag", "BEff_j_btag", "GenbJetsvsJets"};
     allChannels_ = {"all"};
     
@@ -121,6 +124,8 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     int nGenMuon = 0;
     int nGenBJet = 0;
     int nGenJet = 0;
+    int nMatchBJet =0;
+    int nFakeBJet = 0;
 
     for (auto part: Leptons) {
 	std::string partName = lepNameMap[part.Id()];
@@ -162,13 +167,14 @@ void Efficiency::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
 	}
         
     }
-    
-    Fill2D("GenbJetsvsJets", nGenJet, nGenBJet);
 
-    Fill1D("NGenBJets", nGenBJet);
-    Fill1D("NGenJets", nGenJet);
+    Fill2D("GenbJetsvsJets", nGenJet, nGenBJet);
+    Fill1D("NMatchBJet", nMatchBJet);
+    Fill1D("NGenBJet", nGenBJet);
+    Fill1D("NGenJet", nGenJet);
     Fill1D("NGenElec", nGenElec);
     Fill1D("NGenMuon", nGenMuon);
+    Fill1D("NFakeBJet", nFakeBJet);
     return;
 }
 
