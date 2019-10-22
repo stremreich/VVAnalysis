@@ -1,9 +1,11 @@
 #!/bin/bash
 
-runTime=$(stat -c "%Y" .compile)
-modTime=$(ls  -tr src/* interface/* | tail -n 1 | xargs stat -c "%Y")
+## to run: ./Fillhists.sh -o test.root -f "4top2016"
 
-if [ "$modTime" -gt "$runTime"  ]; then
+runTime=$(stat -c "%Y" .compile)
+modTime=$(ls -tr src/* interface/* | tail -n 1 | xargs stat -c "%Y")
+
+if [ "$modTime" -gt "$runTime" ]; then
     echo Recompiling
     scramv1 b -j 10 1>/dev/null
     if [ $? != 0 ]; then
