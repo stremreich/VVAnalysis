@@ -146,30 +146,6 @@ def makeHistFile(args):
             map(os.remove, combinedNames)
 
     fOut.Close()
-    if args['test']:
-        sys.exit(0)
-
-    alldata = HistTools.makeCompositeHists(fOut,"AllData", 
-        ConfigureJobs.getListOfFilesWithXSec(["WZxsec2016data"], manager_path), args['lumi'],
-        underflow=False, overflow=False)
-    OutputTools.writeOutputListItem(alldata, fOut)
-    alldata.Delete()
-
-    nonpromptmc = HistTools.makeCompositeHists(fOut, "NonpromptMC", ConfigureJobs.getListOfFilesWithXSec( 
-        ConfigureJobs.getListOfNonpromptFilenames(), manager_path), args['lumi'],
-        underflow=False, overflow=False)
-    nonpromptmc.Delete()
-
-    OutputTools.writeOutputListItem(nonpromptmc, fOut)
-    ewkmc = HistTools.makeCompositeHists(fOut,"AllEWK", ConfigureJobs.getListOfFilesWithXSec(
-        ConfigureJobs.getListOfEWKFilenames(), manager_path), args['lumi'],
-        underflow=False, overflow=False)
-    OutputTools.writeOutputListItem(ewkmc, fOut)
-    ewkmc.Delete()
-
-    ewkcorr = HistTools.getDifference(fOut, "DataEWKCorrected", "AllData", "AllEWK")
-    OutputTools.writeOutputListItem(ewkcorr, fOut)
-    ewkcorr.Delete()
 
 def main():
     args = getComLineArgs()
