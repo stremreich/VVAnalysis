@@ -346,8 +346,6 @@ std::vector<std::string> SelectorBase::ReadHistDataFromConfig(std::string histDa
 
 void SelectorBase::SetupNewDirectory()
 {
-    if (addSumweights_)
-        AddObject<TH1D>(sumWeightsHist_, "sumweights", "sumweights", 1, 0, 10);
 }
 
 std::string SelectorBase::getHistName(std::string histName, std::string variationName) {

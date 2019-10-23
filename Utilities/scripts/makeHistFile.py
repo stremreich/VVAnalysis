@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import ROOT
+import subprocess
 from python import SelectorTools
 from python import UserInput
 from python import OutputTools
@@ -30,6 +31,10 @@ def getComLineArgs():
         help="Number of cores to use (parallelize by dataset)")
     parser.add_argument("--input_tier", type=str,
         default="", help="Selection stage of input files")
+    parser.add_argument("--with_background", action='store_true',
+                    help="Don't run background selector")
+    parser.add_argument("--background_input", type=str, default="",
+                        required=False, help="Selection to use for background selector")
     parser.add_argument("--regions", type=str,
         default="", help="Define subregions for dataset, format 'dataset=region1,region2,...;'")
     parser.add_argument("--year", type=str,
@@ -54,32 +59,21 @@ def makeHistFile(args):
             "AnalysisDatasetManager", "Utilities/python"]))
 
     tmpFileName = args['output_file']
-    fOut = ROOT.TFile(tmpFileName, "recreate")
+    toCombine = args['with_background'] 
+    fOut = ROOT.TFile(tmpFileName if not toCombine else tmpFileName.replace(".root", "sel.root"), "recreate")
+    combinedNames = [fOut.GetName()]
 
     addScaleFacs = False
     if args['analysis'] == "WZxsec2016" or args['analysis'] == 'Zstudy_2016':
         addScaleFacs = True
     addScaleFacs=False
+    fr_inputs = []
     sf_inputs = [ROOT.TParameter(bool)("applyScaleFacs", False)]
 
     if addScaleFacs:
         fScales = ROOT.TFile('data/scaleFactors.root')
         mCBTightFakeRate = fScales.Get("mCBTightFakeRate")
         eCBTightFakeRate = fScales.Get("eCBTightFakeRate")
-        useSvenjasFRs = False
-        useJakobsFRs = False
-        if useSvenjasFRs:
-            mCBTightFakeRate = fScales.Get("mCBTightFakeRate_Svenja")
-            eCBTightFakeRate = fScales.Get("eCBTightFakeRate_Svenja")
-        elif useJakobsFRs:
-            mCBTightFakeRate = fScales.Get("mCBTightFakeRate_Jakob")
-            eCBTightFakeRate = fScales.Get("eCBTightFakeRate_Jakob")
-        # For medium muons
-        #mCBMedFakeRate.SetName("fakeRate_allMu")
-        if mCBTightFakeRate:
-            mCBTightFakeRate.SetName("fakeRate_allMu")
-        if eCBTightFakeRate:
-            eCBTightFakeRate.SetName("fakeRate_allE")
 
         muonIsoSF = fScales.Get('muonIsoSF')
         muonIdSF = fScales.Get('muonTightIdSF')
@@ -98,24 +92,8 @@ def makeHistFile(args):
     if args['input_tier'] == '':
         args['input_tier'] = args['selection']
     selection = args['selection'].split("_")[0]
-
-    if selection == "Inclusive2Jet":
-        selection = "Wselection"
-        print "Info: Using Wselection for hist defintions"
     analysis = "/".join([args['analysis'], selection])
     hists, hist_inputs = UserInput.getHistInfo(analysis, args['hist_names'], args['noHistConfig'])
-
-    #if "WZxsec2016" in analysis and "FakeRate" not in args['output_selection'] and not args['test']:
-    #    background = SelectorTools.applySelector(["WZxsec2016data"] +
-    #        ConfigureJobs.getListOfEWKFilenames() + ["wz3lnu-powheg"] +
-    #        ConfigureJobs.getListOfNonpromptFilenames(), 
-    #            "WZBackgroundSelector", args['selection'], fOut, 
-    #            extra_inputs=sf_inputs+fr_inputs+hist_inputs+tselection, 
-    #            channels=channels,
-    #            addSumweights=False,
-    #            nanoAOD=nanoAOD,
-    #            parallel=args['parallel'],
-    #            )
 
     selector = SelectorTools.SelectorDriver(args['analysis'], args['selection'], args['input_tier'], args['year'])
     selector.setNumCores(args['numCores'])
@@ -148,8 +126,27 @@ def makeHistFile(args):
 
     mc = selector.applySelector()
 
+    if args['with_background']:
+        # TODO: Should also have an option to specify input file list for background
+        if args['background_input'] and args['filenames']:
+            selector.setInputTier(args['background_input'])
+            selector.setDatasets(args['filenames'])
+        selector.isBackground()
+        selector.setAddSumWeights(False)
+        selector.unsetDatasetRegions()
+        selector.setInputs(sf_inputs+hist_inputs+fr_inputs)
+        output_name = tmpFileName.replace(".root", "bkgd.root")
+        selector.setOutputfile(output_name)
+        bkgd = selector.applySelector()
+        combinedNames.append(output_name)
+
+    if len(combinedNames) > 1:
+        rval = subprocess.call(["hadd", "-f", tmpFileName] + combinedNames)
+        if rval == 0:
+            map(os.remove, combinedNames)
+
+    fOut.Close()
     if args['test']:
-        fOut.Close()
         sys.exit(0)
 
     alldata = HistTools.makeCompositeHists(fOut,"AllData", 

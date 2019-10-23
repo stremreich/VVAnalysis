@@ -52,6 +52,7 @@ class SelectorBase : public TSelector {
     enum Selection {
         tightleptons,                 ZZGenFiducial,
         Wselection,                   Zselection,
+        WselectionAntiIso,                   
         Wselection_Full,              FakeRateSelectionLoose,
         FakeRateSelectionTight,       VBSselection_Loose,
         VBSselection_NoZeppenfeld,    VBSselection_Tight,
@@ -99,6 +100,7 @@ class SelectorBase : public TSelector {
 	{"tightleptons", tightleptons},
         {"ZZGenFiducial", ZZGenFiducial},
         {"Wselection", Wselection},
+        {"WselectionAntiIso", WselectionAntiIso},
         {"Zselection", Zselection},
         {"Wselection_Full", Wselection_Full},
         {"FakeRateSelectionLoose", FakeRateSelectionLoose},
@@ -148,7 +150,6 @@ class SelectorBase : public TSelector {
 
     std::vector<std::string> subprocesses_;
     bool doSystematics_;
-    bool addSumweights_;
     bool applyScaleFactors_;
     bool applyPrefiringCorr_;
     

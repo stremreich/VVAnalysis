@@ -36,6 +36,7 @@ public :
     TTreeReader     fReader;
     TTreeReaderArray<double> evtWeight = {fReader, "evtWeight"};
     TTreeReaderValue<int> charge = {fReader, "q"};
+    TTreeReaderValue<double> lepPfRelIso = {fReader, "relIso"};
     
     // Readers to access the data (delete the ones you do not need).
     virtual void    Init(TTree *tree) override;

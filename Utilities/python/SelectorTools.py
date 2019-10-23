@@ -42,6 +42,7 @@ class SelectorDriver(object):
         self.numCores = 1
         self.channels = ["Inclusive"]
         self.outfile_name = "temp.root"
+        self.outfile = None
         self.datasets = {}
         self.regions = {}
 
@@ -59,11 +60,16 @@ class SelectorDriver(object):
     def setAddSumWeights(self, addSumWeights):
         self.addSumweights = addSumWeights
 
+    def outputFile(self):
+        return self.outfile
+    
     def setOutputfile(self, outfile_name):
+        if self.outfile:
+            self.outfile.Close()
         self.outfile_name = outfile_name
         self.outfile = ROOT.gROOT.FindObject(outfile_name)
         if not self.outfile:
-            self.outfile = ROOT.TFile.Open(outfile_name)
+            self.outfile = ROOT.TFile.Open(outfile_name, "recreate")
         self.current_file = self.outfile
 
     def addTNamed(self, name, title):
@@ -83,6 +89,12 @@ class SelectorDriver(object):
         self.addTNamed("ntupleType", self.ntupleType)
         self.addTNamed("selection", self.selection)
         self.addTNamed("year", self.year)
+
+    def setSelection(self, selection):
+        self.selection = selection
+        
+    def setInputTier(self, input_tier):
+        self.input_tier = input_tier
         
     def setNtupeType(self, ntupleType):
         self.ntupleType = ntupleType
@@ -125,6 +137,9 @@ class SelectorDriver(object):
         for region in regionSets:
             process, regions = [i.strip() for i in region.split("=")]
             self.regions[process] = ["_".join([process, i.strip()]) for i in regions.split(",")]
+    
+    def unsetDatasetRegions(self):
+        self.regions = {}
 
     def setDatasets(self, datalist):
         datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier)
@@ -139,6 +154,7 @@ class SelectorDriver(object):
                     logging.warning(e)
                     continue
             self.datasets[dataset] = [file_path]
+        print self.datasets
 
     def applySelector(self):
         for chan in self.channels:
@@ -152,6 +168,9 @@ class SelectorDriver(object):
         if len(self.channels) > 1 and self.numCores > 1:
             tempfiles = [self.outfile_name.replace(".root", "_%s.root" % c) for c in self.channels]
             self.combineParallelFiles(tempfiles, "Inclusive")
+
+    def isBackground(self):
+        self.selector_name = self.selector_name.replace("Selector", "BackgroundSelector")
 
     def processDataset(self, dataset, file_path, chan):
         logging.info("Processing dataset %s" % dataset)
@@ -275,10 +294,10 @@ class SelectorDriver(object):
             )
         logging.debug("Processing tree %s for file %s." % (tree.GetName(), rtfile.GetName()))
         tree.Process(selector, "")
-        logging.debug("Processed with selector %s." % selector.GetName())
+        logging.debug("Processed file %s with selector %s." % (filename, selector.GetName()))
         if addSumweights:
             self.fillSumweightsHist(rtfile, filenum)
-        logging.debug("Added sumweights hist.")
+            logging.debug("Added sumweights hist.")
         rtfile.Close()
 
     # You can use filenum to index the files and sum separately, but it's not necessary
