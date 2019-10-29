@@ -203,15 +203,16 @@ class CombineCardTools(object):
                     entries=theoryVars['scale']['entries'], 
                     central=(theoryVars['scale']['central'] if 'scale' in theoryVars else -1))
                 pdfFunction = getattr(HistTools, "get%sPDFVariationHists" % ("Hessian" if "hessian" in theoryVars['pdf']['combine'] else "MC"))
+                print pdfFunction
                 pdfHists = pdfFunction(weightHist, theoryVars['pdf']['entries'], processName, 
                         self.rebin, central=(theoryVars['pdf']['central'] if 'pdf' in theoryVars else -1))
+                print pdfHists
                 if expandedTheory:
                     expandedScaleHists = HistTools.getExpandedScaleHists(weightHist, processName, self.rebin, 
                         entries=theoryVars['scale']['entries'], 
                         central=(theoryVars['scale']['central'] if 'scale' in theoryVars else -1))
                     scaleHists.extend(expandedScaleHists)
                     if "hessian" in theoryVars['pdf']['combine']:
-                        pdfFunction = getattr(HistTools, "get%sPDFVariationHists" % ("Hessian" if "hessian" in theoryVars['pdf']['combine'] else "MC"))
                         allPdfHists = HistTools.getAllSymmetricHessianVariationHists(weightHist, theoryVars['pdf']['entries'], processName, 
                             self.rebin, central=(theoryVars['pdf']['central'] if 'pdf' in theoryVars else -1))
                         pdfHists.extend(allPdfHists)

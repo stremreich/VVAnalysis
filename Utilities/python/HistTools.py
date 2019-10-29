@@ -133,7 +133,7 @@ def getLHEWeightHists(init2D_hist, entries, name, variation_name, rebin=None):
     return hists, hist_name
 
 def getMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
-    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdfMC", rebin)
     if central == -1:
         upaction = lambda x: x[int(0.84*len(entries))] 
         downaction = lambda x: x[int(0.16*len(entries))] 
@@ -158,7 +158,7 @@ def getAllSymmetricHessianVariationHists(init2D_hist, entries, name, rebin=None,
     return variationSet
 
 def getHessianPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
-    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdfHes", rebin)
     #centralIndex = central if central != -1 else int(len(entries)/2)
     sumsq = lambda x: math.sqrt(sum([0 if y < 0.01 else ((x[central] - y)**2) for y in x]))
     upaction = lambda x: x[central] + sumsq(x) 
