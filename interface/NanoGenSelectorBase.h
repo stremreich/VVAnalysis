@@ -32,7 +32,8 @@ public :
     static const unsigned int N_KEEP_GEN_ = 300;
     static const unsigned int N_KEEP_JET_ = 30;
     static const unsigned int N_LHESCALE_WEIGHTS_ = 10;
-    static const unsigned int N_LHEPDF_WEIGHTS_ = 102;
+    static const unsigned int N_LHEPDF_WEIGHTS_ = 100;
+    static const unsigned int N_LHEPDFAS_WEIGHTS_ = 102;
     static const unsigned int N_MC2HESSIAN_WEIGHTS_ = 60;
     float weight;
     bool doMC2H_ = false;
@@ -47,7 +48,7 @@ public :
     UInt_t nLHEScaleWeight;
     UInt_t nLHEPdfWeight;
     Float_t LHEScaleWeight[N_LHESCALE_WEIGHTS_];
-    Float_t LHEPdfWeight[N_LHEPDF_WEIGHTS_];
+    Float_t LHEPdfWeight[N_LHEPDFAS_WEIGHTS_];
     double LHEHessianPdfWeight[N_MC2HESSIAN_WEIGHTS_];
     UInt_t nGenPart;
     Float_t GenPart_pt[N_KEEP_GEN_];

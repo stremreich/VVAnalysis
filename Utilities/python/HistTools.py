@@ -1,3 +1,4 @@
+import numpy
 import array
 import ROOT
 import logging
@@ -145,6 +146,16 @@ def getMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
             upaction, downaction, central
     )
 
+# Calculate standard deviation per bin
+def getSymmMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdfMC", rebin)
+    upaction = lambda x: numpy.mean(x[1:]) + numpy.std(x[1:], ddof=1)
+    downaction = lambda x: numpy.mean(x[1:]) - numpy.std(x[1:], ddof=1)
+
+    return getVariationHists(hists, name, hist_name, 
+            upaction, downaction, central
+    )
+
 def getAllSymmetricHessianVariationHists(init2D_hist, entries, name, rebin=None, central=0):
     hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
     #centralIndex = central if central != -1 else int(len(entries)/2)
@@ -164,7 +175,7 @@ def getHessianPDFVariationHists(init2D_hist, entries, name, rebin=None, central=
     upaction = lambda x: x[central] + sumsq(x) 
     downaction = lambda x: x[central] - sumsq(x) 
     return getVariationHists(hists, name, hist_name, 
-            upaction, downaction, central, #downaction, central
+            upaction, downaction, central, 
     )
 
 def getPDFPercentVariation(values):

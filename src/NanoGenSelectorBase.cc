@@ -115,12 +115,9 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
 void NanoGenSelectorBase::buildHessian2MCSet() {
     double pdfWeights[N_LHEPDF_WEIGHTS_];
     for (size_t i = 0; i < N_LHEPDF_WEIGHTS_; i++) {
-        // Exclude alpha_s
-        if (i == 100)
-            break;
         pdfWeights[i] = LHEPdfWeight[i];
     }
-    pdfweightshelper_.DoMC2Hessian(1., const_cast<const double *>(pdfWeights), LHEHessianPdfWeight);
+    pdfweightshelper_.DoMC2Hessian(1., const_cast<const double*>(pdfWeights), LHEHessianPdfWeight);
 }
 
 void NanoGenSelectorBase::SetupNewDirectory() {
