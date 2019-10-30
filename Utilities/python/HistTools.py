@@ -3,6 +3,7 @@ import array
 import ROOT
 import logging
 import math
+import numpy
 
 def getDifference(fOut, name, dir1, dir2, ratioFunc=None):
     differences = ROOT.TList()
@@ -326,7 +327,8 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
         if hists == []:
             hists = [i.GetName() for i in hist_file.Get(directory).GetListOfKeys()]
         sumweights = 0
-        if "data" not in directory.lower() and "nonprompt" not in directory.lower():
+        isData = "data" in directory.lower() or "nonprompt" in directory.lower()
+        if not isData:
             sumweights_hist = hist_file.Get("/".join([directory, "sumweights"]))
             if not sumweights_hist:
                 logging.warning("Failed to find sumWeights for dataset %s" % directory)
@@ -346,7 +348,7 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
                 xsec = members[xseclookup]
                 if sumweights:
                     hist.Scale(xsec*1000*lumi/sumweights)
-                else:
+                elif not isData:
                     hist.Scale(1000*lumi*numpy.sign(xsec))
                     logging.warning("No sumWeights found for dataset %s, scaling only by lumi." % directory)
                 addOverflowAndUnderflow(hist, underflow, overflow)
