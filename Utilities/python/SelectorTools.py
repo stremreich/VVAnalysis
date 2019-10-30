@@ -45,6 +45,7 @@ class SelectorDriver(object):
         self.outfile = None
         self.datasets = {}
         self.regions = {}
+        self.maxEntries = -1
 
     # Needed to parallelize class member function, see
     # https://stackoverflow.com/questions/1816958/cant-pickle-type-instancemethod-when-using-multiprocessing-pool-map
@@ -56,6 +57,9 @@ class SelectorDriver(object):
 
     def setChannels(self, channels):
         self.channels = channels
+
+    def setMaxEntries(self, maxEntries):
+        self.maxEntries = maxEntries
 
     def setAddSumWeights(self, addSumWeights):
         self.addSumweights = addSumWeights
@@ -293,7 +297,10 @@ class SelectorDriver(object):
                 % (tree_name, filename, self.ntupleType)
             )
         logging.debug("Processing tree %s for file %s." % (tree.GetName(), rtfile.GetName()))
-        tree.Process(selector, "")
+        if self.maxEntries and self.maxEntries > 0:
+            tree.Process(selector, "", self.maxEntries)
+        else:
+            tree.Process(selector, "")
         logging.debug("Processed file %s with selector %s." % (filename, selector.GetName()))
         if addSumweights:
             self.fillSumweightsHist(rtfile, filenum)
@@ -303,9 +310,11 @@ class SelectorDriver(object):
     # You can use filenum to index the files and sum separately, but it's not necessary
     def fillSumweightsHist(self, rtfile, filenum=1):
         if self.ntupleType == "NanoAOD":
+            nevents_branch = "genEventCount"
             sumweights_branch = "genEventSumw"
             meta_tree_name = "Runs"
         else:
+            nevents_branch = ""
             sumweights_branch = "summedWeights"
             meta_tree_name = "metaInfo/metaInfo"
         meta_tree = rtfile.Get(meta_tree_name)
@@ -313,5 +322,10 @@ class SelectorDriver(object):
         sumweights_hist = ROOT.gROOT.FindObject("sumweights")
         tmplabel = sumweights_hist.GetName()+"_i"
         tmpweights_hist = sumweights_hist.Clone(tmplabel)
-        meta_tree.Draw("%i>>%s" % (filenum, tmplabel), sumweights_branch)
+        draw_weight = sumweights_branch 
+        if self.maxEntries and self.maxEntries > 0:
+            logging.warning("maxEntries is a subset of all the events in the file." \
+                " The sumweights hist will be scaled to reflect this, but this is NOT exact!")
+            draw_weight += "*%i/%s" % (self.maxEntries, nevents_branch)
+        meta_tree.Draw("%i>>%s" % (filenum, tmplabel), draw_weight)
         sumweights_hist.Add(tmpweights_hist)
