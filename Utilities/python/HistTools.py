@@ -305,6 +305,10 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
         # For aQGC, the different plot groups should already be in their own files
         if "aqgc" in directory:
             directory = name
+        
+        # Support for negative cross section processes (for nonprompt)
+        xseclookup = directory if directory in members.keys() or "-" in directory[0] else directory.split("__")[0]
+        directory = directory.replace("-", "")
         if not hist_file.Get(directory):
             logging.warning("Skipping invalid filename %s" % directory)
             continue
@@ -314,9 +318,10 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
         if "data" not in directory.lower() and "nonprompt" not in directory.lower():
             sumweights_hist = hist_file.Get("/".join([directory, "sumweights"]))
             if not sumweights_hist:
-                raise RuntimeError("Failed to find sumWeights for dataset %s" % directory)
-            sumweights = sumweights_hist.Integral(1, sumweights_hist.GetNbinsX()+2)
-            sumweights_hist.Delete()
+                logging.warning("Failed to find sumWeights for dataset %s" % directory)
+            else:
+                sumweights = sumweights_hist.Integral(1, sumweights_hist.GetNbinsX()+2)
+                sumweights_hist.Delete()
         for histname in hists:
             if histname == "sumweights": continue
             tmphist = hist_file.Get("/".join([directory, histname]))
@@ -327,9 +332,12 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
             tmphist.Delete()
             if hist:
                 sumhist = composite.FindObject(hist.GetName())
+                xsec = members[xseclookup]
                 if sumweights:
-                    xsec = members[directory if directory in members.keys() else directory.split("__")[0]]
                     hist.Scale(xsec*1000*lumi/sumweights)
+                else:
+                    hist.Scale(1000*lumi*numpy.sign(xsec))
+                    logging.warning("No sumWeights found for dataset %s, scaling only by lumi." % directory)
                 addOverflowAndUnderflow(hist, underflow, overflow)
             else:
                 raise RuntimeError("hist %s was not produced for "

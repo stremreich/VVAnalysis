@@ -193,6 +193,9 @@ def getListOfFiles(filelist, selection, manager_path="", analysis=""):
     for name in filelist:
         if ".root" in name:
             names.append(name)
+        # Allow negative contributions
+        elif name[0] == "-" :
+            names.append(name)
         elif "WZxsec2016" in name:
             dataset_file = manager_path + \
                 "%s/FileInfo/WZxsec2016/%s.json" % (getManagerPath(), selection)
@@ -241,8 +244,11 @@ def getListOfFilesWithXSec(filelist, manager_path="", selection="ntuples"):
         if "data" in file_name.lower() or "nonprompt" in file_name.lower():
             info.update({file_name : 1})
         else:
-            file_info = mc_info[file_name.split("__")[0]]
+            file_info = mc_info[file_name.split("__")[0].replace("-", "")]
             kfac = file_info["kfactor"] if "kfactor" in file_info.keys() else 1
+            # Intended to use for, e.g., nonprompt
+            if file_name[0] == "-":
+                kfac *= -1
             info.update({file_name : file_info["cross_section"]*kfac})
     return info
 

@@ -174,6 +174,7 @@ class CombineCardTools(object):
         group = HistTools.makeCompositeHists(self.inputFile, processName, 
                     {proc : self.crossSectionMap[proc] for proc in self.processes[processName]}, 
                     self.lumi, plotsToRead, rebin=self.rebin, overflow=False)
+        for i in group: print i
 
         fitVariable = self.getFitVariable(processName)
         #TODO:Make optional
@@ -181,8 +182,11 @@ class CombineCardTools(object):
         for chan in self.channels:
             histName = "_".join([fitVariable, chan]) if chan != "all" else fitVariable
             hist = group.FindObject(histName)
+            if not hist:
+                raise RuntimeError("Failed to produce hist %s for process %s" % (histName, processName))
             #TODO: Make optional
             if "data" not in processName.lower():
+                print processName
                 HistTools.removeZeros(hist)
             HistTools.addOverflow(hist)
             processedHists.append(histName)
