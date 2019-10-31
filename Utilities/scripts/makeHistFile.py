@@ -8,6 +8,7 @@ from python import ConfigureJobs
 from python import HistTools
 import os
 import logging
+import datetime
 import sys
 
 logging.basicConfig(level=logging.DEBUG)
@@ -51,6 +52,18 @@ def getComLineArgs():
                         "as defined in AnalysisDatasetManager, separated "
                         "by commas")
     return vars(parser.parse_args())
+
+def addMetaInfo(fOut):
+    metaInfo = fOut.mkdir("MetaInfo")
+    metaInfo.cd()
+    time = ROOT.TNamed("datetime", str(datetime.datetime.now()))
+    command = ROOT.TNamed("command", ' '.join(sys.argv))
+    githash = ROOT.TNamed("githash", subprocess.check_output(['git', 'log', '-1', '--format="%H"']))
+    gitdiff = ROOT.TNamed("gitdiff", subprocess.check_output(['git', 'diff',]))
+    time.Write()
+    command.Write()
+    githash.Write()
+    gitdiff.Write()
 
 def makeHistFile(args):
     ROOT.gROOT.SetBatch(True)
@@ -148,6 +161,7 @@ def makeHistFile(args):
         if rval == 0:
             map(os.remove, combinedNames)
 
+    addMetaInfo(fOut)
     fOut.Close()
 
 def main():
