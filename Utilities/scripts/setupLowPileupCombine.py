@@ -11,6 +11,8 @@ ROOT.gROOT.SetBatch(True)
 parser = argparse.ArgumentParser()
 parser.add_argument("--debug", action='store_true',
     help="Print debug info")
+parser.add_argument("-u", '--unbinnedSignal', action='store_true',
+    help="Just use one signalStrength")
 parser.add_argument("-a", "--append", type=str, default="",
     help="Append to output folder name")
 parser.add_argument("-r", "--rebin", 
@@ -33,17 +35,17 @@ config_factory = ConfigHistFactory(
     "LowPileupW/NanoAOD",
 )
 
-plot_groups = ["data", "nonprompt", "ewk", "top", "wmv_jetbinned_nlo_pt0to10", "wmv_jetbinned_nlo_pt10to20", "wmv_jetbinned_nlo_pt20to30", "wmv_jetbinned_nlo_pt30to40", "wmv_jetbinned_nlo_pt40to50", "wmv_jetbinned_nlo_pt50to60", "wmv_jetbinned_nlo_pt60to70", "wmv_jetbinned_nlo_pt70to80", "wmv_jetbinned_nlo_pt80to90", "wmv_jetbinned_nlo_pt90to100", "wmv_jetbinned_nlo_pt100", "wmv_jetbinned_nlo",]
+plot_groups = ["data", "nonprompt", "ewk", "top", "wmv_0j_nlo", "wmv_1j_nlo", "wmv_2j_nlo", "wmv_jetbinned_nlo_pt0to10", "wmv_jetbinned_nlo_pt10to20", "wmv_jetbinned_nlo_pt20to30", "wmv_jetbinned_nlo_pt30to40", "wmv_jetbinned_nlo_pt40to50", "wmv_jetbinned_nlo_pt50to60", "wmv_jetbinned_nlo_pt60to70", "wmv_jetbinned_nlo_pt70to80", "wmv_jetbinned_nlo_pt80to90", "wmv_jetbinned_nlo_pt90to100", "wmv_jetbinned_nlo_pt100", "wmv_jetbinned_nlo",]
 plotGroupsMap = {name : config_factory.getPlotGroupMembers(name) for name in plot_groups}
 
 xsecs  = ConfigureJobs.getListOfFilesWithXSec([f for files in plotGroupsMap.values() for f in files])
-print xsecs
 
 channels = ["mp", "mn"]
 if args.rebin:
     rebin = array.array('d', args.rebin)
     cardtool.setRebin(rebin)
-fitvar = "ptW"
+#fitvar = "ptW"
+fitvar = "pfMet"
 cardtool.setFitVariable(fitvar)
 cardtool.setProcesses(plotGroupsMap)
 cardtool.setChannels(channels)
@@ -54,10 +56,11 @@ cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/LowPileup/%s" % fold
 cardtool.setFitVariableAppend("nonprompt", "Fakes")
 
 #cardtool.setLumi(35.9)
-cardtool.setLumi(0.2)
+cardtool.setLumi(0.199)
 #cardtool.setInputFile("/eos/user/k/kelong/HistFiles/WGen/combinedJetBinned.root")
 cardtool.setInputFile("/afs/cern.ch/user/k/kelong/work/WZAnalysis/CMSSW_10_6_0_patch1/src/Analysis/VVAnalysis/testW.root")
 cardtool.setOutputFile("WGenCombineInput.root")
+#cardtool.setCombineChannels({"all" : channels, "m" : ["mp", "mn"]})
 cardtool.setCombineChannels({"all" : channels, "m" : ["mp", "mn"]})
 for process in plot_groups:
     #Turn this back on when the theory uncertainties are added
@@ -74,6 +77,7 @@ for process in plot_groups:
     cardtool.writeProcessHistsToOutput(process)
 
 nuissance_map = {"e" : 2, "m" : 2}
+template_name = "W" if args.unbinnedSignal else "WPtBinned"
 for chan in ["m"]:
     cardtool.setTemplateFileName("Templates/CombineCards/LowPileup/W_template_{channel}.txt")
     logging.info("Writting cards for channel %s" % chan)
