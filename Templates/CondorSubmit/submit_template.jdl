@@ -1,0 +1,37 @@
+Universe             = vanilla
+Executable           = wrapRunSelector.sh
+GetEnv               = false
+
+# (wisconsin-specific) tell glideins to run job with access to cvmfs (via parrot)
++RequiresCVMFS       = True
+# TODO: Understand why AFS is required/remove dependency
++RequiresSharedFS    = True
+
+WhenToTransferOutput = On_Exit_Or_Evict
+ShouldTransferFiles  = yes
+want_graceful_removal = True 
++IsFastQueueJob      = True
+request_memory       = 2000
+request_disk         = 2048000
+Requirements         = TARGET.Arch == "X86_64" && IsSlowSlot=!=true && (MY.RequiresSharedFS=!=true || TARGET.HasAFS_OSG) && (TARGET.HasParrotCVMFS=?=true || (TARGET.UWCMS_CVMFS_Exists  && TARGET.CMS_CVMFS_Exists))
+# stop jobs from running if they blow up in size or memory
+periodic_hold        = (DiskUsage/1024 > 10.0*2000 ||  ImageSize/1024 > RequestMemory*2)
+Analysis = ${analysis} 
+Filelist = filelist
+NPerJob = ${nPerJob}
+NProcesses = ${nJobs}
+
+# Recommend randomizing file list so that one job does not
+# end up processing a bunch of the same files that take longer
+# such as Drell-Yan.  e.g.
+# mv list.txt tmp && sort -R tmp > list.txt
+
+Arguments            = -a $$(Analysis) -s ${selection} --output_file $$(Analysis)_$$(Filelist)_$$(Process).root --input_tier ${input_tier} --inputs_from_file $$(Filelist).txt $$(NPerJob) $$(Process) ${extraArgs}
+Transfer_Input_Files = $$(Analysis)_AnalysisCode.tgz,$$(Filelist).txt
+output               = logs/$$(Analysis)_$$(Filelist)_$$(Process).out
+error                = logs/$$(Analysis)_$$(Filelist)_$$(Process).err
+Log                  = logs/$$(Analysis)_$$(Filelist)_$$(Process).log
+
+Queue $$(NProcesses)
+
+

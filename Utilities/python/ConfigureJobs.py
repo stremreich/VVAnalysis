@@ -7,6 +7,8 @@ import os
 import json
 import array
 import string
+import socket
+import logging
 #try:
 import configparser
 #except:
@@ -43,19 +45,45 @@ def getBinning(variable='MTWZ', isVBS=True, isHiggs=False):
 def getChannels(analysis='WZ'):
     if analysis == 'WZ':
         return ["eee", "eem", "emm", "mmm"]
-def getManagerPath():
-    config = configparser.ConfigParser()
-    try:
-        config.read_file(open("Templates/config.%s" % os.environ["USER"]))
-        if "dataset_manager_path" not in config['Setup']:
-            raise ValueError("dataset_manager_path not specified in config file Template/config.%s" 
-                            % os.environ["USER"])
-    except ValueError as e:
-        if os.path.isdir('AnalysisDatasetManager'):
-            return '.'
-        raise e
 
+def getManagerName():
+    config_name = ""
+    try:
+        config_name = "Templates/config.%s" % os.getlogin()
+    except OSError:
+        pass
+    default_name = "AnalysisDatasetManager"
+    if not os.path.isfile(config_name):
+        logging.warning("dataset_manager_name not specified in config file %s" % config_name)
+        logging.warning("Using default '%s'" % default_name)
+        return default_name
+    config = configparser.ConfigParser()
+    config.read_file(open(config_name))
+    if "dataset_manager_name" not in config['Setup']:
+        logging.warning("dataset_manager_name not specified in config file %s" % config_name)
+        logging.warning("Using default '%s'" % default_name)
+        return default_name
+    return config['Setup']['dataset_manager_name']
+
+def getManagerPath():
+    config_name = ""
+    try:
+        config_name = "Templates/config.%s" % os.getlogin()
+    except OSError:
+        pass
+    if not os.path.isfile(config_name):
+        if os.path.isdir(getManagerName()):
+            return '.'
+        else:
+            raise IOError("Failed to find valid config file. Looking for %s" 
+                    % config_name)
+    config = configparser.ConfigParser()
+    config.read_file(open(config_name))
+    if "dataset_manager_path" not in config['Setup']:
+        raise ValueError("dataset_manager_path not specified in config file %s"
+                        % config_name)
     return config['Setup']['dataset_manager_path'] + "/"
+
 def getCombinePath():
     config = configparser.ConfigParser()
     config.read_file(open("Templates/config.%s" % os.environ["USER"]))
@@ -63,7 +91,18 @@ def getCombinePath():
         raise ValueError("dataset_manager_path not specified in config file Template/config.%s" 
                             % os.environ["USER"])
     return config['Setup']['combine_path'] + "/"
-def getListOfEWKFilenames():
+def getListOfEWKFilenames(analysis=""):
+    if "ZZ4l" in analysis:
+        return [
+            "zz4l-powheg",
+            "ggZZ4e",
+            "ggZZ4m",
+            "ggZZ4t",
+            "ggZZ2e2mu",
+            "ggZZ2e2tau",
+            "ggZZ2mu2tau",
+        ]
+    # TODO: This is obviously WZ specific and should be updated
     return [
     #    "wz3lnu-powheg",
     # Use jet binned WZ samples for subtraction by default
@@ -139,20 +178,35 @@ def getListOfHDFSFiles(file_path):
             files.append(split[1])
     return files
 
-def getListOfFiles(filelist, selection, manager_path="", analysis=''):
+# TODO: Would be good to switch the order of the last two arguments
+# completely deprecate manager_path without breaking things
+def getListOfFiles(filelist, selection, manager_path="", analysis=""):
     if manager_path is "":
         manager_path = getManagerPath()
-    
-    data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
-    group_path = "%s/AnalysisDatasetManager/PlotGroups" % manager_path
+    data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
     data_info = UserInput.readAllInfo("/".join([data_path, "data/*"]))
     mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
-    valid_names = data_info.keys() + mc_info.keys()
-    group_names = UserInput.readAllInfo("%s/%s.py" %(group_path, analysis)) if analysis else dict()
+    analysis_info = UserInput.readInfo("/".join([data_path, analysis, selection])) \
+        if analysis != "" else []
+    valid_names = (data_info.keys() + mc_info.keys()) if not analysis_info else analysis_info.keys()
     names = []
     for name in filelist:
         if ".root" in name:
             names.append(name)
+        # Allow negative contributions
+        elif name[0] == "-" :
+            names.append(name)
+        elif "WZxsec2016" in name:
+            dataset_file = manager_path + \
+                "%s/FileInfo/WZxsec2016/%s.json" % (getManagerPath(), selection)
+            allnames = json.load(open(dataset_file)).keys()
+            if "nodata" in name:
+                nodata = [x for x in allnames if "data" not in x]
+                names += nodata
+            elif "data" in name:
+                names += [x for x in allnames if "data" in x]
+            else:
+                names += allnames
         elif "*" in name:
             names += fnmatch.filter(valid_names, name)
         elif name in group_names:
@@ -160,16 +214,19 @@ def getListOfFiles(filelist, selection, manager_path="", analysis=''):
         else:
             if name.split("__")[0] not in valid_names:
                 print "%s is not a valid name" % name
-                print "Valid names are", valid_names
+                print "Valid names must be defined in AnalysisDatasetManager/FileInfo/(data/montecarlo)*"
                 continue
             names += [name]
     return [str(i) for i in names]
 
 def getXrdRedirector():
-    usbased = ["hep.wisc.edu"]
-    if any(i in os.environ["HOSTNAME"] for i in usbased):
-        return 'cmsxrootd.fnal.gov'
-    return 'cms-xrd-global.cern.ch'
+    usbased = ["wisc.edu"]
+    usredir = 'cmsxrootd.fnal.gov'
+    globalredir = 'cms-xrd-global.cern.ch'
+    # Cluster machines may not have this env variable
+    if any(i in socket.gethostname() for i in usbased):
+        return usredir
+    return globalredir
 
 def fillTemplatedFile(template_file_name, out_file_name, template_dict):
     with open(template_file_name, "r") as templateFile:
@@ -177,21 +234,40 @@ def fillTemplatedFile(template_file_name, out_file_name, template_dict):
         result = source.substitute(template_dict)
     with open(out_file_name, "w") as outFile:
         outFile.write(result)
-def getListOfFilesWithXSec(filelist, manager_path=""):
+
+def getListOfFilesWithXSec(filelist, manager_path="", selection="ntuples"):
     if manager_path is "":
         manager_path = getManagerPath()
-    data_path = "%s/AnalysisDatasetManager/FileInfo" % manager_path
-    files = getListOfFiles(filelist, "ntuples", manager_path)
+    data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
+    files = getListOfFiles(filelist, selection, manager_path)
     mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
     info = {}
     for file_name in files:
-        if "data" in file_name:
+        if "data" in file_name.lower() or "nonprompt" in file_name.lower():
             info.update({file_name : 1})
         else:
-            file_info = mc_info[file_name.split("__")[0]]
+            file_info = mc_info[file_name.split("__")[0].replace("-", "")]
             kfac = file_info["kfactor"] if "kfactor" in file_info.keys() else 1
+            # Intended to use for, e.g., nonprompt
+            if file_name[0] == "-":
+                kfac *= -1
             info.update({file_name : file_info["cross_section"]*kfac})
     return info
+
+def getListOfFilesWithDASPath(filelist, analysis, selection, manager_path=""):
+    if manager_path is "":
+        manager_path = getManagerPath()
+    data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
+    files = getListOfFiles(filelist, selection, manager_path, analysis)
+    selection_info = UserInput.readInfo("/".join([data_path, analysis, selection]))
+    info = {}
+    for file_name in files:
+        if "DAS" not in selection_info[file_name].keys():
+            print "ERROR: DAS path not defined for file %s in analysis %s/%s" % (file_name, analysis, selection)
+            continue
+        info.update({file_name : selection_info[file_name]["DAS"]})
+    return info
+
 def getPreviousStep(selection, analysis):
     selection_map = {}
     if analysis == "WZxsec2016":
@@ -234,7 +310,7 @@ def getConfigFileName(config_file_name):
     for extension in ["json", "py"]:
         if os.path.isfile(".".join([config_file_name, extension])):
             return ".".join([config_file_name, extension])
-    raise IOError("Invalid configuration file. Tried to read %s which does not exist" % \
+    raise ValueError("Invalid configuration file. Tried to read %s which does not exist" % \
             config_file_name)
 
 def getInputFilesPath(sample_name, selection, analysis, manager_path=""):
@@ -243,8 +319,7 @@ def getInputFilesPath(sample_name, selection, analysis, manager_path=""):
     if ".root" in sample_name:
         print "INFO: using simple file %s" % sample_name
         return sample_name
-    # could this be where the extra / is ? took the / from between %s ADM
-    data_path = "%sAnalysisDatasetManager/FileInfo" % manager_path
+    data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
     input_file_base_name = "/".join([data_path, analysis, selection])
     input_file_name = getConfigFileName(input_file_base_name)
     input_files = UserInput.readInfo(input_file_name)

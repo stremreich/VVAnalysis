@@ -36,11 +36,13 @@ void SelectorBase::Init(TTree *tree)
 	if (ntupleType != nullptr) {
 	    std::string ntupleName = ntupleType->GetTitle();
 	    if (ntupleName == "NanoAOD")
-		ntupleType_ = NanoAOD;
+		    ntupleType_ = NanoAOD;
 	    else if (ntupleName  == "UWVV")
 		ntupleType_ = UWVV;
+	    else if (ntupleName  == "Bacon")
+		ntupleType_ = Bacon;
 	    else
-		throw std::invalid_argument("Unsupported ntuple type!");
+		    throw std::invalid_argument("Unsupported ntuple type!");
 	}
 	else {
 	    std::cerr << "INFO: Assuming NanoAOD ntuples" << std::endl;
@@ -81,10 +83,8 @@ void SelectorBase::Init(TTree *tree)
     if (name_.find("data") == std::string::npos){
         isMC_ = true;
     }
-    if (doSystematics_ && isMC_) // isNonpromptEstimate?
+    if (doSystematics_ && isMC_ && !isNonprompt_)
         variations_.insert(systematics_.begin(), systematics_.end());
-    
-    currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(name_.c_str()));
 
     if (channelMap_.find(channelName_) != channelMap_.end())
         channel_ = channelMap_[channelName_];
@@ -101,21 +101,46 @@ void SelectorBase::Init(TTree *tree)
     TNamed* isSlaveClass = (TNamed *) GetInputList()->FindObject("isSlaveClass");
     if(isSlaveClass != nullptr) return;
     
-    if ( currentHistDir_ == nullptr ) {
-	currentHistDir_ = new TList();
-	currentHistDir_->SetName(name_.c_str());
-	fOutput->Add(currentHistDir_);
-	// Watch for something that I hope never happens,
-	size_t existingObjectPtrsSize = allObjects_.size();
-	SetupNewDirectory();
-	if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
-	    std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
-	}
-    }
-    
-    UpdateDirectory();
-
+    makeOutputDirs();
     SetBranches();
+}
+
+void SelectorBase::addSubprocesses(std::vector<std::string> processes) {
+    subprocesses_ = processes;
+}
+
+void SelectorBase::setSubprocesses(std::string process) {
+    currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(process.c_str()));
+    if (currentHistDir_ == nullptr) {
+        currentHistDir_ = new TList();
+        currentHistDir_->SetName(process.c_str());
+        fOutput->Add(currentHistDir_);
+    }
+        //throw std::invalid_argument(process + " is not a valid subprocess for selector!");
+}
+
+void SelectorBase::makeOutputDirs() {
+    std::vector<std::string> allProcesses = {name_};
+    allProcesses.insert(allProcesses.begin(), subprocesses_.begin(), subprocesses_.end());
+    
+    for (auto& name : allProcesses) { 
+        currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(name.c_str()));
+        
+        if ( currentHistDir_ == nullptr ) {
+            currentHistDir_ = new TList();
+            currentHistDir_->SetName(name.c_str());
+            fOutput->Add(currentHistDir_);
+            if (name == name_)
+                SetupNewDirectory();
+        }
+    }
+    //TODO: Determine why this fails and if it's really needed
+    //size_t existingObjectPtrsSize = allObjects_.size();
+    // Watch for something that I hope never happens,
+    //if ( existingObjectPtrsSize > 0 && allObjects_.size() != existingObjectPtrsSize ) {
+    //    throw std::invalid_argument(Form("SelectorBase: Size of allObjects has changed!: %lu to %lu", existingObjectPtrsSize, allObjects_.size()));
+    //}
+    //UpdateDirectory();
 }
 
 void SelectorBase::SetScaleFactors() {
@@ -127,6 +152,11 @@ void SelectorBase::SetBranches() {
         SetBranchesUWVV();
     else if (ntupleType_ == NanoAOD)
         SetBranchesNanoAOD();
+    else if (ntupleType_ == Bacon)
+        SetBranchesBacon();
+    else 
+        throw std::invalid_argument("Undefined ntuple type!");
+        
 }
 
 void SelectorBase::LoadBranches(Long64_t entry, std::pair<Systematic, std::string> variation) {
@@ -135,6 +165,8 @@ void SelectorBase::LoadBranches(Long64_t entry, std::pair<Systematic, std::strin
     }
     else if (ntupleType_ == NanoAOD)
         LoadBranchesNanoAOD(entry, variation);
+    else if (ntupleType_ == Bacon)
+        LoadBranchesBacon(entry, variation);
 }
 
 Bool_t SelectorBase::Process(Long64_t entry)
@@ -178,37 +210,29 @@ void SelectorBase::UpdateDirectory()
   }
 }
 
+template<typename T>
+void SelectorBase::InitializeHistMap(std::vector<std::string>& labels, std::map<std::string, T*>& histMap) {
+    for (auto& label : labels) {
+        if (channel_ != Inclusive) {
+            auto histName = getHistName(label, "", channelName_);
+            histMap[histName] = {};
+        }
+        else {
+            for (auto& chan : allChannels_) {
+                auto histName = getHistName(label, "", chan);
+                histMap[histName] = {};
+            }
+        }
+    }
+}
+
 void SelectorBase::InitializeHistogramsFromConfig() {
     TList* histInfo = (TList *) GetInputList()->FindObject("histinfo");
     if (histInfo == nullptr ) 
         throw std::domain_error("Can't initialize histograms without passing histogram information to TSelector");
 
-    for (auto& label : hists1D_) {
-        if (channel_ != Inclusive) {
-            auto histName = getHistName(label, "", channelName_);
-            histMap1D_[histName] = {};
-        }
-        else {
-            for (auto& chan : allChannels_) {
-                auto histName = getHistName(label, "", chan);
-                histMap1D_[histName] = {};
-            }
-        }
-    }
-
-    for (auto& label : hists2D_) {
-      if (channel_ != Inclusive) {
-	auto histName = getHistName(label, "", channelName_);
-	histMap2D_[histName] = {};
-      }
-      else {
-	for (auto& chan : allChannels_) {
-	  auto histName = getHistName(label, "", chan);
-	  histMap2D_[histName] = {};
-	}
-      }
-    }
-    
+    InitializeHistMap(hists1D_,histMap1D_);
+    InitializeHistMap(weighthists1D_, weighthistMap1D_);
     for (auto && entry : *histInfo) {  
         TNamed* currentHistInfo = dynamic_cast<TNamed*>(entry);
         std::string name = currentHistInfo->GetName();
@@ -229,6 +253,21 @@ void SelectorBase::InitializeHistogramsFromConfig() {
 		std::cerr << "Skipping invalid histogram " << name << std::endl;
 	}
     }
+
+    for (auto& subprocess : subprocesses_) {
+        setSubprocesses(subprocess);
+        auto& subprocessMap = subprocessHistMaps1D_[subprocess];
+        subprocessMap = {};
+        for (auto& hist : histMap1D_) {
+            subprocessMap[hist.first] = {};
+            if (hist.second == nullptr)
+                continue;
+            AddObject<TH1D>(subprocessMap[hist.first], const_cast<TH1D&>(*hist.second));
+            //subprocessWeightHistMaps1D_[subporcess] = weighthistMap1D_;
+        }
+    }
+
+    currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(name_.c_str()));
 }
 
 void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string channel, std::vector<std::string> histData) {
@@ -247,24 +286,25 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
 
     if (histData.size() == 4) {
         AddObject<TH1D>(histMap1D_[histName], histName.c_str(), histData[0].c_str(),nbins, xmin, xmax);
-        if (doSystematics_ && std::find(systHists_.begin(), systHists_.end(), histName) != systHists_.end()) {
+        if (doSystematics_ && !isNonprompt_ && std::find(systHists_.begin(), systHists_.end(), name) != systHists_.end()) {
             for (auto& syst : systematics_) {
                 std::string syst_histName = getHistName(name, syst.second, channel);
+                std::cout << "Adding syst hist " << syst_histName << std::endl;
                 histMap1D_[syst_histName] = {};
                 AddObject<TH1D>(histMap1D_[syst_histName], syst_histName.c_str(), 
                     histData[0].c_str(),nbins, xmin, xmax);
                 // TODO: Cleaner way to determine if you want to store systematics for weighted entries
-                //if (isaQGC_ && doaQGC_ && (weighthists_.find(name) != weighthists_.end())) { 
+                //if (isaQGC_ && doaQGC_ && (weighthistMap1D_.find(name) != weighthistMap1D_.end())) { 
                 //    std::string weightsyst_histName = name+"_lheWeights_"+syst.second;
-                //    AddObject<TH2D>(weighthists_[syst_histName], 
+                //    AddObject<TH2D>(weighthistMap1D_[syst_histName], 
                 //        (weightsyst_histName+"_"+channel).c_str(), histData[0].c_str(),
                 //        nbins, xmin, xmax, 1000, 0, 1000);
                 //}
             }
         }
         // Weight hists must be subset of 1D hists!
-        if (isMC_ && (weighthists_.find(histName) != weighthists_.end())) { 
-            AddObject<TH2D>(weighthists_[histName], 
+        if (isMC_ && !isNonprompt_ && (weighthistMap1D_.find(histName) != weighthistMap1D_.end())) { 
+            AddObject<TH2D>(weighthistMap1D_[histName], 
                 (name+"_lheWeights_"+channel).c_str(), histData[0].c_str(),
                 nbins, xmin, xmax, 1000, 0, 1000);
         }
@@ -284,8 +324,8 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
             }
         }
         // 3D weight hists must be subset of 2D hists!
-        if (isMC_ && (weighthists2D_.find(histName) != weighthists2D_.end())) { 
-            AddObject<TH3D>(weighthists2D_[histName], 
+        if (isMC_ && (weighthistMap2D_.find(histName) != weighthistMap2D_.end())) { 
+            AddObject<TH3D>(weighthistMap2D_[histName], 
                 (name+"_lheWeights_"+channel).c_str(), histData[0].c_str(),
                 nbins, xmin, xmax, nbinsy, ymin, ymax, 1000, 0, 1000);
         }
@@ -311,8 +351,6 @@ std::vector<std::string> SelectorBase::ReadHistDataFromConfig(std::string histDa
 
 void SelectorBase::SetupNewDirectory()
 {
-    if (addSumweights_)
-        AddObject<TH1D>(sumWeightsHist_, "sumweights", "sumweights", 1, 0, 10);
 }
 
 std::string SelectorBase::getHistName(std::string histName, std::string variationName) {

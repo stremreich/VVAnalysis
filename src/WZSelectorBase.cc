@@ -83,6 +83,12 @@ void WZSelectorBase::SetBranchesUWVV() {
         b.SetBranch("e1IsCBVIDTight", l1IsTight);
         b.SetBranch("e2IsCBVIDTight", l2IsTight);
         b.SetBranch("e3IsCBVIDTight", l3IsTight);
+        b.SetBranch("e1PVDXY", l1PVDXY);
+        b.SetBranch("e2PVDXY", l2PVDXY);
+        b.SetBranch("e3PVDXY", l3PVDXY);
+        b.SetBranch("e1PVDZ", l1PVDZ);
+        b.SetBranch("e2PVDZ", l2PVDZ);
+        b.SetBranch("e3PVDZ", l3PVDZ);
         b.SetBranch("Mass", Mass);
         b.SetBranch("e1_e2_Mass", ZMass);
         b.SetBranch("e1Pt", l1Pt);
@@ -108,6 +114,12 @@ void WZSelectorBase::SetBranchesUWVV() {
         b.SetBranch("e1IsCBVIDTight", l1IsTight);
         b.SetBranch("e2IsCBVIDTight", l2IsTight);
         b.SetBranch("mIsWZTight", l3IsTight);
+        b.SetBranch("mPVDXY", l1PVDXY);
+        b.SetBranch("e2PVDXY", l2PVDXY);
+        b.SetBranch("e3PVDXY", l3PVDXY);
+        b.SetBranch("mPVDZ", l1PVDZ);
+        b.SetBranch("e2PVDZ", l2PVDZ);
+        b.SetBranch("e3PVDZ", l3PVDZ);
         b.SetBranch("e1_e2_Mass", ZMass);
         b.SetBranch("e1Pt", l1Pt);
         b.SetBranch("e2Pt", l2Pt);
@@ -132,6 +144,12 @@ void WZSelectorBase::SetBranchesUWVV() {
         b.SetBranch("eIsCBVIDTight", l3IsTight);
         b.SetBranch("m1IsWZTight", l1IsTight);
         b.SetBranch("m2IsWZTight", l2IsTight);
+        b.SetBranch("m1PVDXY", l1PVDXY);
+        b.SetBranch("m2PVDXY", l2PVDXY);
+        b.SetBranch("ePVDXY", l3PVDXY);
+        b.SetBranch("m1PVDZ", l1PVDZ);
+        b.SetBranch("m2PVDZ", l2PVDZ);
+        b.SetBranch("ePVDZ", l3PVDZ);
         b.SetBranch("m1_m2_Mass", ZMass);
         b.SetBranch("m1Pt", l1Pt);
         b.SetBranch("m2Pt", l2Pt);
@@ -156,6 +174,12 @@ void WZSelectorBase::SetBranchesUWVV() {
         b.SetBranch("m1IsWZTight", l1IsTight);
         b.SetBranch("m2IsWZTight", l2IsTight);
         b.SetBranch("m3IsWZTight", l3IsTight);
+        b.SetBranch("m1PVDXY", l1PVDXY);
+        b.SetBranch("m2PVDXY", l2PVDXY);
+        b.SetBranch("m3PVDXY", l3PVDXY);
+        b.SetBranch("m1PVDZ", l1PVDZ);
+        b.SetBranch("m2PVDZ", l2PVDZ);
+        b.SetBranch("m3PVDZ", l3PVDZ);
         b.SetBranch("m1_m2_Mass", ZMass);
         b.SetBranch("m1Pt", l1Pt);
         b.SetBranch("m2Pt", l2Pt);
@@ -207,9 +231,14 @@ void WZSelectorBase::SetBranchesNanoAOD() {
     b.SetBranch("Muon_phi", Muon_phi);
     b.SetBranch("Muon_mass", Muon_mass);
     b.SetBranch("Muon_pfRelIso04_all", Muon_pfRelIso04_all);
-    b.SetBranch("Electron_cutBased", Electron_cutBased);
+    //b.SetBranch("Electron_cutBased", Electron_cutBased);
+    b.SetBranch("Electron_cutBased_Fall17_V1", Electron_cutBased);
+    b.SetBranch("Electron_dxy", Electron_dxy);
+    b.SetBranch("Electron_dz", Electron_dz);
     b.SetBranch("Muon_tightId", Muon_tightId);
     b.SetBranch("Muon_tkIsoId", Muon_tkIsoId);
+    b.SetBranch("Muon_dxy", Muon_dxy);
+    b.SetBranch("Muon_dz", Muon_dz);
     b.SetBranch("MET_pt", MET);
     b.SetBranch("MET_phi", type1_pfMETPhi);
     b.SetBranch("Electron_charge", Electron_charge);
@@ -302,30 +331,58 @@ void WZSelectorBase::SetLeptonVarsNano() {
     l3Mass= l3.mass();
 
     if (channel_ == eee) {
-        l1IsTight = (Electron_cutBased[looseElecIndices.at(0)] == 4);
-        l2IsTight = (Electron_cutBased[looseElecIndices.at(1)] == 4);
-        l3IsTight = (Electron_cutBased[looseElecIndices.at(2)] == 4);
+        size_t ie = looseElecIndices.at(0);
+        l1IsTight = (Electron_cutBased[ie] == 4);
+        l1PVDXY = Electron_dxy[ie];
+        l1PVDZ = Electron_dz[ie];
+        ie = looseElecIndices.at(1);
+        l2IsTight = (Electron_cutBased[ie] == 4);
+        l2PVDXY = Electron_dxy[ie];
+        l2PVDZ = Electron_dz[ie];
+        ie = looseElecIndices.at(2);
+        l3IsTight = (Electron_cutBased[ie] == 4);
+        l3PVDXY = Electron_dxy[ie];
+        l3PVDZ = Electron_dz[ie];
     }
     else if (channel_ == eem) {
-        l1IsTight = (Electron_cutBased[looseElecIndices.at(0)] == 4);
-        l2IsTight = (Electron_cutBased[looseElecIndices.at(1)] == 4);
+        size_t ie = looseElecIndices.at(0);
+        l1IsTight = (Electron_cutBased[ie] == 4);
+        l1PVDXY = Electron_dxy[ie];
+        l1PVDZ = Electron_dz[ie];
+        ie = looseElecIndices.at(1);
+        l2IsTight = (Electron_cutBased[ie] == 4);
+        l2PVDXY = Electron_dxy[ie];
+        l2PVDZ = Electron_dz[ie];
         size_t imu = looseMuonIndices.at(0);
         l3IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
     }
-    else if (channel_ == eem) {
+    else if (channel_ == emm) {
         size_t imu = looseMuonIndices.at(0);
         l1IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
+        l1PVDXY = Muon_dxy[imu];
+        l1PVDZ = Muon_dz[imu];
         imu = looseMuonIndices.at(1);
         l2IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
-        l3IsTight = (Electron_cutBased[looseElecIndices.at(1)] == 4);
+        l2PVDXY = Muon_dxy[imu];
+        l2PVDZ = Muon_dz[imu];
+        size_t ie = looseElecIndices.at(0);
+        l3IsTight = (Electron_cutBased[ie] == 4);
+        l3PVDXY = Electron_dxy[ie];
+        l3PVDZ = Electron_dz[ie];
      }
      else if (channel_ == mmm) {
         size_t imu = looseMuonIndices.at(0);
         l1IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
+        l1PVDXY = Muon_dxy[imu];
+        l1PVDZ = Muon_dz[imu];
         imu = looseMuonIndices.at(1);
         l2IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
+        l2PVDXY = Muon_dxy[imu];
+        l2PVDZ = Muon_dz[imu];
         imu = looseMuonIndices.at(2);
         l3IsTight = (Muon_tightId[imu] && Muon_pfRelIso04_all[imu] < 0.15);
+        l3PVDXY = Muon_dxy[imu];
+        l3PVDZ = Muon_dz[imu];
      }
 }
 
@@ -498,11 +555,25 @@ void WZSelectorBase::SetMasses() {
 // Meant to be a wrapper for the tight ID just in case it changes
 // To be a function of multiple variables
 bool WZSelectorBase::zlep1IsTight() {
-    return l1IsTight; 
+    bool l1IsE = (channel_ == eem || channel_ == eee);
+    if (l1IsE) { 
+        // TODO: This should really be the supercluster eta, I think
+        bool isEB = std::abs(l1Eta) > 1.479;
+        return l1IsTight && (
+            std::abs(l1PVDXY) < (isEB ? 0.05 : 0.1) && std::abs(l1PVDZ) < (isEB ? 0.1 : 0.2));
+    }
+    return (l1IsTight && std::abs(l1PVDXY) < 0.02 && std::abs(l1PVDZ) < 0.1); 
 }
 
 bool WZSelectorBase::zlep2IsTight() {
-    return l2IsTight; 
+    bool l2IsE = (channel_ == eem || channel_ == eee);
+    if (l2IsE) { 
+        // TODO: This should really be the supercluster eta, I think
+        bool isEB = std::abs(l2Eta) > 1.479;
+        return l2IsTight && (
+            std::abs(l2PVDXY) < (isEB ? 0.05 : 0.1) && std::abs(l2PVDZ) < (isEB ? 0.1 : 0.2));
+    }
+    return (l2IsTight && std::abs(l2PVDXY) < 0.02 && std::abs(l2PVDZ) < 0.1); 
 }
 
 bool WZSelectorBase::tightZLeptons() {
@@ -510,7 +581,14 @@ bool WZSelectorBase::tightZLeptons() {
 }
 
 bool WZSelectorBase::lepton3IsTight() {
-    return l3IsTight;
+    bool l3IsE = (channel_ == emm || channel_ == eee);
+    if (l3IsE) { 
+        // TODO: This should really be the supercluster eta, I think
+        bool isEB = std::abs(l3Eta) > 1.479;
+        return l3IsTight && (
+            std::abs(l3PVDXY) < (isEB ? 0.05 : 0.1) && std::abs(l3PVDZ) < (isEB ? 0.1 : 0.2));
+    }
+    return (l3IsTight && std::abs(l3PVDXY) < 0.02 && std::abs(l3PVDZ) < 0.1); 
 }
 
 bool WZSelectorBase::IsGenMatched3l() {

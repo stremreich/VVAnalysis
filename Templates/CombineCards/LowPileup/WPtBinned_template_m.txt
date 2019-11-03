@@ -1,0 +1,34 @@
+imax 1  number of channels
+jmax 13  number of processes - 1
+kmax ${nuisances} number of nuisance parameters (sources of systematical uncertainties)
+------------
+
+shapes Wmv_pT0to10  * ${output_file} wmv_jetbinned_nlo_pt0to10/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo_pt0to10/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes Wmv_pT10to20 * ${output_file} wmv_jetbinned_nlo_pt10to20/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo_pt10to20/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes Wmv_pT20to30 * ${output_file} wmv_jetbinned_nlo_pt20to30/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo_pt20to30/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes Wmv_pT30to40 * ${output_file} wmv_jetbinned_nlo_pt30to40/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo_pt30to40/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes Wmv_pT40to50 * ${output_file} wmv_jetbinned_nlo_pt40to50/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo_pt40to50/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes Wmv_pT50to60 * ${output_file} wmv_jetbinned_nlo_pt50to60/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo_pt50to60/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes Wmv_pT60to70 * ${output_file} wmv_jetbinned_nlo_pt60to70/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo_pt60to70/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes Wmv_pT70to80 * ${output_file} wmv_jetbinned_nlo_pt70to80/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo_pt70to80/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes Wmv_pT80to90 * ${output_file} wmv_jetbinned_nlo_pt80to90/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo_pt80to90/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes Wmv_pT90to100 * ${output_file} wmv_jetbinned_nlo_pt90to100/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo_pt90to100/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes Wmv_pT100    * ${output_file} wmv_jetbinned_nlo_pt100/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo_pt100/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes ewk          * ${output_file} ewk/${fit_variable}_$$CHANNEL ewk/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes top          * ${output_file} top/${fit_variable}_$$CHANNEL top/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes nonprompt    * ${output_file} nonprompt/${fit_variable}_Fakes_$$CHANNEL  nonprompt/${fit_variable}_Fakes_$$SYSTEMATIC_$$CHANNEL
+shapes data_obs     * ${output_file} data/${fit_variable}_$$CHANNEL 
+
+bin           m
+observation   -1
+
+------------
+bin                             m                   m               m               m                                       m                                   m                                       m                               m                                   m                                       m                                       m                                       m                                       m                                       m
+process                         nonprompt           ewk             top             Wmv_pT0to10                             Wmv_pT10to20                        Wmv_pT20to30                            Wmv_pT30to40                    Wmv_pT40to50                        Wmv_pT50to60                            Wmv_pT60to70                            Wmv_pT70to80                            Wmv_pT80to90                            Wmv_pT90to100                           Wmv_pT100                              
+process                         -1                  1               2               -2                                      -3                                  -4                                      -5                              -6                                  -7                                      -8                                      -9                                      -10                                     -11                                     -11                                        
+rate                            ${nonprompt}        ${ewk}          ${top}          ${wmv_jetbinned_nlo_pt0to10}            ${wmv_jetbinned_nlo_pt10to20}       ${wmv_jetbinned_nlo_pt20to30}     ${wmv_jetbinned_nlo_pt30to40}         ${wmv_jetbinned_nlo_pt40to50}       ${wmv_jetbinned_nlo_pt50to60}           ${wmv_jetbinned_nlo_pt60to70}           ${wmv_jetbinned_nlo_pt70to80}           ${wmv_jetbinned_nlo_pt80to90}           ${wmv_jetbinned_nlo_pt90to100}          ${wmv_jetbinned_nlo_pt100}       
+------------                                                                                                                                                                                                                                                                                                       
+lumi2016_13TeV          lnN     -                   1.017           1.017           1.017                                   1.017                               1.017                                   1.017                           1.017                               1.017                                   1.017                                   1.017                                   1.017                                   1.017                                   1.017
+CMS_norm_nonprompt      lnN     1.2                 -               -               -                                       -                                   -                                       -                               -                                   -                                       -                                       -                                       -                                       -                                       - 
+                                                                          
+
