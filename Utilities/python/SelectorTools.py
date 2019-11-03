@@ -11,9 +11,6 @@ import logging
 
 class SelectorDriver(object):
     def __init__(self, analysis, selection, input_tier, year):
-<<<<<<< HEAD
-        logging.basicConfig(level=logging.INFO)
-        
         selector_map = {
             "WZxsec2016" : "WZSelector",
             "Zstudy" : "ZSelector",

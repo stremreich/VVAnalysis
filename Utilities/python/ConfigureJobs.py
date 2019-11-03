@@ -184,11 +184,13 @@ def getListOfFiles(filelist, selection, manager_path="", analysis=""):
     if manager_path is "":
         manager_path = getManagerPath()
     data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
+    group_path = "%s/AnalysisDatasetManager/PlotGroups" % manager_path
     data_info = UserInput.readAllInfo("/".join([data_path, "data/*"]))
     mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
     analysis_info = UserInput.readInfo("/".join([data_path, analysis, selection])) \
         if analysis != "" else []
     valid_names = (data_info.keys() + mc_info.keys()) if not analysis_info else analysis_info.keys()
+    group_names = UserInput.readAllInfo("%s/%s.py" %(group_path, analysis)) if analysis else dict()
     names = []
     for name in filelist:
         if ".root" in name:
