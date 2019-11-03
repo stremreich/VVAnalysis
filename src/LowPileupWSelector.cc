@@ -49,7 +49,8 @@ void LowPileupWSelector::SetBranchesBacon() {
 void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) { 
     lep_b->GetEntry(entry);
     fReader.SetLocalEntry(entry);
-    LowPileupSelector::LoadBranchesBacon(entry, variation);
+    if (variation.first == Central)
+        LowPileupSelector::LoadBranchesBacon(entry, variation);
     if (*charge > 0) {
         channel_ = mp;
         channelName_ = "mp";

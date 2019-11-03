@@ -174,7 +174,6 @@ class CombineCardTools(object):
         group = HistTools.makeCompositeHists(self.inputFile, processName, 
                     {proc : self.crossSectionMap[proc] for proc in self.processes[processName]}, 
                     self.lumi, plotsToRead, rebin=self.rebin, overflow=False)
-        for i in group: print i
 
         fitVariable = self.getFitVariable(processName)
         #TODO:Make optional
@@ -186,7 +185,6 @@ class CombineCardTools(object):
                 raise RuntimeError("Failed to produce hist %s for process %s" % (histName, processName))
             #TODO: Make optional
             if "data" not in processName.lower():
-                print processName
                 HistTools.removeZeros(hist)
             HistTools.addOverflow(hist)
             processedHists.append(histName)
@@ -207,10 +205,8 @@ class CombineCardTools(object):
                     entries=theoryVars['scale']['entries'], 
                     central=(theoryVars['scale']['central'] if 'scale' in theoryVars else -1))
                 pdfFunction = getattr(HistTools, "get%sPDFVariationHists" % ("Hessian" if "hessian" in theoryVars['pdf']['combine'] else "SymmMC"))
-                print pdfFunction
                 pdfHists = pdfFunction(weightHist, theoryVars['pdf']['entries'], processName, 
                         self.rebin, central=(theoryVars['pdf']['central'] if 'pdf' in theoryVars else -1))
-                print pdfHists
                 if expandedTheory:
                     expandedScaleHists = HistTools.getExpandedScaleHists(weightHist, processName, self.rebin, 
                         entries=theoryVars['scale']['entries'], 

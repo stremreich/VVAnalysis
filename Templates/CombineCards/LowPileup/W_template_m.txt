@@ -20,4 +20,9 @@ rate                            ${nonprompt}        ${ewk}          ${top}      
 ------------                                                                                                       
 lumi2016_13TeV          lnN     -                   1.017           1.017           1.017                          
 CMS_norm_nonprompt      lnN     1.2                 -               -               -                              
+CMS_eff_MCsubt_m        shape   -                   1               1               1
+CMS_modeling_fsr        shape   -                   1               1               1
+CMS_eff_stat_m          shape   -                   1               1               1
+norm_top                lnN     -                   -               1.1             -
+norm_ewk                lnN     -                   1.1             -               -
                                                                           

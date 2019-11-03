@@ -52,7 +52,7 @@ cardtool.setFitVariable(fitvar)
 cardtool.setProcesses(plotGroupsMap)
 cardtool.setChannels(channels)
 cardtool.setCrosSectionMap(xsecs)
-cardtool.setVariations(["CMS_eff_MCsubt_m", "CMS_modeling_fsr", "CMS_eff_statm",],
+cardtool.setVariations(["CMS_eff_MCsubt_m", "CMS_modeling_fsr", "CMS_eff_stat_m",],
                 exclude=["nonprompt", "data"])
 folder_name = "_".join([fitvar,args.append]) if args.append != "" else fitvar
 cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/LowPileup/%s" % folder_name)
@@ -79,7 +79,7 @@ for process in plot_groups:
     cardtool.writeProcessHistsToOutput(process)
 cardtool.writeMetaInfo()
 
-nuissance_map = {"e" : 2, "m" : 2}
+nuissance_map = {"e" : 7, "m" : 7}
 template_name = "W" if args.unbinnedSignal else "WPtBinned"
 for chan in ["m"]:
     cardtool.setTemplateFileName("Templates/CombineCards/LowPileup/W_template_{channel}.txt")
