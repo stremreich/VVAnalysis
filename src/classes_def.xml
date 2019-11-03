@@ -19,5 +19,4 @@
   <class name="disambiguateFinalStates"/>
   <class name="disambiguateFinalStatesZZ"/>
   <class name="Efficiency"/>
-  <class name="ThreeLepSelector"/>
 </lcgdict>

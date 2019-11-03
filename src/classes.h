@@ -42,6 +42,5 @@ namespace{
     disambiguateFinalStates pDisambiguator;
     disambiguateFinalStates pDisambiguatorZZ;
     Efficiency pEfficiency;
-    ThreeLepSelector pThreeLepSelector;
   }
 }
