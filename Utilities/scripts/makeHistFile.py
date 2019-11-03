@@ -8,10 +8,7 @@ from python import ConfigureJobs
 from python import HistTools
 import os
 import logging
-import datetime
 import sys
-
-logging.basicConfig(level=logging.DEBUG)
 
 def getComLineArgs():
     parser = UserInput.getDefaultParser()
@@ -23,6 +20,8 @@ def getComLineArgs():
         default="test.root", help="Output file name")
     parser.add_argument("--test", action='store_true',
         help="Run test job (no background estimate)")
+    parser.add_argument("--debug", action='store_true',
+        help="Print verbose info")
     ntuple_group = parser.add_mutually_exclusive_group(required=False)
     ntuple_group.add_argument("--uwvv", action='store_true',
         help="Use UWVV format ntuples in stead of NanoAOD")
@@ -52,18 +51,6 @@ def getComLineArgs():
                         "as defined in AnalysisDatasetManager, separated "
                         "by commas")
     return vars(parser.parse_args())
-
-def addMetaInfo(fOut):
-    metaInfo = fOut.mkdir("MetaInfo")
-    metaInfo.cd()
-    time = ROOT.TNamed("datetime", str(datetime.datetime.now()))
-    command = ROOT.TNamed("command", ' '.join(sys.argv))
-    githash = ROOT.TNamed("githash", subprocess.check_output(['git', 'log', '-1', '--format="%H"']))
-    gitdiff = ROOT.TNamed("gitdiff", subprocess.check_output(['git', 'diff',]))
-    time.Write()
-    command.Write()
-    githash.Write()
-    gitdiff.Write()
 
 def makeHistFile(args):
     ROOT.gROOT.SetBatch(True)
@@ -155,17 +142,19 @@ def makeHistFile(args):
         selector.setOutputfile(output_name)
         bkgd = selector.applySelector()
         combinedNames.append(output_name)
+    selector.outputFile().Close()
 
     if len(combinedNames) > 1:
         rval = subprocess.call(["hadd", "-f", tmpFileName] + combinedNames)
         if rval == 0:
             map(os.remove, combinedNames)
-
-    addMetaInfo(fOut)
-    fOut.Close()
+    fOut = ROOT.TFile(tmpFileName, "update")
+    OutputTools.addMetaInfo(fOut)
 
 def main():
     args = getComLineArgs()
+    logging.basicConfig(level=(logging.DEBUG if args['debug'] else logging.WARNING))
+
     makeHistFile(args)
     exit(0)
 

@@ -251,6 +251,9 @@ class CombineCardTools(object):
         OutputTools.writeOutputListItem(processHists, self.outputFile)
         processHists.Delete()
         
+    def writeMetaInfo(self):
+        OutputTools.addMetaInfo(self.outputFile)
+
     def writeCards(self, chan, nuisances, year="", extraArgs={}):
         chan_dict = self.yields[chan].copy()
         chan_dict.update(extraArgs)

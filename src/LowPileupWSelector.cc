@@ -4,8 +4,37 @@
 
 void LowPileupWSelector::Init(TTree *tree)
 {
+    doSystematics_ = true;
     allChannels_ = {"mp", "mn"};
     hists1D_ = {"CutFlow", "mW", "yW", "ptW", "ptl", "etal", "pfMet",};
+    systHists_ = {"ptW", "ptl", "pfMet"};
+    systematics_ = {
+        {muonEfficiencyMCSubtractUp, "CMS_eff_MCsubt_mUp"},
+        {muonEfficiencyMCSubtractDown, "CMS_eff_MCsubt_mDown"},
+        {modelingFsrUp, "CMS_modeling_fsrUp"},
+        {modelingFsrDown, "CMS_modeling_fsrDown"},
+        {muonEfficiencyBackgroundUp, "CMS_eff_background_mUp"},
+        {muonEfficiencyBackgroundDown, "CMS_eff_background_mDown"},
+        {muonEfficiencyTagPtUp, "CMS_eff_tagPt_mUp"},
+        {muonEfficiencyTagPtDown, "CMS_eff_tagPt_mDown"},
+        {muonEfficiencyStatUp, "CMS_eff_stat_mUp"},
+        {muonEfficiencyStatDown, "CMS_eff_stat_mDown"},
+    };
+    
+    //enum{mc=1,fsr,bkg,tagpt,effstat,pfireu,pfired};
+    systematicWeightMap_ = {
+        {Central, 0},
+        {muonEfficiencyMCSubtractUp, 1},
+        {muonEfficiencyMCSubtractDown, 1},
+        {modelingFsrUp, 2},
+        {modelingFsrDown, 2},
+        {muonEfficiencyBackgroundUp, 3},
+        {muonEfficiencyBackgroundDown, 3},
+        {muonEfficiencyTagPtUp, 4},
+        {muonEfficiencyTagPtDown, 4},
+        {muonEfficiencyStatUp, 5},
+        {muonEfficiencyStatDown, 5},
+    };
 
     fReader.SetTree(tree);
     LowPileupSelector::Init(tree);
@@ -21,8 +50,6 @@ void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) {
     lep_b->GetEntry(entry);
     fReader.SetLocalEntry(entry);
     LowPileupSelector::LoadBranchesBacon(entry, variation);
-    if (isMC_)
-        weight = evtWeight[0];
     if (*charge > 0) {
         channel_ = mp;
         channelName_ = "mp";
@@ -30,6 +57,22 @@ void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) {
     else {
         channel_ = mn;
         channelName_ = "mn";
+    }
+    if (isMC_) {
+        float cenwgt = evtWeight[systematicWeightMap_[Central]];
+        float wgt = evtWeight[systematicWeightMap_[variation.first]];
+        if (variation.first == Central)
+            weight = cenwgt;
+        else if (variation.first == muonEfficiencyMCSubtractUp ||
+                    variation.first == muonEfficiencyBackgroundUp ||
+                    variation.first == muonEfficiencyTagPtUp ||
+                    variation.first == muonEfficiencyStatUp ||
+                    variation.first == modelingFsrUp) {
+            weight = wgt > cenwgt ? wgt : cenwgt + std::abs(cenwgt-wgt);
+        }
+        else {
+            weight = wgt < cenwgt ? wgt : cenwgt - std::abs(cenwgt-wgt);
+        }
     }
 }
 

@@ -15,6 +15,8 @@ parser.add_argument("-u", '--unbinnedSignal', action='store_true',
     help="Just use one signalStrength")
 parser.add_argument("-a", "--append", type=str, default="",
     help="Append to output folder name")
+parser.add_argument("-f", "--input_file", type=str, required=True,
+    help="Input hist file")
 parser.add_argument("-r", "--rebin", 
                     type=lambda x : [] if "," not in x else [float(i.strip()) for i in x.split(',')],
                     default=[i for i in range(0, 100, 10)], help="Rebin array: "
@@ -50,7 +52,8 @@ cardtool.setFitVariable(fitvar)
 cardtool.setProcesses(plotGroupsMap)
 cardtool.setChannels(channels)
 cardtool.setCrosSectionMap(xsecs)
-cardtool.setVariations([])
+cardtool.setVariations(["CMS_eff_MCsubt_m", "CMS_modeling_fsr", "CMS_eff_statm",],
+                exclude=["nonprompt", "data"])
 folder_name = "_".join([fitvar,args.append]) if args.append != "" else fitvar
 cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/LowPileup/%s" % folder_name)
 cardtool.setFitVariableAppend("nonprompt", "Fakes")
@@ -58,9 +61,8 @@ cardtool.setFitVariableAppend("nonprompt", "Fakes")
 #cardtool.setLumi(35.9)
 cardtool.setLumi(0.199)
 #cardtool.setInputFile("/eos/user/k/kelong/HistFiles/WGen/combinedJetBinned.root")
-cardtool.setInputFile("/afs/cern.ch/user/k/kelong/work/WZAnalysis/CMSSW_10_6_0_patch1/src/Analysis/VVAnalysis/testW.root")
+cardtool.setInputFile(args.input_file)
 cardtool.setOutputFile("WGenCombineInput.root")
-#cardtool.setCombineChannels({"all" : channels, "m" : ["mp", "mn"]})
 cardtool.setCombineChannels({"all" : channels, "m" : ["mp", "mn"]})
 for process in plot_groups:
     #Turn this back on when the theory uncertainties are added
@@ -75,6 +77,7 @@ for process in plot_groups:
             cardtool.addTheoryVar(process, 'pdf_mc' if "cp5" not in process else "pdf_hessian", pdf_entries, central=0)
     cardtool.loadHistsForProcess(process)
     cardtool.writeProcessHistsToOutput(process)
+cardtool.writeMetaInfo()
 
 nuissance_map = {"e" : 2, "m" : 2}
 template_name = "W" if args.unbinnedSignal else "WPtBinned"

@@ -79,6 +79,11 @@ class SelectorBase : public TSelector {
         electronEfficiencyUp,      electronEfficiencyDown,
         electronScaleUp,           electronScaleDown,
         pileupUp,                  pileupDown,
+        muonEfficiencyMCSubtractUp, muonEfficiencyMCSubtractDown, 
+        modelingFsrUp,             modelingFsrDown, 
+        muonEfficiencyBackgroundUp, muonEfficiencyBackgroundDown, 
+        muonEfficiencyTagPtUp,     muonEfficiencyTagPtDown, 
+        muonEfficiencyStatUp,      muonEfficiencyStatDown, 
     }; 
 
      typedef std::map<std::string, TH1D*> HistMap1D;
@@ -150,6 +155,7 @@ class SelectorBase : public TSelector {
 
     std::vector<std::string> subprocesses_;
     bool doSystematics_;
+    bool isNonprompt_ = false;
     bool applyScaleFactors_;
     bool applyPrefiringCorr_;
     

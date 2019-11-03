@@ -83,7 +83,7 @@ void SelectorBase::Init(TTree *tree)
     if (name_.find("data") == std::string::npos){
         isMC_ = true;
     }
-    if (doSystematics_ && isMC_) // isNonpromptEstimate?
+    if (doSystematics_ && isMC_ && !isNonprompt_)
         variations_.insert(systematics_.begin(), systematics_.end());
 
     if (channelMap_.find(channelName_) != channelMap_.end())
@@ -282,9 +282,10 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
 
     if (histData.size() == 4) {
         AddObject<TH1D>(histMap1D_[histName], histName.c_str(), histData[0].c_str(),nbins, xmin, xmax);
-        if (doSystematics_ && std::find(systHists_.begin(), systHists_.end(), histName) != systHists_.end()) {
+        if (doSystematics_ && !isNonprompt_ && std::find(systHists_.begin(), systHists_.end(), name) != systHists_.end()) {
             for (auto& syst : systematics_) {
                 std::string syst_histName = getHistName(name, syst.second, channel);
+                std::cout << "Adding syst hist " << syst_histName << std::endl;
                 histMap1D_[syst_histName] = {};
                 AddObject<TH1D>(histMap1D_[syst_histName], syst_histName.c_str(), 
                     histData[0].c_str(),nbins, xmin, xmax);
@@ -298,7 +299,7 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
             }
         }
         // Weight hists must be subset of 1D hists!
-        if (isMC_ && (weighthistMap1D_.find(histName) != weighthistMap1D_.end())) { 
+        if (isMC_ && !isNonprompt_ && (weighthistMap1D_.find(histName) != weighthistMap1D_.end())) { 
             AddObject<TH2D>(weighthistMap1D_[histName], 
                 (name+"_lheWeights_"+channel).c_str(), histData[0].c_str(),
                 nbins, xmin, xmax, 1000, 0, 1000);

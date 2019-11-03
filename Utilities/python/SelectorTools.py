@@ -11,10 +11,6 @@ import logging
 
 class SelectorDriver(object):
     def __init__(self, analysis, selection, input_tier, year):
-        # TODO: Make this a configurable argument
-        #logging.basicConfig(level=logging.DEBUG)
-        logging.basicConfig(level=logging.WARNING)
-
         selector_map = {
             "WZxsec2016" : "WZSelector",
             "Zstudy" : "ZSelector",
@@ -53,7 +49,7 @@ class SelectorDriver(object):
         self.processDatasetHelper(args)
 
     def tempfileName(self, dataset):
-        return "temp_%s_%s" % (dataset, self.outfile_name)
+        return "temp_%s_%s" % (dataset, self.outfile_name.split("/")[-1])
 
     def setChannels(self, channels):
         self.channels = channels
@@ -285,7 +281,6 @@ class SelectorDriver(object):
             self.processFile(selector, filename, addSumweights, chan, i+1)
 
     def processFile(self, selector, filename, addSumweights, chan, filenum=1):
-        logging.debug("Processing file: %s" % filename)
         rtfile = ROOT.TFile.Open(filename)
         if not rtfile or not rtfile.IsOpen() or rtfile.IsZombie():
             raise IOError("Failed to open file %s!" % filename)

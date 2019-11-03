@@ -7,6 +7,7 @@ class LowPileupWBackgroundSelector : public LowPileupWSelector {
 public :
     LowPileupWBackgroundSelector(TTree * /*tree*/ =0) { }
     ~LowPileupWBackgroundSelector() { }
+    virtual void    Init(TTree *tree) override;
 
     ClassDefOverride(LowPileupWBackgroundSelector,0);
 

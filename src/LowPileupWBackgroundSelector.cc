@@ -2,6 +2,11 @@
 #include <TStyle.h>
 #include <regex>
 
+void LowPileupWBackgroundSelector::Init(TTree *tree) {
+    isNonprompt_ = true;
+    LowPileupWSelector::Init(tree);
+}
+
 void LowPileupWBackgroundSelector::FillHistograms(Long64_t entry, SystPair variation) { 
     if (*lepPfRelIso > 0.25 && *lepPfRelIso < 0.35)
         return;
