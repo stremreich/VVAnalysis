@@ -289,7 +289,6 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
         if (doSystematics_ && !isNonprompt_ && std::find(systHists_.begin(), systHists_.end(), name) != systHists_.end()) {
             for (auto& syst : systematics_) {
                 std::string syst_histName = getHistName(name, syst.second, channel);
-                std::cout << "Adding syst hist " << syst_histName << std::endl;
                 histMap1D_[syst_histName] = {};
                 AddObject<TH1D>(histMap1D_[syst_histName], syst_histName.c_str(), 
                     histData[0].c_str(),nbins, xmin, xmax);
