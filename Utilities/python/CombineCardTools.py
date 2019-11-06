@@ -250,7 +250,7 @@ class CombineCardTools(object):
     def writeMetaInfo(self):
         OutputTools.addMetaInfo(self.outputFile)
 
-    def writeCards(self, chan, nuisances, year="", extraArgs={}):
+    def writeCards(self, chan, nuisances, label="", outlabel="", extraArgs={}):
         chan_dict = self.yields[chan].copy()
         chan_dict.update(extraArgs)
         for key, value in extraArgs.iteritems():
@@ -259,10 +259,10 @@ class CombineCardTools(object):
         chan_dict["nuisances"] = nuisances
         chan_dict["fit_variable"] = self.fitVariable
         chan_dict["output_file"] = self.outputFile.GetName()
-        outputCard = self.templateName.split("/")[-1].format(channel=chan, year=year) 
-        outputCard = outputCard.replace("template", "")
+        outputCard = self.templateName.split("/")[-1].format(channel=chan, label=label) 
+        outputCard = outputCard.replace("template", outlabel)
         outputCard = outputCard.replace("__", "_")
-        ConfigureJobs.fillTemplatedFile(self.templateName.format(channel=chan, year=year),
+        ConfigureJobs.fillTemplatedFile(self.templateName.format(channel=chan, label=label),
             "/".join([self.outputFolder, outputCard]),
             chan_dict
         )

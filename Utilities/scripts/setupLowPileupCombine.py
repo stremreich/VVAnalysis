@@ -17,9 +17,12 @@ parser.add_argument("-a", "--append", type=str, default="",
     help="Append to output folder name")
 parser.add_argument("-f", "--input_file", type=str, required=True,
     help="Input hist file")
+parser.add_argument("-b", "--fitvars", 
+    type=lambda x: x.split(","), default=["ptW"],
+    help="Variable to use in the fit")
 parser.add_argument("-r", "--rebin", 
                     type=lambda x : [] if "," not in x else [float(i.strip()) for i in x.split(',')],
-                    default=[i for i in range(0, 100, 10)], help="Rebin array: "
+                    default=[i for i in range(0, 105, 5)], help="Rebin array: "
                     "values (bin edges) separated by commas.")
 args = parser.parse_args()
 
@@ -46,44 +49,43 @@ channels = ["mp", "mn"]
 if args.rebin:
     rebin = array.array('d', args.rebin)
     cardtool.setRebin(rebin)
-#fitvar = "ptW"
-fitvar = "pfMet"
-cardtool.setFitVariable(fitvar)
 cardtool.setProcesses(plotGroupsMap)
 cardtool.setChannels(channels)
 cardtool.setCrosSectionMap(xsecs)
-cardtool.setVariations(["CMS_eff_MCsubt_m", "CMS_modeling_fsr", "CMS_eff_stat_m",],
+cardtool.setVariations(["CMS_eff_MCsubt_m", "CMS_modeling_fsr", "CMS_eff_stat_m", 
+        "CMS_eff_background_m", "CMS_eff_tagPt_m",],
                 exclude=["nonprompt", "data"])
-folder_name = "_".join([fitvar,args.append]) if args.append != "" else fitvar
+folder_name = "_".join(args.fitvars + ([args.append] if args.append != "" else []))
 cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/LowPileup/%s" % folder_name)
+
 cardtool.setFitVariableAppend("nonprompt", "Fakes")
 
 #cardtool.setLumi(35.9)
 cardtool.setLumi(0.199)
-#cardtool.setInputFile("/eos/user/k/kelong/HistFiles/WGen/combinedJetBinned.root")
 cardtool.setInputFile(args.input_file)
-cardtool.setOutputFile("WGenCombineInput.root")
-cardtool.setCombineChannels({"all" : channels, "m" : ["mp", "mn"]})
-for process in plot_groups:
-    #Turn this back on when the theory uncertainties are added
-    if process not in ["nonprompt", "data"] and False:
-        cardtool.addTheoryVar(process, 'scale', range(1, 10), exclude=[6, 7], central=4)
-        if "cp5" not in process and args.mc2hes:
-            # Exclude alpha_s variations
-            pdf_entries = [5] + range(112, 172) 
-            cardtool.addTheoryVar(process, "pdf_hessian", pdf_entries, central=0)
-        else:
-            pdf_entries = [5] + (range(10, 110) if "cp5" not in process else range(10, 40))
-            cardtool.addTheoryVar(process, 'pdf_mc' if "cp5" not in process else "pdf_hessian", pdf_entries, central=0)
-    cardtool.loadHistsForProcess(process)
-    cardtool.writeProcessHistsToOutput(process)
-cardtool.writeMetaInfo()
+for fitvar in args.fitvars:
+    cardtool.setFitVariable(fitvar)
+    cardtool.setOutputFile("WLowPileup_%s_CombineInput.root" % fitvar)
+    cardtool.setCombineChannels({"all" : channels, "m" : ["mp", "mn"]})
+    for process in plot_groups:
+        #Turn this back on when the theory uncertainties are added
+        if process not in ["nonprompt", "data"] and False:
+            cardtool.addTheoryVar(process, 'scale', range(1, 10), exclude=[6, 7], central=4)
+            if "cp5" not in process and args.mc2hes:
+                # Exclude alpha_s variations
+                pdf_entries = [5] + range(112, 172) 
+                cardtool.addTheoryVar(process, "pdf_hessian", pdf_entries, central=0)
+            else:
+                pdf_entries = [5] + (range(10, 110) if "cp5" not in process else range(10, 40))
+                cardtool.addTheoryVar(process, 'pdf_mc' if "cp5" not in process else "pdf_hessian", pdf_entries, central=0)
+        cardtool.loadHistsForProcess(process)
+        cardtool.writeProcessHistsToOutput(process)
+    cardtool.writeMetaInfo()
 
-nuissance_map = {"e" : 7, "m" : 7}
-template_name = "W" if args.unbinnedSignal else "WPtBinned"
-for chan in ["m"]:
-    cardtool.setTemplateFileName("Templates/CombineCards/LowPileup/W_template_{channel}.txt")
-    logging.info("Writting cards for channel %s" % chan)
-    cardtool.writeCards(chan, nuissance_map[chan],)
-
-
+    nuissance_map = {"e" : 9, "m" : 9}
+    template_name = "W" if args.unbinnedSignal else "WPtBinned"
+    for chan in ["m"]:
+        cardname = "%s_template_{channel}.txt" % template_name
+        cardtool.setTemplateFileName("Templates/CombineCards/LowPileup/"+cardname)
+        logging.info("Writting cards for channel %s" % chan)
+        cardtool.writeCards(chan, nuissance_map[chan], outlabel=fitvar)
