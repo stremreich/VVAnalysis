@@ -55,7 +55,7 @@ void SelectorBase::Init(TTree *tree)
         else {
             name_ = GetNameFromFile();
         }
-        if (name_ == ""){
+        if (name_.empty()){
             std::cerr << "INFO: Using default name \"Unknown\" for file" << std::endl;
             name_ = "Unknown";
         }
@@ -210,12 +210,12 @@ template<typename T>
 void SelectorBase::InitializeHistMap(std::vector<std::string>& labels, std::map<std::string, T*>& histMap) {
     for (auto& label : labels) {
         if (channel_ != Inclusive) {
-            auto histName = getHistName(label, "", channelName_);
+            auto histName = getHistName(label, {}, channelName_);
             histMap[histName] = {};
         }
         else {
             for (auto& chan : allChannels_) {
-                auto histName = getHistName(label, "", chan);
+                auto histName = getHistName(label, {}, chan);
                 histMap[histName] = {};
             }
         }
@@ -240,7 +240,7 @@ void SelectorBase::InitializeHistogramsFromConfig() {
         }
 
         for (auto& chan : channels) {
-            auto histName = getHistName(name, "", chan); 
+            auto histName = getHistName(name, {}, chan); 
             if (hists2D_.find(histName) != hists2D_.end() || histMap1D_.find(histName) != histMap1D_.end()) { 
                 InitializeHistogramFromConfig(name, chan, histData);
             }
@@ -274,7 +274,7 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
                     << std::endl;
         exit(1);
     }
-    std::string histName = getHistName(name, "", channel);
+    std::string histName = getHistName(name, {}, channel);
     
     int nbins = std::stoi(histData[1]);
     float xmin = std::stof(histData[2]);
@@ -350,14 +350,16 @@ void SelectorBase::SetupNewDirectory()
 }
 
 std::string SelectorBase::getHistName(std::string histName, std::string variationName) {
-    return getHistName(histName, variationName, "");
+    return getHistName(histName, variationName, channelName_);
 }
 
 std::string SelectorBase::getHistName(std::string histName, std::string variationName, std::string channel) {
-    if (channel == "")
-        channel = channelName_;
-    if (variationName != "")
-        return histName + "_" + variationName + "_" + channel;
-    return histName + "_" + channel;
+    histName.append("_");
+    if (!variationName.empty()) {
+        histName.append(variationName);
+        histName.append("_");
+    }
+    histName.append(channel);
+    return histName;
 }
 

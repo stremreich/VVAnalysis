@@ -147,7 +147,7 @@ class SelectorBase : public TSelector {
 
 
     std::vector<std::string> allChannels_ = {};
-    SystMap variations_ = {{Central, ""}};
+    SystMap variations_ = {{Central, {}}};
     SystMap systematics_ = {};
 
     TList *currentHistDir_{nullptr};
@@ -254,8 +254,8 @@ class SelectorBase : public TSelector {
     void InitializeHistogramFromConfig(std::string name, std::string channel, std::vector<std::string> histData);
     void InitializeHistogramsFromConfig();
     std::vector<std::string> ReadHistDataFromConfig(std::string histDataString);
-    std::string getHistName(std::string histName, std::string variationName, std::string channel);
     std::string getHistName(std::string histName, std::string variationName);
+    std::string getHistName(std::string histName, std::string variationName, std::string channel);
     template<typename T>
     void InitializeHistMap(std::vector<std::string>& labels, std::map<std::string, T*>& histMap);
 
@@ -270,8 +270,8 @@ class SelectorBase : public TSelector {
     template<typename T, typename... Args>
 	void HistFullFill(std::map<std::string, T*> container,
 			  std::string histname, std::string var, Args... args) {
-	SafeHistFill(container, getHistName(histname, var), args...);
-	SafeHistFill(container, getHistName(histname, var, "all"), args...);
+	    SafeHistFill(container, getHistName(histname, var), args...);
+	    SafeHistFill(container, getHistName(histname, var, std::string("all")), args...);
     }
   
     
