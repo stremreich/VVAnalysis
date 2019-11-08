@@ -47,17 +47,18 @@ void LowPileupWSelector::SetBranchesBacon() {
 }
 
 void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) { 
-    lep_b->GetEntry(entry);
-    fReader.SetLocalEntry(entry);
-    if (variation.first == Central)
+    if (variation.first == Central) {
+        lep_b->GetEntry(entry);
+        fReader.SetLocalEntry(entry);
         LowPileupSelector::LoadBranchesBacon(entry, variation);
-    if (*charge > 0) {
-        channel_ = mp;
-        channelName_ = "mp";
-    }
-    else {
-        channel_ = mn;
-        channelName_ = "mn";
+        if (*charge > 0) {
+            channel_ = mp;
+            channelName_ = "mp";
+        }
+        else {
+            channel_ = mn;
+            channelName_ = "mn";
+        }
     }
     if (isMC_) {
         float cenwgt = evtWeight[systematicWeightMap_[Central]];
