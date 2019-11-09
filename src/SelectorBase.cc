@@ -229,9 +229,10 @@ void SelectorBase::InitializeHistogramsFromConfig() {
 
     InitializeHistMap(hists1D_,histMap1D_);
     InitializeHistMap(weighthists1D_, weighthistMap1D_);
+
     for (auto && entry : *histInfo) {  
         TNamed* currentHistInfo = dynamic_cast<TNamed*>(entry);
-        std::string name = currentHistInfo->GetName();
+        const char* name = currentHistInfo->GetName();
         std::vector<std::string> histData = ReadHistDataFromConfig(currentHistInfo->GetTitle());
         
         std::vector<ChannelPair> channels = {{channel_, channelName_}};
@@ -239,29 +240,29 @@ void SelectorBase::InitializeHistogramsFromConfig() {
             channels = allChannels_;
         }
 
-        for (auto& chan : channels) {
+        for (const auto& chan : channels) {
             HistLabel centralLabel = {name, chan.first, Central};
-            if (hists2D_.find(centralLabel) != hists2D_.end() || histMap1D_.find(centralLabel) != histMap1D_.end()) { 
+            if (histMap1D_.find(centralLabel) != histMap1D_.end() || hists2D_.find(centralLabel) != hists2D_.end()) { 
                 InitializeHistogramFromConfig(name, chan, histData);
             }
             //No need to print warning for every channel
-            else if (chan.first == channels.front().first)
-                std::cerr << "Skipping invalid histogram " << name << std::endl;
+            else 
+                std::cerr << "Skipping invalid histogram '" << name << "'" << std::endl;
         }
     }
 
-    //for (auto& subprocess : subprocesses_) {
-    //    setSubprocesses(subprocess);
-    //    auto& subprocessMap = subprocessHistMaps1D_[subprocess];
-    //    subprocessMap = {};
-    //    for (auto& hist : histMap1D_) {
-    //        subprocessMap[hist.first] = {};
-    //        if (hist.second == nullptr)
-    //            continue;
-    //        AddObject<TH1D>(subprocessMap[hist.first], const_cast<TH1D&>(*hist.second));
-    //        //subprocessWeightHistMaps1D_[subporcess] = weighthistMap1D_;
-    //    }
-    //}
+    for (auto& subprocess : subprocesses_) {
+        setSubprocesses(subprocess);
+        auto& subprocessMap = subprocessHistMaps1D_[subprocess];
+        subprocessMap = {};
+        for (auto& hist : histMap1D_) {
+            subprocessMap[hist.first] = {};
+            if (hist.second == nullptr)
+                continue;
+            AddObject<TH1D>(subprocessMap[hist.first], const_cast<TH1D&>(*hist.second));
+            //subprocessWeightHistMaps1D_[subporcess] = weighthistMap1D_;
+        }
+    }
 
     currentHistDir_ = dynamic_cast<TList*>(fOutput->FindObject(name_.c_str()));
 }

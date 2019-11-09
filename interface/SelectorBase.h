@@ -2,6 +2,7 @@
 #define SelectorBase_h
 
 #include <TROOT.h>
+#include <string.h>
 #include <TChain.h>
 #include <TFile.h>
 #include <TSelector.h>
@@ -233,8 +234,8 @@ class SelectorBase : public TSelector {
  protected:
     // Maps to the histogram pointers themselves
     HistMap1D histMap1D_ = {};
-    //std::map<std::string, HistMap1D> subprocessHistMaps1D_ = {};
-    //std::vector<HistMap2D> subprocessWeightHistMaps1D_ = {};
+    std::map<std::string, HistMap1D> subprocessHistMaps1D_ = {};
+    std::vector<HistMap2D> subprocessWeightHistMaps1D_ = {};
     HistMap2D hists2D_ = {};
     HistMap2D weighthistMap1D_ = {};
     HistMap3D weighthistMap2D_ {};
@@ -291,10 +292,11 @@ class SelectorBase : public TSelector {
 
     // Filling Functions
     template<typename T, typename... Args>
-	void SafeHistFill(std::unordered_map<HistLabel, T*> container, 
-			  HistLabel histLabel, Args... args) {
-	if (container[histLabel] != nullptr)
-	    container[histLabel]->Fill(args...);
+	void SafeHistFill(std::unordered_map<HistLabel, T*>& container, 
+		const char* name, Channel chan, Systematic var, Args... args) {
+        HistLabel histLabel = {name, chan, var};
+        if (container[histLabel] != nullptr)
+            container[histLabel]->Fill(args...);
     };
   
     //template<typename T, typename... Args>
