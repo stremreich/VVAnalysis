@@ -6,9 +6,9 @@
 #include "Analysis/VVAnalysis/interface/LowPileupWSelector.h"
 #include "Analysis/VVAnalysis/interface/LowPileupWBackgroundSelector.h"
 //#include "Analysis/VVAnalysis/interface/ZZGenSelector.h"
-//#include "Analysis/VVAnalysis/interface/WGenSelector.h"
-//#include "Analysis/VVAnalysis/interface/ZGenSelector.h"
-//#include "Analysis/VVAnalysis/interface/NanoGenSelectorBase.h"
+#include "Analysis/VVAnalysis/interface/WGenSelector.h"
+#include "Analysis/VVAnalysis/interface/ZGenSelector.h"
+#include "Analysis/VVAnalysis/interface/NanoGenSelectorBase.h"
 //#include "Analysis/VVAnalysis/interface/WZSelector.h"
 //#include "Analysis/VVAnalysis/interface/ThreeLepSelector.h"
 //#include "Analysis/VVAnalysis/interface/WZSelectorBase.h"
@@ -29,10 +29,10 @@ namespace{
     LowPileupWSelector pLowPileupWBackgroundSelector;
     LowPileupSelector pLowPileupSelector;
     //WZSelector pWZSelector;
-    //NanoGenSelectorBase pNanoGenSelectorBase;
+    NanoGenSelectorBase pNanoGenSelectorBase;
     //ZZGenSelector pZZGenSelector;
-    //WGenSelector pWGenSelector;
-    //ZGenSelector pZGenSelector;
+    WGenSelector pWGenSelector;
+    ZGenSelector pZGenSelector;
     //WZBackgroundSelector pWZBackgroundSelector;
     ScaleFactor pScaleFactor;
     disambiguateFinalStates pDisambiguator;

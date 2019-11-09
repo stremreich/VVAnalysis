@@ -5,6 +5,9 @@
   <class name="LowPileupWSelector"/>
   <class name="LowPileupWBackgroundSelector"/>
   <class name="LowPileupSelector"/>
+  <class name="NanoGenSelectorBase"/>
+  <class name="WGenSelector"/>
+  <class name="ZGenSelector"/>
   <class name="ScaleFactor"/>
   <class name="disambiguateFinalStates"/>
   <class name="disambiguateFinalStatesZZ"/>
