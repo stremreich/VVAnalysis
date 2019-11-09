@@ -38,7 +38,7 @@ public :
     TTreeReaderValue<int> charge = {fReader, "q"};
     TTreeReaderValue<double> lepPfRelIso = {fReader, "relIso"};
 
-    std::map<Systematic, size_t> systematicWeightMap_;
+    std::unordered_map<Systematic, size_t> systematicWeightMap_;
     
     // Readers to access the data (delete the ones you do not need).
     virtual void    Init(TTree *tree) override;

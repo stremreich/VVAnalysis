@@ -14,10 +14,64 @@
 
 // Headers needed by this particular selector
 #include <vector>
+#include <unordered_map>
 #include "Analysis/VVAnalysis/interface/ScaleFactor.h"
 
 //Dylan's macro, pls ignore
 //#define PAIR(NAME_) {#NAME_, NAME_}
+
+enum Channel {
+    e,           m,         
+    ep,          en,        mp,     mn,
+    ee,          em,        mm,     
+    eee,         eem,       emm,    mmm,
+    eeee,        eemm,      mmee,   mmmm,
+    Inclusive,   Unknown,   lll,    
+};
+  
+enum Systematic {
+    Central,
+    jetEnergyScaleUp,          jetEnergyScaleDown,
+    jetEnergyResolutionUp,     jetEnergyResolutionDown,
+    metUnclusteredEnergyUp,    metUnclusteredEnergyDown,
+    muonEfficiencyUp,          muonEfficiencyDown,
+    muonScaleUp,               muonScaleDown,
+    electronEfficiencyUp,      electronEfficiencyDown,
+    electronScaleUp,           electronScaleDown,
+    pileupUp,                  pileupDown,
+    muonEfficiencyMCSubtractUp, muonEfficiencyMCSubtractDown, 
+    modelingFsrUp,             modelingFsrDown, 
+    muonEfficiencyBackgroundUp, muonEfficiencyBackgroundDown, 
+    muonEfficiencyTagPtUp,     muonEfficiencyTagPtDown, 
+    muonEfficiencyStatUp,      muonEfficiencyStatDown, 
+}; 
+
+    
+struct HistLabel {
+    std::string name;
+    Channel channel;
+    Systematic variation;
+
+    bool operator==(const HistLabel& h) const {
+        return (name == h.name &&
+            channel == h.channel &&
+            variation == h.variation);
+    };
+};
+
+namespace std
+{
+    template <>
+    struct hash<HistLabel>
+    {
+        size_t operator()(const HistLabel& h) const
+        {
+            return (std::hash<std::string>()(h.name) ^ std::hash<size_t>()(h.channel) ^
+                std::hash<size_t>()(h.variation));
+
+        }
+    };
+}
 
 class SelectorBase : public TSelector {
  public :
@@ -40,15 +94,6 @@ class SelectorBase : public TSelector {
         Bacon,
     };
 
-    enum Channel {
-        e,           m,         
-        ep,          en,        mp,     mn,
-        ee,          em,        mm,     
-        eee,         eem,       emm,    mmm,
-        eeee,        eemm,      mmee,   mmmm,
-        Inclusive,   Unknown,   lll,    
-    };
-  
     enum Selection {
         tightleptons,                 ZZGenFiducial,
         Wselection,                   Zselection,
@@ -69,28 +114,13 @@ class SelectorBase : public TSelector {
         yrdefault,      yr2016,      yr2017,      yr2018
     };
 
-    enum Systematic {
-        Central,
-        jetEnergyScaleUp,          jetEnergyScaleDown,
-        jetEnergyResolutionUp,     jetEnergyResolutionDown,
-        metUnclusteredEnergyUp,    metUnclusteredEnergyDown,
-        muonEfficiencyUp,          muonEfficiencyDown,
-        muonScaleUp,               muonScaleDown,
-        electronEfficiencyUp,      electronEfficiencyDown,
-        electronScaleUp,           electronScaleDown,
-        pileupUp,                  pileupDown,
-        muonEfficiencyMCSubtractUp, muonEfficiencyMCSubtractDown, 
-        modelingFsrUp,             modelingFsrDown, 
-        muonEfficiencyBackgroundUp, muonEfficiencyBackgroundDown, 
-        muonEfficiencyTagPtUp,     muonEfficiencyTagPtDown, 
-        muonEfficiencyStatUp,      muonEfficiencyStatDown, 
-    }; 
+    typedef std::pair<Channel, std::string> ChannelPair;
 
-     typedef std::map<std::string, TH1D*> HistMap1D;
-     typedef std::map<std::string, TH2D*> HistMap2D;
-     typedef std::map<std::string, TH3D*> HistMap3D;
-     typedef std::map<Systematic, std::string> SystMap;
-     typedef std::pair<Systematic, std::string> SystPair;
+    typedef std::unordered_map<HistLabel, TH1D*> HistMap1D;
+    typedef std::unordered_map<HistLabel, TH2D*> HistMap2D;
+    typedef std::unordered_map<HistLabel, TH3D*> HistMap3D;
+    typedef std::map<Systematic, std::string> SystMap;
+    typedef std::pair<Systematic, std::string> SystPair;
 
     /****************************/
     /*  __  __                  */
@@ -146,7 +176,7 @@ class SelectorBase : public TSelector {
     };
 
 
-    std::vector<std::string> allChannels_ = {};
+    std::vector<ChannelPair> allChannels_ = {};
     SystMap variations_ = {{Central, {}}};
     SystMap systematics_ = {};
 
@@ -203,7 +233,7 @@ class SelectorBase : public TSelector {
  protected:
     // Maps to the histogram pointers themselves
     HistMap1D histMap1D_ = {};
-    std::map<std::string, HistMap1D> subprocessHistMaps1D_ = {};
+    //std::map<std::string, HistMap1D> subprocessHistMaps1D_ = {};
     //std::vector<HistMap2D> subprocessWeightHistMaps1D_ = {};
     HistMap2D hists2D_ = {};
     HistMap2D weighthistMap1D_ = {};
@@ -251,28 +281,28 @@ class SelectorBase : public TSelector {
     
     float GetPrefiringEfficiencyWeight(std::vector<float>* jetPt, std::vector<float>* jetEta);
     virtual std::string GetNameFromFile() { return ""; }
-    void InitializeHistogramFromConfig(std::string name, std::string channel, std::vector<std::string> histData);
+    void InitializeHistogramFromConfig(std::string name, ChannelPair channel, std::vector<std::string>& histData);
     void InitializeHistogramsFromConfig();
     std::vector<std::string> ReadHistDataFromConfig(std::string histDataString);
     std::string getHistName(std::string histName, std::string variationName);
     std::string getHistName(std::string histName, std::string variationName, std::string channel);
     template<typename T>
-    void InitializeHistMap(std::vector<std::string>& labels, std::map<std::string, T*>& histMap);
+    void InitializeHistMap(std::vector<std::string>& labels, std::unordered_map<HistLabel, T*>& histMap);
 
     // Filling Functions
     template<typename T, typename... Args>
-	void SafeHistFill(std::map<std::string, T*> container, 
-			  std::string histname, Args... args) {
-	if (container[histname] != nullptr)
-	    container[histname]->Fill(args...);
+	void SafeHistFill(std::unordered_map<HistLabel, T*> container, 
+			  HistLabel histLabel, Args... args) {
+	if (container[histLabel] != nullptr)
+	    container[histLabel]->Fill(args...);
     };
   
-    template<typename T, typename... Args>
-	void HistFullFill(std::map<std::string, T*> container,
-			  std::string histname, std::string var, Args... args) {
-	    SafeHistFill(container, getHistName(histname, var), args...);
-	    SafeHistFill(container, getHistName(histname, var, std::string("all")), args...);
-    }
+    //template<typename T, typename... Args>
+	//void HistFullFill(std::map<std::string, T*> container,
+	//		  std::string histname, std::string var, Args... args) {
+	//    SafeHistFill(container, getHistName(histname, var), args...);
+	//    SafeHistFill(container, getHistName(histname, var, std::string("all")), args...);
+    //}
   
     
 };
