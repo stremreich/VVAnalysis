@@ -8,6 +8,9 @@
   <class name="NanoGenSelectorBase"/>
   <class name="WGenSelector"/>
   <class name="ZGenSelector"/>
+  <class name="WZSelectorBase"/>
+  <class name="WZSelector"/>
+  <class name="WZBackgroundSelector"/>
   <class name="ScaleFactor"/>
   <class name="disambiguateFinalStates"/>
   <class name="disambiguateFinalStatesZZ"/>
