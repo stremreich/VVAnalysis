@@ -4,9 +4,9 @@
 
 void ZSelector::Init(TTree *tree)
 {
-    allChannels_ = {"ee", "mm"};
+    allChannels_ = {{ee, "ee"}, {mm, "mm"}};
     // Add CutFlow for Unknown to understand when channels aren't categorized
-    histMap1D_["CutFlow_Unknown"] = {};
+    histMap1D_[{"CutFlow", Unknown, Central}] = {};
     hists1D_ = {"CutFlow", "ZMass", "ZEta", "yZ", "ZPt", "ptl1", "etal1", "ptl2", "etal2",
 		"ptj1", "ptj2", "ptj3", "etaj1", "etaj2", "etaj3", "phij1", "phij2", "phij3", "nJets",
 		"MET",};
@@ -342,20 +342,21 @@ bool ZSelector::tightZLeptons() {
 
 void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
     int step = 0;
-    SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+    SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
 
 
     if (channel_ != mm && channel_ != ee) 
         return;
-    SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+    SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
 
     if (!passesTrigger)
         return;
-    SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+    SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
 
     if (channel_ == ee && (std::abs(l1Eta) > 2.4 || std::abs(l2Eta) > 2.4 ))
 	return;
     else if (channel_ == mm && (std::abs(l1Eta) > 2.5 || std::abs(l2Eta) > 2.5 ))
+<<<<<<< HEAD
 	return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
@@ -366,31 +367,42 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
     if (ZMass > 106.1876 || ZMass < 76.1876)
 	return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+=======
+        return;
+    SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
+
+    if (l1Pt < 25 || l2Pt < 25)
+        return;
+    SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
+
+    if (ZMass > 106.1876 || ZMass < 76.1876)
+        return;
+    SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
 
     //if (MET > 25)
     //    return;
-    //SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+    //SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
 
     if (!tightZLeptons())
-	return;
-    SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
+        return;
+    SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
 
-    SafeHistFill(histMap1D_, getHistName("ZMass", variation.second), ZMass, weight);
-    SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), l1Pt, weight);
-    SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), l2Pt, weight);
-    SafeHistFill(histMap1D_, getHistName("etal1", variation.second), l2Eta, weight);
-    SafeHistFill(histMap1D_, getHistName("etal2", variation.second), l2Eta, weight);
-    SafeHistFill(histMap1D_, getHistName("ZEta", variation.second), ZEta, weight);
-    SafeHistFill(histMap1D_, getHistName("yZ", variation.second), Zy, weight);
-    SafeHistFill(histMap1D_, getHistName("ZPt", variation.second), ZPt, weight);
-    SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jets.size(), weight);
-    SafeHistFill(histMap1D_, getHistName("MET", variation.second), MET, weight);
+    SafeHistFill(histMap1D_, "ZMass", channel_, variation.first, ZMass, weight);
+    SafeHistFill(histMap1D_, "ptl1", channel_, variation.first, l1Pt, weight);
+    SafeHistFill(histMap1D_, "ptl2", channel_, variation.first, l2Pt, weight);
+    SafeHistFill(histMap1D_, "etal1", channel_, variation.first, l2Eta, weight);
+    SafeHistFill(histMap1D_, "etal2", channel_, variation.first, l2Eta, weight);
+    SafeHistFill(histMap1D_, "ZEta", channel_, variation.first, ZEta, weight);
+    SafeHistFill(histMap1D_, "yZ", channel_, variation.first, Zy, weight);
+    SafeHistFill(histMap1D_, "ZPt", channel_, variation.first, ZPt, weight);
+    SafeHistFill(histMap1D_, "nJets", channel_, variation.first, jets.size(), weight);
+    SafeHistFill(histMap1D_, "MET", channel_, variation.first, MET, weight);
     for (size_t i = 1; i <= 3; i++) {
         if (jets.size() >= i ) {
             const auto& jet = jets.at(i-1);
-            SafeHistFill(histMap1D_, getHistName("ptj"+std::to_string(i), variation.second), jet.pt(), weight);
-            SafeHistFill(histMap1D_, getHistName("etaj"+std::to_string(i), variation.second), jet.eta(), weight);
-            SafeHistFill(histMap1D_, getHistName("phij"+std::to_string(i), variation.second), jet.phi(), weight);
+            SafeHistFill(histMap1D_, ("ptj"+std::to_string(i)).c_str(), channel_, variation.first, jet.pt(), weight);
+            SafeHistFill(histMap1D_, ("etaj"+std::to_string(i)).c_str(), channel_, variation.first, jet.eta(), weight);
+            SafeHistFill(histMap1D_, ("phij"+std::to_string(i)).c_str(), channel_, variation.first, jet.phi(), weight);
         }  
     }
 }
