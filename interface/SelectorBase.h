@@ -27,7 +27,7 @@ enum Channel {
     ee,          em,        mm,     
     eee,         eem,       emm,    mmm,
     eeee,        eemm,      mmee,   mmmm,
-    Inclusive,   Unknown,   lll,    
+    Inclusive,   Unknown,   lll, all,
 };
   
 enum Systematic {
@@ -173,7 +173,7 @@ class SelectorBase : public TSelector {
         {"ee", ee},                 {"em", em},       {"mm", mm},
         {"eee", eee},               {"eem", eem},     {"emm", emm},     {"mmm", mmm},
         {"eeee", eeee},             {"eemm", eemm},   {"mmee", mmee},   {"mmmm", mmmm},
-        {"Inclusive", Inclusive},   {"lll", lll},
+        {"Inclusive", Inclusive},   {"lll", lll},     {"all", all},
     };
 
 
@@ -299,12 +299,12 @@ class SelectorBase : public TSelector {
             container[histLabel]->Fill(args...);
     };
   
-    //template<typename T, typename... Args>
-	//void HistFullFill(std::map<std::string, T*> container,
-	//		  std::string histname, std::string var, Args... args) {
-	//    SafeHistFill(container, getHistName(histname, var), args...);
-	//    SafeHistFill(container, getHistName(histname, var, std::string("all")), args...);
-    //}
+    template<typename T, typename... Args>
+	void HistFullFill(std::unordered_map<HistLabel, T*>& container,
+			  const char* histname, Systematic var, Args... args) {
+	    SafeHistFill(container, histname, channel_, var, args...);
+	    SafeHistFill(container, histname, all, var, args...);
+    }
   
     
 };
