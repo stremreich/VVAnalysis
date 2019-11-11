@@ -38,7 +38,6 @@ namespace{
     WGenSelector pWGenSelector;
     ZGenSelector pZGenSelector;
     WZBackgroundSelector pWZBackgroundSelector;
-    ThreeLepSelector pThreeLepSelector;
     ScaleFactor pScaleFactor;
     disambiguateFinalStates pDisambiguator;
     disambiguateFinalStates pDisambiguatorZZ;

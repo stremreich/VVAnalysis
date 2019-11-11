@@ -246,7 +246,7 @@ void SelectorBase::InitializeHistogramsFromConfig() {
 
         for (const auto& chan : channels) {
             HistLabel centralLabel = {name, chan.first, Central};
-            if (histMap1D_.find(centralLabel) != histMap1D_.end() || hists2D_.find(centralLabel) != hists2D_.end()) { 
+            if (histMap1D_.find(centralLabel) != histMap1D_.end() || histMap2D_.find(centralLabel) != histMap2D_.end()) { 
                 InitializeHistogramFromConfig(name, chan, histData);
             }
             //No need to print warning for every channel
@@ -315,14 +315,14 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, ChannelPair c
         int nbinsy = std::stoi(histData[4]);
         float ymin = std::stof(histData[5]);
         float ymax = std::stof(histData[6]);
-        AddObject<TH2D>(hists2D_[centralLabel], histName.c_str(), histData[0].c_str(),nbins, xmin, xmax,
+        AddObject<TH2D>(histMap2D_[centralLabel], histName.c_str(), histData[0].c_str(),nbins, xmin, xmax,
                 nbinsy, ymin, ymax);
         if (doSystematics_ && std::find(systHists2D_.begin(), systHists2D_.end(), name) != systHists2D_.end()) {
             for (auto& syst : systematics_) {
                 HistLabel systLabel = {name, channel.first, syst.first};
                 std::string syst_histName = getHistName(name, syst.second, channel.second);
-                hists2D_[systLabel] = {};
-                AddObject<TH2D>(hists2D_[systLabel], syst_histName.c_str(), 
+                histMap2D_[systLabel] = {};
+                AddObject<TH2D>(histMap2D_[systLabel], syst_histName.c_str(), 
                     histData[0].c_str(),nbins, xmin, xmax, nbinsy, ymin, ymax);
             }
         }

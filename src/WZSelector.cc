@@ -557,10 +557,10 @@ void WZSelector::FillVBSHistograms(float weight, bool noBlind,
         std::pair<Systematic, std::string> variation) { 
     // JES/JER uncertainties
     // Need to separate check VBS cuts using JER/JES variations
-    SafeHistFill(hists2D_, "mjj_etajj_2D", channel_, variation.first, 
+    SafeHistFill(histMap2D_, "mjj_etajj_2D", channel_, variation.first, 
         mjj, dEtajj, weight*(isMC_ || noBlind || mjj < 500 || dEtajj < 2.5));
     SafeHistFill(histMap1D_, "zep3l", channel_, variation.first, zep3l, weight);
-    SafeHistFill(hists2D_, "mjj_dRjj_2D", channel_, variation.first, mjj, dRjj, weight*(isMC_ || noBlind || mjj < 500 || dEtajj < 2.5));
+    SafeHistFill(histMap2D_, "mjj_dRjj_2D", channel_, variation.first, mjj, dRjj, weight*(isMC_ || noBlind || mjj < 500 || dEtajj < 2.5));
 
     SafeHistFill(histMap1D_, "mjj", channel_, variation.first, mjj, weight*(isMC_ || (mjj < 500) || noBlind));
     SafeHistFill(histMap1D_, "dEtajj", channel_, variation.first, dEtajj, weight*(isMC_ || (dEtajj < 2.5) || noBlind));

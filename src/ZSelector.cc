@@ -354,20 +354,8 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
     SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
 
     if (channel_ == ee && (std::abs(l1Eta) > 2.4 || std::abs(l2Eta) > 2.4 ))
-	return;
+	    return;
     else if (channel_ == mm && (std::abs(l1Eta) > 2.5 || std::abs(l2Eta) > 2.5 ))
-<<<<<<< HEAD
-	return;
-    SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
-
-    if (l1Pt < 25 || l2Pt < 25)
-	return;
-    SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
-
-    if (ZMass > 106.1876 || ZMass < 76.1876)
-	return;
-    SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
-=======
         return;
     SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
 

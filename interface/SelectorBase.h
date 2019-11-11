@@ -257,9 +257,9 @@ class SelectorBase : public TSelector {
  protected:
     // Maps to the histogram pointers themselves
     HistMap1D histMap1D_ = {};
-    std::map<std::string, HistMap1D> subprocessHistMaps1D_ = {};
+    std::unordered_map<std::string, HistMap1D> subprocessHistMaps1D_ = {};
     std::vector<HistMap2D> subprocessWeightHistMaps1D_ = {};
-    HistMap2D hists2D_ = {};
+    HistMap2D histMap2D_ = {};
     HistMap2D weighthistMap1D_ = {};
     HistMap3D weighthistMap2D_ {};
 
@@ -305,6 +305,11 @@ class SelectorBase : public TSelector {
 			  const char* histname, Systematic var, Args... args) {
 	    SafeHistFill(container, histname, channel_, var, args...);
 	    SafeHistFill(container, histname, all, var, args...);
+    }
+    template<typename T, typename... Args>
+	void HistFullFill(std::unordered_map<HistLabel, T*>& container,
+			  const std::string& histname, Systematic var, Args... args) {
+        HistFullFill(container, histname.c_str(), var, args...);
     }
   
 };

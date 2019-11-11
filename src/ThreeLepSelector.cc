@@ -682,7 +682,7 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
 
     Fill1D("CutFlow", ++step);
     
-    HistFullFill(histMap1D_, "weight", variation.second, abs(weight), 1);
+    HistFullFill(histMap1D_, "weight", variation.first, abs(weight), 1);
     Fill1D("Met", MET);
     Fill1D("HT", HT);
     Fill1D("ptl1", goodLeptons[0].Pt());
