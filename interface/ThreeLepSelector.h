@@ -229,7 +229,6 @@ public :
     void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
     virtual void    SetBranchesNanoAOD() override;
     virtual void    SetupNewDirectory() override;
-    virtual std::string GetNameFromFile() override;
     // Readers to access the data (delete the ones you do not need).
     virtual void    SetScaleFactors() override;
     virtual void    Init(TTree *tree) override;

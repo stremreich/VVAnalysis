@@ -136,7 +136,6 @@ class TTTSelector : public SelectorBase {
   void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
   void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
   virtual void    SetupNewDirectory() override;
-  virtual std::string GetNameFromFile() override;
   // Readers to access the data (delete the ones you do not need).
   virtual void    SlaveBegin(TTree *tree) override;
   virtual void    Init(TTree *tree) override;

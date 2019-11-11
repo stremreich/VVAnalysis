@@ -4,7 +4,7 @@
 
 void LowPileupZSelector::Init(TTree *tree)
 {
-    allChannels_ = {"mm"};
+    allChannels_ = {{mm, "mm"}};
     hists1D_ = {"CutFlow", "mZ", "yZ", "ptZ", "ptl1", "etal1", "ptl2", "etal2", "pfMet",};
 
     LowPileupSelector::Init(tree);
@@ -40,12 +40,12 @@ void LowPileupZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, st
         return;
     if (category != eMuMu1HLT && category != eMuMu2HLT)
         return;
-    SafeHistFill(histMap1D_, getHistName("mZ", variation.second), zCand.M(), weight);
-    SafeHistFill(histMap1D_, getHistName("ptZ", variation.second), zCand.Pt(), weight);
-    SafeHistFill(histMap1D_, getHistName("yZ", variation.second), zCand.Rapidity(), weight);
-    SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), lep1->Pt(), weight);
-    SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), lep2->Pt(), weight);
-    SafeHistFill(histMap1D_, getHistName("etal1", variation.second), lep1->Eta(), weight);
-    SafeHistFill(histMap1D_, getHistName("etal2", variation.second), lep2->Eta(), weight);
-    SafeHistFill(histMap1D_, getHistName("pfMet", variation.second), pfMet, weight);
+    //SafeHistFill(histMap1D_, getHistName("mZ", variation.second), zCand.M(), weight);
+    //SafeHistFill(histMap1D_, getHistName("ptZ", variation.second), zCand.Pt(), weight);
+    //SafeHistFill(histMap1D_, getHistName("yZ", variation.second), zCand.Rapidity(), weight);
+    //SafeHistFill(histMap1D_, getHistName("ptl1", variation.second), lep1->Pt(), weight);
+    //SafeHistFill(histMap1D_, getHistName("ptl2", variation.second), lep2->Pt(), weight);
+    //SafeHistFill(histMap1D_, getHistName("etal1", variation.second), lep1->Eta(), weight);
+    //SafeHistFill(histMap1D_, getHistName("etal2", variation.second), lep2->Eta(), weight);
+    //SafeHistFill(histMap1D_, getHistName("pfMet", variation.second), pfMet, weight);
 }

@@ -1,20 +1,20 @@
 <lcgdict>
   <class name="FakeRateSelector"/>
   <class name="TTTSelector"/>
-  <class name="ThreeLepSelector"/>
   <class name="SelectorBase"/>
-  <class name="WZSelector"/>
   <class name="ZSelector"/>
   <class name="LowPileupZSelector"/>
   <class name="LowPileupWSelector"/>
   <class name="LowPileupWBackgroundSelector"/>
   <class name="LowPileupSelector"/>
-  <class name="WZBackgroundSelector"/>
-  <class name="WZSelectorBase"/>
-  <class name="ZZGenSelector"/>
   <class name="NanoGenSelectorBase"/>
   <class name="WGenSelector"/>
   <class name="ZGenSelector"/>
+  <class name="ZZGenSelector"/>
+  <class name="WZSelectorBase"/>
+  <class name="WZSelector"/>
+  <class name="WZBackgroundSelector"/>
+  <class name="ThreeLepSelector"/>
   <class name="ScaleFactor"/>
   <class name="disambiguateFinalStates"/>
   <class name="disambiguateFinalStatesZZ"/>

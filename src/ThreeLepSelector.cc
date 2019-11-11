@@ -5,8 +5,8 @@
 #include <regex>
 #include "TParameter.h"
 
-#define Fill1D(NAME, VALUE_) HistFullFill(histMap1D_, NAME, variation.second, VALUE_, weight);
-#define Fill2D(NAME, VALUE1_, VALUE2_) HistFullFill(histMap2D_, NAME, variation.second, VALUE1_, VALUE2_, weight);
+#define Fill1D(NAME, VALUE_) HistFullFill(histMap1D_, NAME, variation.first, VALUE_, weight);
+#define Fill2D(NAME, VALUE1_, VALUE2_) HistFullFill(histMap2D_, NAME, variation.first, VALUE1_, VALUE2_, weight);
 
 #define GETMASK(index, size) (((1 << (size)) - 1) << (index))
 #define READFROM(data, index, size) (((data) & GETMASK((index), (size))) >> (index))
@@ -19,16 +19,6 @@ typedef std::bitset<sizeof(int)> IntBits;
 enum ElectronCBID {CBID_VETO=1, CBID_LOOSE=2, CBID_MEDIUM=3, CBID_TIGHT=4};
 
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
-
-// This is very WZ specific and should really be improved or likely removed
-std::string ThreeLepSelector::GetNameFromFile() {
-    std::regex expr = std::regex("201[0-9]-[0-9][0-9]-[0-9][0-9]-(.*)-WZxsec2016");
-    std::smatch matches;
-    std::string fileName = fChain->GetTree()->GetDirectory()->GetFile()->GetName();
-
-    std::regex_search(fileName, matches, expr);
-    return std::string(matches.str(1));
-}
 
 void ThreeLepSelector::SetScaleFactors() {
     calib = BTagCalibration("deepcsv", "data/btag_scales.csv");
@@ -65,7 +55,7 @@ void ThreeLepSelector::SetScaleFactors() {
 void ThreeLepSelector::Init(TTree *tree) {
     b.SetTree(tree);
 
-    allChannels_ = {"mm", "ee", "em", "all", "lll"};
+    allChannels_ = {{mm, "mm"}, {ee, "ee"}, {em, "em"}, {all, "all"}, {lll, "lll"}};
 
     hists1D_ = {
 		"CutFlow",      "ZMass",       "ptl1",     "etal1",    "ptl2",     "etal2",        "SR",
@@ -76,7 +66,6 @@ void ThreeLepSelector::Init(TTree *tree) {
     hists2D_ = {"bJetvsJets",    "Beff_b_btag", "Beff_j_btag", "Beff_b", "Beff_j"};
 
     SelectorBase::Init(tree);
-
 }
 
 void ThreeLepSelector::SetBranchesNanoAOD() {
@@ -693,7 +682,7 @@ void ThreeLepSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std:
 
     Fill1D("CutFlow", ++step);
     
-    HistFullFill(histMap1D_, "weight", variation.second, abs(weight), 1);
+    HistFullFill(histMap1D_, "weight", variation.first, abs(weight), 1);
     Fill1D("Met", MET);
     Fill1D("HT", HT);
     Fill1D("ptl1", goodLeptons[0].Pt());

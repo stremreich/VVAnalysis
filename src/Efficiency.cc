@@ -1,9 +1,9 @@
 
 #include "Analysis/VVAnalysis/interface/Efficiency.h"
 #include "TLorentzVector.h"
-#define Fill1D(NAME, VALUE_) HistFullFill(histMap1D_, NAME, variation.second, VALUE_, weight);
+#define Fill1D(NAME, VALUE_) HistFullFill(histMap1D_, NAME, variation.first, VALUE_, weight);
 
-#define Fill2D(NAME, VALUE1_, VALUE2_) HistFullFill(histMap2D_, NAME, variation.second, VALUE1_, VALUE2_, weight);
+#define Fill2D(NAME, VALUE1_, VALUE2_) HistFullFill(histMap2D_, NAME, variation.first, VALUE1_, VALUE2_, weight);
 
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>>LorentzVector;
 
@@ -17,7 +17,7 @@ void Efficiency::Init(TTree *tree) {
 		"NMatchBJet", "NFakeBJet"};
     
     hists2D_ = {"BEff_b_btag", "BEff_j_btag", "GenbJetsvsJets"};
-    allChannels_ = {"all"};
+    allChannels_ = {{all, "all"}};
     
     b.SetTree(tree);    
     SelectorBase::Init(tree);

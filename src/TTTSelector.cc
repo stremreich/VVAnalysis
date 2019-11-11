@@ -4,24 +4,14 @@
 #include <regex>
 #include "TParameter.h"
 
-#define Fill1D(NAME, VALUE_) HistFullFill(histMap1D_, NAME, variation.second, VALUE_, weight);
-#define Fill2D(NAME, VALUE1_, VALUE2_) HistFullFill(histMap2D_, NAME, variation.second, VALUE1_, VALUE2_, weight);
+#define Fill1D(NAME, VALUE_) HistFullFill(histMap1D_, NAME, variation.first, VALUE_, weight);
+#define Fill2D(NAME, VALUE1_, VALUE2_) HistFullFill(histMap2D_, NAME, variation.first, VALUE1_, VALUE2_, weight);
 
 
 
 enum Lepton {Muon=13, Electron=11};
 
 typedef ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double>> LorentzVector;
-
-// This is very WZ specific and should really be improved or likely removed
-std::string TTTSelector::GetNameFromFile() {
-  std::regex expr = std::regex("201[0-9]-[0-9][0-9]-[0-9][0-9]-(.*)-WZxsec2016");
-  std::smatch matches;
-  std::string fileName = fChain->GetTree()->GetDirectory()->GetFile()->GetName(); 
-
-  std::regex_search(fileName, matches, expr);
-  return std::string(matches.str(1));
-}
 
 void TTTSelector::SlaveBegin(TTree *) {
   return;
@@ -50,10 +40,10 @@ void TTTSelector::SlaveBegin(TTree *) {
 void TTTSelector::Init(TTree *tree){
   b.SetTree(tree);
   
-  allChannels_ = {"ee", "mm", "em", "all"};
+  allChannels_ = {{ee, "ee"}, {mm, "mm"}, {em, "em"}, {all, "all"}};
  
   hists1D_ = {"CutFlow", "ZMass", "ptl1", "etal1", "ptl2", "etal2", "SR", "bjetpt", "jetpt", "nbjet", "njet", "jetphi","bjetphi", "phil1", "phil2","HT","MET", "nelec", "nmuon", "lept_charge", "before", "after", "nGoodParts"};
-  hists2D_ = {"bJetvsJets"};
+ hists2D_ = {"bJetvsJets"};
   
   SelectorBase::Init(tree);
   
