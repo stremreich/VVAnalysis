@@ -1,6 +1,7 @@
 <use name="CondFormats/BTauObjects"/>
 <use name="CondTools/BTau"/>
 <use name="DataFormats/HepMCCandidate"/>
+<use name="PhysicsTools/HepMCCandAlgos"/>
 <use name="DataFormats/Math"/>
 <use name="root"/>
 <use name="boost"/>

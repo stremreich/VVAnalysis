@@ -1,50 +1,47 @@
 #include "Analysis/VVAnalysis/interface/NanoGenSelectorBase.h"
+#include "PhysicsTools/HepMCCandAlgos/interface/PDFWeightsHelper.h"
 #include "Analysis/VVAnalysis/interface/helpers.h"
 #include <TStyle.h>
 #include <regex>
 
 void NanoGenSelectorBase::Init(TTree *tree)
 {
+    b.SetTree(tree);
     SelectorBase::Init(tree);
+    edm::FileInPath mc2hessianCSV("PhysicsTools/HepMCCandAlgos/data/NNPDF30_lo_as_0130_hessian_60.csv");
+    doMC2H_ = name_.find("cp5") == std::string::npos;
+    std::cout << "INFO: Convert MC to Hessian is " << doMC2H_ << std::endl;
+    if (doMC2H_)
+        pdfweightshelper_.Init(N_LHEPDF_WEIGHTS_, N_MC2HESSIAN_WEIGHTS_, mc2hessianCSV);
 }
 
 void NanoGenSelectorBase::SetBranchesNanoAOD() {
-    fChain->SetBranchAddress("genWeight", &genWeight, &b_genWeight);
-    fChain->SetBranchAddress("nGenPart", &nGenPart, &b_nGenPart);
-    fChain->SetBranchAddress("GenPart_pt", &GenPart_pt, &b_GenPart_pt);
-    fChain->SetBranchAddress("GenPart_phi", &GenPart_phi, &b_GenPart_phi);
-    fChain->SetBranchAddress("GenPart_eta", &GenPart_eta, &b_GenPart_eta);
-    fChain->SetBranchAddress("GenPart_phi", &GenPart_phi, &b_GenPart_phi);
-    fChain->SetBranchAddress("GenPart_mass", &GenPart_mass, &b_GenPart_mass);
-    fChain->SetBranchAddress("GenPart_status", &GenPart_status, &b_GenPart_status);
-    fChain->SetBranchAddress("GenPart_pdgId", &GenPart_pdgId, &b_GenPart_pdgId);
-    fChain->SetBranchAddress("nGenJet", &nGenJet, &b_nGenJet);
-    fChain->SetBranchAddress("GenJet_pt", &GenJet_pt, &b_GenJet_pt);
-    fChain->SetBranchAddress("GenJet_phi", &GenJet_phi, &b_GenJet_phi);
-    fChain->SetBranchAddress("GenJet_eta", &GenJet_eta, &b_GenJet_eta);
-    fChain->SetBranchAddress("GenJet_phi", &GenJet_phi, &b_GenJet_phi);
-    fChain->SetBranchAddress("GenJet_mass", &GenJet_mass, &b_GenJet_mass);
-    fChain->SetBranchAddress("GenMET_pt", &GenMET_pt, &b_GenMET_pt);
-    fChain->SetBranchAddress("GenMET_phi", &GenMET_phi, &b_GenMET_phi);
+    b.SetBranch("genWeight", genWeight);
+    b.SetBranch("nLHEScaleWeight", nLHEScaleWeight);
+    b.SetBranch("nLHEPdfWeight", nLHEPdfWeight);
+    b.SetBranch("LHEScaleWeight", LHEScaleWeight);
+    b.SetBranch("LHEPdfWeight", LHEPdfWeight);
+    b.SetBranch("nGenPart", nGenPart);
+    b.SetBranch("GenPart_pt", GenPart_pt);
+    b.SetBranch("GenPart_phi", GenPart_phi);
+    b.SetBranch("GenPart_eta", GenPart_eta);
+    b.SetBranch("GenPart_phi", GenPart_phi);
+    b.SetBranch("GenPart_mass", GenPart_mass);
+    b.SetBranch("GenPart_status", GenPart_status);
+    b.SetBranch("GenPart_pdgId", GenPart_pdgId);
+    b.SetBranch("nGenJet", nGenJet);
+    b.SetBranch("GenJet_pt", GenJet_pt);
+    b.SetBranch("GenJet_phi", GenJet_phi);
+    b.SetBranch("GenJet_eta", GenJet_eta);
+    b.SetBranch("GenJet_phi", GenJet_phi);
+    b.SetBranch("GenJet_mass", GenJet_mass);
+    b.SetBranch("GenMET_pt", GenMET_pt);
+    b.SetBranch("GenMET_phi", GenMET_phi);
 }
 
 void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) { 
     weight = 1;
-    b_nGenPart->GetEntry(entry);
-    b_GenMET_pt->GetEntry(entry);
-    b_GenMET_phi->GetEntry(entry);
-    b_GenPart_mass->GetEntry(entry);
-    b_GenPart_pt->GetEntry(entry);
-    b_GenPart_eta->GetEntry(entry);
-    b_GenPart_phi->GetEntry(entry);
-    b_GenPart_pdgId->GetEntry(entry);
-    b_GenPart_status->GetEntry(entry);
-
-    b_nGenJet->GetEntry(entry);
-    b_GenJet_pt->GetEntry(entry);
-    b_GenJet_eta->GetEntry(entry);
-    b_GenJet_phi->GetEntry(entry);
-    b_GenJet_mass->GetEntry(entry);
+    b.SetEntry(entry);
 
     if (nGenPart > N_KEEP_GEN_) {
         std::string message = "Found more Gen particles than max read number.\n    Found ";
@@ -91,14 +88,17 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
     std::sort(leptons.begin(), leptons.end(), 
         [](const reco::GenParticle& a, const reco::GenParticle& b) { return a.pt() > b.pt(); });
 
+    ht = 0;
     for (size_t i = 0; i < nGenJet; i++) {
         LorentzVector jet;
         jet.SetPt(GenJet_pt[i]);
         jet.SetEta(GenJet_eta[i]);
         jet.SetPhi(GenJet_phi[i]);
         jet.SetM(GenJet_mass[i]);
-        if (jet.pt() > 30 && !helpers::overlapsCollection(jet, leptons, 0.4, nLeptons_))
+        if (jet.pt() > 30 && !helpers::overlapsCollection(jet, leptons, 0.4, nLeptons_)) {
+            ht += jet.pt();
             jets.push_back(jet);
+        }
     } // No need to sort jets, they're already pt sorted
 
     genMet.SetPt(GenMET_pt);
@@ -107,12 +107,24 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
     genMet.SetEta(0.);
 
     SetComposite();
-    b_genWeight->GetEntry(entry);
     weight = genWeight;
+    if (doMC2H_)
+        buildHessian2MCSet();
+}
+
+void NanoGenSelectorBase::buildHessian2MCSet() {
+    double pdfWeights[N_LHEPDF_WEIGHTS_];
+    for (size_t i = 0; i < N_LHEPDF_WEIGHTS_; i++) {
+        pdfWeights[i] = LHEPdfWeight[i];
+    }
+    pdfweightshelper_.DoMC2Hessian(1., const_cast<const double*>(pdfWeights), LHEHessianPdfWeight);
 }
 
 void NanoGenSelectorBase::SetupNewDirectory() {
     SelectorBase::SetupNewDirectory();
+    AddObject<TH1D>(mcPdfWeights_, "MCweights", "MC pdf weights", 200, 0, 2);
+    AddObject<TH1D>(hesPdfWeights_, "Hesweights", "Hessian pdf weights", 200, 0, 2);
+    AddObject<TH1D>(scaleWeights_, "scaleweights", "Scale weights", 200, 0, 2);
 
     InitializeHistogramsFromConfig();
 }

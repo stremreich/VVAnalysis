@@ -1,0 +1,30 @@
+imax 1  number of channels
+jmax 3  number of processes - 1
+kmax ${nuisances} number of nuisance parameters (sources of systematical uncertainties)
+------------
+
+shapes Wmv          * ${output_file} wmv_jetbinned_nlo/${fit_variable}_$$CHANNEL wmv_jetbinned_nlo/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes ewk          * ${output_file} ewk/${fit_variable}_$$CHANNEL ewk/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes top          * ${output_file} top/${fit_variable}_$$CHANNEL top/${fit_variable}_$$SYSTEMATIC_$$CHANNEL
+shapes nonprompt    * ${output_file} nonprompt/${fit_variable}_Fakes_$$CHANNEL  nonprompt/${fit_variable}_Fakes_$$SYSTEMATIC_$$CHANNEL
+shapes data_obs     * ${output_file} data/${fit_variable}_$$CHANNEL 
+
+bin           m
+observation   ${data} 
+
+------------
+bin                             m                   m               m               m                              
+process                         nonprompt           ewk             top             Wmv
+process                         -1                  1               2               -2
+rate                            ${nonprompt}        ${ewk}          ${top}          ${wmv_jetbinned_nlo}
+------------                                                                                                       
+lumi2016_13TeV          lnN     -                   1.017           1.017           1.017                          
+CMS_norm_nonprompt      lnN     1.1                 -               -               -                              
+CMS_eff_MCsubt_m        shape   -                   1               1               1
+CMS_modeling_fsr        shape   -                   1               1               1
+CMS_eff_stat_m          shape   -                   1               1               1
+CMS_eff_background_m    shape   -                   1               1               1
+CMS_eff_tagPt_m         shape   -                   1               1               1
+norm_top                lnN     -                   -               1.1             -
+norm_ewk                lnN     -                   1.1             -               -
+                                                                          
