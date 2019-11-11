@@ -1,7 +1,9 @@
+import numpy
 import array
 import ROOT
 import logging
 import math
+import numpy
 
 def getDifference(fOut, name, dir1, dir2, ratioFunc=None):
     differences = ROOT.TList()
@@ -133,13 +135,23 @@ def getLHEWeightHists(init2D_hist, entries, name, variation_name, rebin=None):
     return hists, hist_name
 
 def getMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
-    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdfMC", rebin)
     if central == -1:
         upaction = lambda x: x[int(0.84*len(entries))] 
         downaction = lambda x: x[int(0.16*len(entries))] 
     else:
         upaction = lambda x : x[central]*(1+getPDFPercentVariation(x))
         downaction = lambda x: x[central]*(1-getPDFPercentVariation(x))
+
+    return getVariationHists(hists, name, hist_name, 
+            upaction, downaction, central
+    )
+
+# Calculate standard deviation per bin
+def getSymmMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdfMC", rebin)
+    upaction = lambda x: numpy.mean(x[1:]) + numpy.std(x[1:], ddof=1)
+    downaction = lambda x: numpy.mean(x[1:]) - numpy.std(x[1:], ddof=1)
 
     return getVariationHists(hists, name, hist_name, 
             upaction, downaction, central
@@ -158,13 +170,13 @@ def getAllSymmetricHessianVariationHists(init2D_hist, entries, name, rebin=None,
     return variationSet
 
 def getHessianPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
-    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf", rebin)
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdfHes", rebin)
     #centralIndex = central if central != -1 else int(len(entries)/2)
     sumsq = lambda x: math.sqrt(sum([0 if y < 0.01 else ((x[central] - y)**2) for y in x]))
     upaction = lambda x: x[central] + sumsq(x) 
     downaction = lambda x: x[central] - sumsq(x) 
     return getVariationHists(hists, name, hist_name, 
-            upaction, downaction, central, #downaction, central
+            upaction, downaction, central, 
     )
 
 def getPDFPercentVariation(values):
@@ -305,18 +317,24 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
         # For aQGC, the different plot groups should already be in their own files
         if "aqgc" in directory:
             directory = name
+        
+        # Support for negative cross section processes (for nonprompt)
+        xseclookup = directory if directory in members.keys() or "-" in directory[0] else directory.split("__")[0]
+        directory = directory.replace("-", "")
         if not hist_file.Get(directory):
             logging.warning("Skipping invalid filename %s" % directory)
             continue
         if hists == []:
             hists = [i.GetName() for i in hist_file.Get(directory).GetListOfKeys()]
         sumweights = 0
-        if "data" not in directory.lower() and "nonprompt" not in directory.lower():
+        isData = "data" in directory.lower() or "nonprompt" in directory.lower()
+        if not isData:
             sumweights_hist = hist_file.Get("/".join([directory, "sumweights"]))
             if not sumweights_hist:
-                raise RuntimeError("Failed to find sumWeights for dataset %s" % directory)
-            sumweights = sumweights_hist.Integral(1, sumweights_hist.GetNbinsX()+2)
-            sumweights_hist.Delete()
+                logging.warning("Failed to find sumWeights for dataset %s" % directory)
+            else:
+                sumweights = sumweights_hist.Integral(1, sumweights_hist.GetNbinsX()+2)
+                sumweights_hist.Delete()
         for histname in hists:
             if histname == "sumweights": continue
             tmphist = hist_file.Get("/".join([directory, histname]))
@@ -327,9 +345,12 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
             tmphist.Delete()
             if hist:
                 sumhist = composite.FindObject(hist.GetName())
+                xsec = members[xseclookup]
                 if sumweights:
-                    xsec = members[directory if directory in members.keys() else directory.split("__")[0]]
                     hist.Scale(xsec*1000*lumi/sumweights)
+                elif not isData:
+                    hist.Scale(1000*lumi*numpy.sign(xsec))
+                    logging.warning("No sumWeights found for dataset %s, scaling only by lumi." % directory)
                 addOverflowAndUnderflow(hist, underflow, overflow)
             else:
                 raise RuntimeError("hist %s was not produced for "

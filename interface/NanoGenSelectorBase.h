@@ -17,9 +17,11 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "Analysis/VVAnalysis/interface/helpers.h"
 #include "Analysis/VVAnalysis/interface/BranchManager.h"
+#include "PhysicsTools/HepMCCandAlgos/interface/PDFWeightsHelper.h"
 
 class NanoGenSelectorBase : public SelectorBase {
 public :
+    PDFWeightsHelper pdfweightshelper_;
     // Derived values
     reco::GenParticleCollection leptons;
     reco::GenParticleCollection neutrinos;
@@ -31,7 +33,14 @@ public :
     static const unsigned int N_KEEP_JET_ = 30;
     static const unsigned int N_LHESCALE_WEIGHTS_ = 10;
     static const unsigned int N_LHEPDF_WEIGHTS_ = 100;
+    static const unsigned int N_LHEPDFAS_WEIGHTS_ = 102;
+    static const unsigned int N_MC2HESSIAN_WEIGHTS_ = 60;
     float weight;
+    bool doMC2H_ = false;
+
+    TH1D* mcPdfWeights_;
+    TH1D* hesPdfWeights_;
+    TH1D* scaleWeights_;
     
     // Values read from file
     Float_t genWeight;
@@ -39,7 +48,8 @@ public :
     UInt_t nLHEScaleWeight;
     UInt_t nLHEPdfWeight;
     Float_t LHEScaleWeight[N_LHESCALE_WEIGHTS_];
-    Float_t LHEPdfWeight[N_LHEPDF_WEIGHTS_];
+    Float_t LHEPdfWeight[N_LHEPDFAS_WEIGHTS_];
+    double LHEHessianPdfWeight[N_MC2HESSIAN_WEIGHTS_];
     UInt_t nGenPart;
     Float_t GenPart_pt[N_KEEP_GEN_];
     Float_t GenPart_eta[N_KEEP_GEN_];
@@ -72,6 +82,7 @@ protected:
     void LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) override;
     virtual void SetComposite() {}
     bool overlapsCollection(const LorentzVector& cand, reco::GenParticleCollection& collection, const float deltaRCut, size_t maxCompare);
+    void buildHessian2MCSet();
 };
 
 #endif

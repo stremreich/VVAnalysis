@@ -1,4 +1,5 @@
 #include "Analysis/VVAnalysis/interface/NanoGenSelectorBase.h"
+#include "PhysicsTools/HepMCCandAlgos/interface/PDFWeightsHelper.h"
 #include "Analysis/VVAnalysis/interface/helpers.h"
 #include <TStyle.h>
 #include <regex>
@@ -7,6 +8,11 @@ void NanoGenSelectorBase::Init(TTree *tree)
 {
     b.SetTree(tree);
     SelectorBase::Init(tree);
+    edm::FileInPath mc2hessianCSV("PhysicsTools/HepMCCandAlgos/data/NNPDF30_lo_as_0130_hessian_60.csv");
+    doMC2H_ = name_.find("cp5") == std::string::npos;
+    std::cout << "INFO: Convert MC to Hessian is " << doMC2H_ << std::endl;
+    if (doMC2H_)
+        pdfweightshelper_.Init(N_LHEPDF_WEIGHTS_, N_MC2HESSIAN_WEIGHTS_, mc2hessianCSV);
 }
 
 void NanoGenSelectorBase::SetBranchesNanoAOD() {
@@ -102,10 +108,23 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
 
     SetComposite();
     weight = genWeight;
+    if (doMC2H_)
+        buildHessian2MCSet();
+}
+
+void NanoGenSelectorBase::buildHessian2MCSet() {
+    double pdfWeights[N_LHEPDF_WEIGHTS_];
+    for (size_t i = 0; i < N_LHEPDF_WEIGHTS_; i++) {
+        pdfWeights[i] = LHEPdfWeight[i];
+    }
+    pdfweightshelper_.DoMC2Hessian(1., const_cast<const double*>(pdfWeights), LHEHessianPdfWeight);
 }
 
 void NanoGenSelectorBase::SetupNewDirectory() {
     SelectorBase::SetupNewDirectory();
+    AddObject<TH1D>(mcPdfWeights_, "MCweights", "MC pdf weights", 200, 0, 2);
+    AddObject<TH1D>(hesPdfWeights_, "Hesweights", "Hessian pdf weights", 200, 0, 2);
+    AddObject<TH1D>(scaleWeights_, "scaleweights", "Scale weights", 200, 0, 2);
 
     InitializeHistogramsFromConfig();
 }

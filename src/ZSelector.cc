@@ -8,8 +8,8 @@ void ZSelector::Init(TTree *tree)
     // Add CutFlow for Unknown to understand when channels aren't categorized
     histMap1D_["CutFlow_Unknown"] = {};
     hists1D_ = {"CutFlow", "ZMass", "ZEta", "yZ", "ZPt", "ptl1", "etal1", "ptl2", "etal2",
-        "ptj1", "ptj2", "ptj3", "etaj1", "etaj2", "etaj3", "phij1", "phij2", "phij3", "nJets",
-        "MET",};
+		"ptj1", "ptj2", "ptj3", "etaj1", "etaj2", "etaj3", "phij1", "phij2", "phij3", "nJets",
+		"MET",};
 
     b.SetTree(tree);
     SelectorBase::Init(tree);
@@ -163,7 +163,7 @@ void ZSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::s
         channel_ = mm;
         channelName_ = "mm";
         if (!(Muon_mediumId[0] && Muon_pfRelIso04_all[0] < 0.15
-                    && Muon_mediumId[1] && Muon_pfRelIso04_all[1] < 0.15)) {
+	      && Muon_mediumId[1] && Muon_pfRelIso04_all[1] < 0.15)) {
             for (size_t i = 0; i < nMuon; i++) {
                 if (Muon_mediumId[i])
                     goodIndices.push_back(i);
@@ -291,27 +291,27 @@ void ZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::stri
 
 void ZSelector::ApplyScaleFactors() {
     if (channel_ == ee) {
-        if (eIdSF_ != nullptr) {
-            weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
-        if (eGsfSF_ != nullptr) {
-            weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
+	if (eIdSF_ != nullptr) {
+	    weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+	    weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+	}
+	if (eGsfSF_ != nullptr) {
+	    weight *= eGsfSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+	    weight *= eGsfSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+	}
     }
     else if (channel_ == mm) {
-        if (mIdSF_ != nullptr) {
-            weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
-        if (mIsoSF_ != nullptr) {
-            weight *= mIsoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
-            weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
-        }
+	if (mIdSF_ != nullptr) {
+	    weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+	    weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+	}
+	if (mIsoSF_ != nullptr) {
+	    weight *= mIsoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+	    weight *= mIsoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+	}
     }
     if (pileupSF_ != nullptr) {
-        weight *= pileupSF_->Evaluate1D(numPU);
+	weight *= pileupSF_->Evaluate1D(numPU);
     }
 }
 
@@ -344,6 +344,7 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
     int step = 0;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
+
     if (channel_ != mm && channel_ != ee) 
         return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
@@ -353,17 +354,17 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (channel_ == ee && (std::abs(l1Eta) > 2.4 || std::abs(l2Eta) > 2.4 ))
-        return;
+	return;
     else if (channel_ == mm && (std::abs(l1Eta) > 2.5 || std::abs(l2Eta) > 2.5 ))
-        return;
+	return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (l1Pt < 25 || l2Pt < 25)
-        return;
+	return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (ZMass > 106.1876 || ZMass < 76.1876)
-        return;
+	return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     //if (MET > 25)
@@ -371,7 +372,7 @@ void ZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string
     //SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     if (!tightZLeptons())
-        return;
+	return;
     SafeHistFill(histMap1D_, getHistName("CutFlow", variation.second), step++, weight);
 
     SafeHistFill(histMap1D_, getHistName("ZMass", variation.second), ZMass, weight);

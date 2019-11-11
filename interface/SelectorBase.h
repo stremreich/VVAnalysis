@@ -16,8 +16,7 @@
 #include <vector>
 #include "Analysis/VVAnalysis/interface/ScaleFactor.h"
 
-//Dylan's macro, pls ignore
-//#define PAIR(NAME_) {#NAME_, NAME_}
+#define PAIR(NAME_) {#NAME_, NAME_}
 
 class SelectorBase : public TSelector {
  public :
@@ -52,6 +51,7 @@ class SelectorBase : public TSelector {
     enum Selection {
         tightleptons,                 ZZGenFiducial,
         Wselection,                   Zselection,
+        WselectionAntiIso,                   
         Wselection_Full,              FakeRateSelectionLoose,
         FakeRateSelectionTight,       VBSselection_Loose,
         VBSselection_NoZeppenfeld,    VBSselection_Tight,
@@ -62,6 +62,7 @@ class SelectorBase : public TSelector {
         Inclusive2Jet,                Inclusive2Jet_Full,
         TightWithLooseVeto,           FourTopPlots,
         FourTopCutBasedEl,            FourTopMVAEl,
+        BEfficiency,                  test,
     };
 
     enum Year {
@@ -78,7 +79,18 @@ class SelectorBase : public TSelector {
         electronEfficiencyUp,      electronEfficiencyDown,
         electronScaleUp,           electronScaleDown,
         pileupUp,                  pileupDown,
+        muonEfficiencyMCSubtractUp, muonEfficiencyMCSubtractDown, 
+        modelingFsrUp,             modelingFsrDown, 
+        muonEfficiencyBackgroundUp, muonEfficiencyBackgroundDown, 
+        muonEfficiencyTagPtUp,     muonEfficiencyTagPtDown, 
+        muonEfficiencyStatUp,      muonEfficiencyStatDown, 
     }; 
+
+     typedef std::map<std::string, TH1D*> HistMap1D;
+     typedef std::map<std::string, TH2D*> HistMap2D;
+     typedef std::map<std::string, TH3D*> HistMap3D;
+     typedef std::map<Systematic, std::string> SystMap;
+     typedef std::pair<Systematic, std::string> SystPair;
 
     /****************************/
     /*  __  __                  */
@@ -93,6 +105,7 @@ class SelectorBase : public TSelector {
 	{"tightleptons", tightleptons},
         {"ZZGenFiducial", ZZGenFiducial},
         {"Wselection", Wselection},
+        {"WselectionAntiIso", WselectionAntiIso},
         {"Zselection", Zselection},
         {"Wselection_Full", Wselection_Full},
         {"FakeRateSelectionLoose", FakeRateSelectionLoose},
@@ -134,14 +147,15 @@ class SelectorBase : public TSelector {
 
 
     std::vector<std::string> allChannels_ = {};
-    std::map<Systematic, std::string> variations_ = {{Central, ""}};
-    std::map<Systematic, std::string> systematics_ = {};
+    SystMap variations_ = {{Central, ""}};
+    SystMap systematics_ = {};
 
     TList *currentHistDir_{nullptr};
     TH1D* sumWeightsHist_;
 
+    std::vector<std::string> subprocesses_;
     bool doSystematics_;
-    bool addSumweights_;
+    bool isNonprompt_ = false;
     bool applyScaleFactors_;
     bool applyPrefiringCorr_;
     
@@ -170,6 +184,31 @@ class SelectorBase : public TSelector {
     // Derived classes override (and call) this to register new objects
     // With AddObject<Type>(localPtr, ...);
     virtual void SetupNewDirectory();
+    void    SetBranches();
+    void    LoadBranches(Long64_t entry, SystPair variation);
+    virtual void    SetBranchesNanoAOD() {
+        throw std::domain_error("NanoAOD ntuples not supported for selector!");
+    }
+    virtual void    LoadBranchesNanoAOD(Long64_t entry, SystPair variation) {
+        throw std::domain_error("NanoAOD ntuples not supported for selector!");
+    }
+    virtual void    SetBranchesUWVV() {
+        throw std::domain_error("UWVV ntuples not supported for selector!");
+    }
+    virtual void    LoadBranchesUWVV(Long64_t entry, SystPair variation) { 
+        throw std::domain_error("UWVV ntuples not supported for selector!");
+    }
+    virtual void    SetBranchesBacon() {
+        throw std::domain_error("Bacon ntuples not supported for selector!");
+    }
+    virtual void    LoadBranchesBacon(Long64_t entry, SystPair variation) {
+        throw std::domain_error("Bacon ntuples not supported for selector!");
+    }
+    virtual void    FillHistograms(Long64_t entry, SystPair variation) { }
+    void addSubprocesses(std::vector<std::string> processes);
+    void makeOutputDirs();
+    void setSubprocesses(std::string process);
+
 
 
     template<typename T, typename... Args>
@@ -186,39 +225,18 @@ class SelectorBase : public TSelector {
 
  protected:
     // Maps to the histogram pointers themselves
-    std::map<std::string, TH1D*> histMap1D_ = {};
-    //TODO change the name to map and don't break things
-    std::map<std::string, TH2D*> hists2D_ = {};
-    std::map<std::string, TH2D*> weighthistMap1D_ = {};
-    std::map<std::string, TH3D*> weighthistMap2D_ {};
+    HistMap1D histMap1D_ = {};
+    std::map<std::string, HistMap1D> subprocessHistMaps1D_ = {};
+    HistMap2D histMap2D_ = {};
+    HistMap2D weighthistMap1D_ = {};
+    HistMap3D weighthistMap2D_ {};
 
     std::vector<std::string> hists1D_ = {};
+    std::vector<std::string> hists2D_ = {};
     std::vector<std::string> weighthists1D_ = {};
     // The histograms for which you also want systematic variations
     std::vector<std::string> systHists_ = {};
     std::vector<std::string> systHists2D_ = {};
-
-    void    SetBranches();
-    void    LoadBranches(Long64_t entry, std::pair<Systematic, std::string> variation);
-    virtual void    SetBranchesNanoAOD() {
-        throw std::domain_error("NanoAOD ntuples not supported for selector!");
-    }
-    virtual void    LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) {
-        throw std::domain_error("NanoAOD ntuples not supported for selector!");
-    }
-    virtual void    SetBranchesUWVV() {
-        throw std::domain_error("UWVV ntuples not supported for selector!");
-    }
-    virtual void    LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) { 
-        throw std::domain_error("UWVV ntuples not supported for selector!");
-    }
-    virtual void    SetBranchesBacon() {
-        throw std::domain_error("Bacon ntuples not supported for selector!");
-    }
-    virtual void    LoadBranchesBacon(Long64_t entry, std::pair<Systematic, std::string> variation) {
-        throw std::domain_error("Bacon ntuples not supported for selector!");
-    }
-    virtual void    FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { }
 
     // Variables
     std::string name_ = "Unnamed";
@@ -252,11 +270,10 @@ class SelectorBase : public TSelector {
     template<typename T, typename... Args>
 	void HistFullFill(std::map<std::string, T*> container,
 			  std::string histname, std::string var, Args... args) {
-	SafeHistFill(container, getHistName(histname, var), args...);
-	SafeHistFill(container, getHistName(histname, var, "all"), args...);
+        SafeHistFill(container, getHistName(histname, var), args...);
+        SafeHistFill(container, getHistName(histname, var, "all"), args...);
     }
   
-    
 };
 
 #endif

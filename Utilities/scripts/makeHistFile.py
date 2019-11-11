@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import ROOT
+import subprocess
 from python import SelectorTools
 from python import UserInput
 from python import OutputTools
@@ -9,16 +10,18 @@ import os
 import logging
 import sys
 
-logging.basicConfig(level=logging.DEBUG)
-
 def getComLineArgs():
     parser = UserInput.getDefaultParser()
     parser.add_argument("--lumi", "-l", type=float,
         default=35.87, help="luminosity value (in fb-1)")
+    parser.add_argument("--maxEntries", "-m", type=int,
+        default=-1, help="Max entries to process")
     parser.add_argument("--output_file", "-o", type=str,
         default="test.root", help="Output file name")
     parser.add_argument("--test", action='store_true',
         help="Run test job (no background estimate)")
+    parser.add_argument("--debug", action='store_true',
+        help="Print verbose info")
     ntuple_group = parser.add_mutually_exclusive_group(required=False)
     ntuple_group.add_argument("--uwvv", action='store_true',
         help="Use UWVV format ntuples in stead of NanoAOD")
@@ -30,8 +33,17 @@ def getComLineArgs():
         help="Number of cores to use (parallelize by dataset)")
     parser.add_argument("--input_tier", type=str,
         default="", help="Selection stage of input files")
+    parser.add_argument("--with_background", action='store_true',
+                    help="Don't run background selector")
+    parser.add_argument("--background_input", type=str, default="",
+                        required=False, help="Selection to use for background selector")
+    parser.add_argument("--regions", type=str,
+        default="", help="Define subregions for dataset, format 'dataset=region1,region2,...;'")
     parser.add_argument("--year", type=str,
         default="default", help="Year of Analysis")
+    parser.add_argument('-db', "--debug_level", type=str,
+        default="INFO", help="Debug for logger (default is info) [INFO, DEBUG, WARNING]")
+    parser.add_argument("--scaleFactor", "-sf", action='store_true', help="Apply Scale Factors")
     parser.add_argument("-c", "--channels", 
                         type=lambda x : [i.strip() for i in x.split(',')],
                         default=["eee","eem","emm","mmm"], help="List of channels"
@@ -52,73 +64,53 @@ def makeHistFile(args):
             "AnalysisDatasetManager", "Utilities/python"]))
 
     tmpFileName = args['output_file']
-    fOut = ROOT.TFile(tmpFileName, "recreate")
+    toCombine = args['with_background'] 
+    fOut = ROOT.TFile(tmpFileName if not toCombine else tmpFileName.replace(".root", "sel.root"), "recreate")
+    combinedNames = [fOut.GetName()]
 
     addScaleFacs = False
     if args['analysis'] == "WZxsec2016" or args['analysis'] == 'Zstudy_2016':
         addScaleFacs = True
     addScaleFacs=False
+    fr_inputs = []
     sf_inputs = [ROOT.TParameter(bool)("applyScaleFacs", False)]
 
     if addScaleFacs:
         fScales = ROOT.TFile('data/scaleFactors.root')
         mCBTightFakeRate = fScales.Get("mCBTightFakeRate")
         eCBTightFakeRate = fScales.Get("eCBTightFakeRate")
-        useSvenjasFRs = False
-        useJakobsFRs = False
-        if useSvenjasFRs:
-            mCBTightFakeRate = fScales.Get("mCBTightFakeRate_Svenja")
-            eCBTightFakeRate = fScales.Get("eCBTightFakeRate_Svenja")
-        elif useJakobsFRs:
-            mCBTightFakeRate = fScales.Get("mCBTightFakeRate_Jakob")
-            eCBTightFakeRate = fScales.Get("eCBTightFakeRate_Jakob")
-        # For medium muons
-        #mCBMedFakeRate.SetName("fakeRate_allMu")
-        if mCBTightFakeRate:
-            mCBTightFakeRate.SetName("fakeRate_allMu")
-        if eCBTightFakeRate:
-            eCBTightFakeRate.SetName("fakeRate_allE")
 
         muonIsoSF = fScales.Get('muonIsoSF')
-        muonIdSF = fScales.Get('muonTightIdSF')
+        muonIdSF = fScales.Get('muonMediumIdSF')
         electronTightIdSF = fScales.Get('electronTightIdSF')
         electronGsfSF = fScales.Get('electronGsfSF')
         pileupSF = fScales.Get('pileupSF')
-
+        
         #fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_JetHT_Run2016B-H.root')
-        fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_SingleMuon_Run2016B-H.root')
-        prefireEff = fPrefireEfficiency.Get('prefireEfficiencyMap')
+        #fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_SingleMuon_Run2016B-H.root')
+        # prefireEff = fPrefireEfficiency.Get('prefireEfficiencyMap')
 
-        fr_inputs = [eCBTightFakeRate, mCBTightFakeRate,]
-        sf_inputs = [electronTightIdSF, electronGsfSF, muonIsoSF, muonIdSF, pileupSF, prefireEff]
+        bScales = ROOT.TFile('data/BEff.root')
+        bScales.SetName("BScales")
+        
+#        fr_inputs = [eCBTightFakeRate, mCBTightFakeRate,]
+        fr_inputs = []
+        sf_inputs = [electronTightIdSF, electronGsfSF, muonIsoSF, muonIdSF, pileupSF, bScales]
         sf_inputs.append(ROOT.TParameter(bool)("applyScaleFacs", True))
+    else:
+        sf_inputs = [ROOT.TParameter(bool)("applyScaleFacs", args['scaleFactor'])]    
 
     if args['input_tier'] == '':
         args['input_tier'] = args['selection']
     selection = args['selection'].split("_")[0]
-
-    if selection == "Inclusive2Jet":
-        selection = "Wselection"
-        print "Info: Using Wselection for hist defintions"
     analysis = "/".join([args['analysis'], selection])
     hists, hist_inputs = UserInput.getHistInfo(analysis, args['hist_names'], args['noHistConfig'])
-
-    #if "WZxsec2016" in analysis and "FakeRate" not in args['output_selection'] and not args['test']:
-    #    background = SelectorTools.applySelector(["WZxsec2016data"] +
-    #        ConfigureJobs.getListOfEWKFilenames() + ["wz3lnu-powheg"] +
-    #        ConfigureJobs.getListOfNonpromptFilenames(), 
-    #            "WZBackgroundSelector", args['selection'], fOut, 
-    #            extra_inputs=sf_inputs+fr_inputs+hist_inputs+tselection, 
-    #            channels=channels,
-    #            addSumweights=False,
-    #            nanoAOD=nanoAOD,
-    #            parallel=args['parallel'],
-    #            )
 
     selector = SelectorTools.SelectorDriver(args['analysis'], args['selection'], args['input_tier'], args['year'])
     selector.setNumCores(args['numCores'])
     selector.setOutputfile(fOut.GetName())
     selector.setInputs(sf_inputs+hist_inputs)
+    selector.setMaxEntries(args['maxEntries'])
 
     if args['uwvv']:
         selector.setNtupeType("UWVV")
@@ -134,36 +126,44 @@ def makeHistFile(args):
         selector.setDatasets(args['filenames'])
     else:
         selector.setFileList(*args['inputs_from_file'])
+
+    if args['regions']:
+        selector.setDatasetRegions(args['regions'])
+    elif args['analysis'] == 'LowPileupW':
+        regions = ["GenPtW_%i_%i" % (i, i+10) for i in range(0, 100, 10)]
+        regions += ["GenPtW_100"]
+        selector.setDatasetRegions("wmv_0j_nlo=" + ','.join(regions))
+        selector.setDatasetRegions("wmv_1j_nlo=" + ','.join(regions))
+        selector.setDatasetRegions("wmv_2j_nlo=" + ','.join(regions))
+
     mc = selector.applySelector()
 
-    if args['test']:
-        fOut.Close()
-        sys.exit(0)
+    if args['with_background']:
+        # TODO: Should also have an option to specify input file list for background
+        if args['background_input'] and args['filenames']:
+            selector.setInputTier(args['background_input'])
+            selector.setDatasets(args['filenames'])
+        selector.isBackground()
+        selector.setAddSumWeights(False)
+        selector.unsetDatasetRegions()
+        selector.setInputs(sf_inputs+hist_inputs+fr_inputs)
+        output_name = tmpFileName.replace(".root", "bkgd.root")
+        selector.setOutputfile(output_name)
+        bkgd = selector.applySelector()
+        combinedNames.append(output_name)
+    selector.outputFile().Close()
 
-    alldata = HistTools.makeCompositeHists(fOut,"AllData", 
-        ConfigureJobs.getListOfFilesWithXSec(["WZxsec2016data"], manager_path), args['lumi'],
-        underflow=False, overflow=False)
-    OutputTools.writeOutputListItem(alldata, fOut)
-    alldata.Delete()
-
-    nonpromptmc = HistTools.makeCompositeHists(fOut, "NonpromptMC", ConfigureJobs.getListOfFilesWithXSec( 
-        ConfigureJobs.getListOfNonpromptFilenames(), manager_path), args['lumi'],
-        underflow=False, overflow=False)
-    nonpromptmc.Delete()
-
-    OutputTools.writeOutputListItem(nonpromptmc, fOut)
-    ewkmc = HistTools.makeCompositeHists(fOut,"AllEWK", ConfigureJobs.getListOfFilesWithXSec(
-        ConfigureJobs.getListOfEWKFilenames(), manager_path), args['lumi'],
-        underflow=False, overflow=False)
-    OutputTools.writeOutputListItem(ewkmc, fOut)
-    ewkmc.Delete()
-
-    ewkcorr = HistTools.getDifference(fOut, "DataEWKCorrected", "AllData", "AllEWK")
-    OutputTools.writeOutputListItem(ewkcorr, fOut)
-    ewkcorr.Delete()
+    if len(combinedNames) > 1:
+        rval = subprocess.call(["hadd", "-f", tmpFileName] + combinedNames)
+        if rval == 0:
+            map(os.remove, combinedNames)
+    fOut = ROOT.TFile(tmpFileName, "update")
+    OutputTools.addMetaInfo(fOut)
 
 def main():
     args = getComLineArgs()
+    logging.basicConfig(level=(logging.DEBUG if args['debug'] else logging.WARNING))
+
     makeHistFile(args)
     exit(0)
 

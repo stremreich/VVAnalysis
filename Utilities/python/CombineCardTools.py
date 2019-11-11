@@ -181,6 +181,8 @@ class CombineCardTools(object):
         for chan in self.channels:
             histName = "_".join([fitVariable, chan]) if chan != "all" else fitVariable
             hist = group.FindObject(histName)
+            if not hist:
+                raise RuntimeError("Failed to produce hist %s for process %s" % (histName, processName))
             #TODO: Make optional
             if "data" not in processName.lower():
                 HistTools.removeZeros(hist)
@@ -202,7 +204,7 @@ class CombineCardTools(object):
                 scaleHists = HistTools.getScaleHists(weightHist, processName, self.rebin, 
                     entries=theoryVars['scale']['entries'], 
                     central=(theoryVars['scale']['central'] if 'scale' in theoryVars else -1))
-                pdfFunction = getattr(HistTools, "get%sPDFVariationHists" % ("Hessian" if "hessian" in theoryVars['pdf']['combine'] else "MC"))
+                pdfFunction = getattr(HistTools, "get%sPDFVariationHists" % ("Hessian" if "hessian" in theoryVars['pdf']['combine'] else "SymmMC"))
                 pdfHists = pdfFunction(weightHist, theoryVars['pdf']['entries'], processName, 
                         self.rebin, central=(theoryVars['pdf']['central'] if 'pdf' in theoryVars else -1))
                 if expandedTheory:
@@ -211,7 +213,6 @@ class CombineCardTools(object):
                         central=(theoryVars['scale']['central'] if 'scale' in theoryVars else -1))
                     scaleHists.extend(expandedScaleHists)
                     if "hessian" in theoryVars['pdf']['combine']:
-                        pdfFunction = getattr(HistTools, "get%sPDFVariationHists" % ("Hessian" if "hessian" in theoryVars['pdf']['combine'] else "MC"))
                         allPdfHists = HistTools.getAllSymmetricHessianVariationHists(weightHist, theoryVars['pdf']['entries'], processName, 
                             self.rebin, central=(theoryVars['pdf']['central'] if 'pdf' in theoryVars else -1))
                         pdfHists.extend(allPdfHists)
@@ -246,7 +247,10 @@ class CombineCardTools(object):
         OutputTools.writeOutputListItem(processHists, self.outputFile)
         processHists.Delete()
         
-    def writeCards(self, chan, nuisances, year="", extraArgs={}):
+    def writeMetaInfo(self):
+        OutputTools.addMetaInfo(self.outputFile)
+
+    def writeCards(self, chan, nuisances, label="", outlabel="", extraArgs={}):
         chan_dict = self.yields[chan].copy()
         chan_dict.update(extraArgs)
         for key, value in extraArgs.iteritems():
@@ -255,10 +259,10 @@ class CombineCardTools(object):
         chan_dict["nuisances"] = nuisances
         chan_dict["fit_variable"] = self.fitVariable
         chan_dict["output_file"] = self.outputFile.GetName()
-        outputCard = self.templateName.split("/")[-1].format(channel=chan, year=year) 
-        outputCard = outputCard.replace("template", "")
+        outputCard = self.templateName.split("/")[-1].format(channel=chan, label=label) 
+        outputCard = outputCard.replace("template", outlabel)
         outputCard = outputCard.replace("__", "_")
-        ConfigureJobs.fillTemplatedFile(self.templateName.format(channel=chan, year=year),
+        ConfigureJobs.fillTemplatedFile(self.templateName.format(channel=chan, label=label),
             "/".join([self.outputFolder, outputCard]),
             chan_dict
         )

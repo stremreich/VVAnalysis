@@ -184,14 +184,19 @@ def getListOfFiles(filelist, selection, manager_path="", analysis=""):
     if manager_path is "":
         manager_path = getManagerPath()
     data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
+    group_path = "%s/AnalysisDatasetManager/PlotGroups" % manager_path
     data_info = UserInput.readAllInfo("/".join([data_path, "data/*"]))
     mc_info = UserInput.readAllInfo("/".join([data_path, "montecarlo/*"]))
     analysis_info = UserInput.readInfo("/".join([data_path, analysis, selection])) \
         if analysis != "" else []
     valid_names = (data_info.keys() + mc_info.keys()) if not analysis_info else analysis_info.keys()
+    group_names = UserInput.readAllInfo("%s/%s.py" %(group_path, analysis)) if analysis else dict()
     names = []
     for name in filelist:
         if ".root" in name:
+            names.append(name)
+        # Allow negative contributions
+        elif name[0] == "-" :
             names.append(name)
         elif "WZxsec2016" in name:
             dataset_file = manager_path + \
@@ -206,6 +211,8 @@ def getListOfFiles(filelist, selection, manager_path="", analysis=""):
                 names += allnames
         elif "*" in name:
             names += fnmatch.filter(valid_names, name)
+        elif name in group_names:
+            names += group_names[name]['Members']
         else:
             if name.split("__")[0] not in valid_names:
                 print "%s is not a valid name" % name
@@ -241,8 +248,11 @@ def getListOfFilesWithXSec(filelist, manager_path="", selection="ntuples"):
         if "data" in file_name.lower() or "nonprompt" in file_name.lower():
             info.update({file_name : 1})
         else:
-            file_info = mc_info[file_name.split("__")[0]]
+            file_info = mc_info[file_name.split("__")[0].replace("-", "")]
             kfac = file_info["kfactor"] if "kfactor" in file_info.keys() else 1
+            # Intended to use for, e.g., nonprompt
+            if file_name[0] == "-":
+                kfac *= -1
             info.update({file_name : file_info["cross_section"]*kfac})
     return info
 
