@@ -258,12 +258,8 @@ class SelectorBase : public TSelector {
     // Maps to the histogram pointers themselves
     HistMap1D histMap1D_ = {};
     std::map<std::string, HistMap1D> subprocessHistMaps1D_ = {};
-<<<<<<< HEAD
-    HistMap2D histMap2D_ = {};
-=======
     std::vector<HistMap2D> subprocessWeightHistMaps1D_ = {};
     HistMap2D hists2D_ = {};
->>>>>>> fixHorridOptimization
     HistMap2D weighthistMap1D_ = {};
     HistMap3D weighthistMap2D_ {};
 
