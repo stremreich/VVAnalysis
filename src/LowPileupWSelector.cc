@@ -51,14 +51,14 @@ void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) {
         lep_b->GetEntry(entry);
         fReader.SetLocalEntry(entry);
         LowPileupSelector::LoadBranchesBacon(entry, variation);
-    }
-    if (*charge > 0) {
-        channel_ = mp;
-        channelName_ = "mp";
-    }
-    else {
-        channel_ = mn;
-        channelName_ = "mn";
+        if (*charge > 0) {
+            channel_ = mp;
+            channelName_ = "mp";
+        }
+        else {
+            channel_ = mn;
+            channelName_ = "mn";
+        }
     }
     if (isMC_) {
         float cenwgt = evtWeight[systematicWeightMap_[Central]];
@@ -97,13 +97,11 @@ void LowPileupWSelector::FillHistograms(Long64_t entry, SystPair variation) {
     if (subprocessHistMaps1D_.empty())
         return;
 
-    const int step = 10;
-    const int maxVal = 100;
-    int lowbin = genVPt + step/2;
-    lowbin -= lowbin % step;
+    std::vector<int> binning = {0, 13, 26, 38, 50, 62, 75, 100};
+    size_t upperIndex = std::distance(binning.begin(), std::upper_bound(binning.begin(), binning.end(), genVPt));
 
-    std::string binname = name_+"_GenPtW_"+ (lowbin >= maxVal ? std::to_string(maxVal) :
-            std::to_string(lowbin)+"_"+std::to_string(lowbin+step));
+    std::string binname = name_+"_GenPtW_"+ (upperIndex == binning.size() ? std::to_string(binning.back()) :
+            std::to_string(binning.at(upperIndex-1))+"_"+std::to_string(binning.at(upperIndex)));
 
     if (subprocessHistMaps1D_.find(binname) == subprocessHistMaps1D_.end())
         throw std::range_error("Could not find bin " + binname + " in subprocessMap!");

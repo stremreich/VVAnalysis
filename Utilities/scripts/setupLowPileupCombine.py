@@ -40,7 +40,13 @@ config_factory = ConfigHistFactory(
     "LowPileupW/NanoAOD",
 )
 
-plot_groups = ["data", "nonprompt", "ewk", "top", "wmv_0j_nlo", "wmv_1j_nlo", "wmv_2j_nlo", "wmv_jetbinned_nlo_pt0to10", "wmv_jetbinned_nlo_pt10to20", "wmv_jetbinned_nlo_pt20to30", "wmv_jetbinned_nlo_pt30to40", "wmv_jetbinned_nlo_pt40to50", "wmv_jetbinned_nlo_pt50to60", "wmv_jetbinned_nlo_pt60to70", "wmv_jetbinned_nlo_pt70to80", "wmv_jetbinned_nlo_pt80to90", "wmv_jetbinned_nlo_pt90to100", "wmv_jetbinned_nlo_pt100", "wmv_jetbinned_nlo",]
+plot_groups = ["data", "nonprompt", "ewk", "top", "wmv_jetbinned_nlo", ]
+
+ptbins = [0.0, 13.0, 26.0, 38.0, 50.0, 62.0, 75.0, 100.0]
+regions = ["pt%ito%i" % (ptbins[i], ptbins[i+1]) for i in range(len(ptbins)-1)]
+plot_groups += ["wmv_jetbinned_nlo_%s" % region for region in regions]
+plot_groups.append("wmv_jetbinned_nlo_pt100")
+
 plotGroupsMap = {name : config_factory.getPlotGroupMembers(name) for name in plot_groups}
 
 xsecs  = ConfigureJobs.getListOfFilesWithXSec([f for files in plotGroupsMap.values() for f in files])
