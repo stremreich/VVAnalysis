@@ -21,9 +21,18 @@ class SelectorDriver(object):
             "ZZGen" : "ZZGenSelector",
             "WGen" : "WGenSelector",
             "ZGen" : "ZGenSelector",
+            "TTT" : "TTTSelector",
             "ThreeLep" : "ThreeLepSelector",
+            "Eff" : "Efficiency",
+            "Efficiency" : "Efficiency",
         }
 
+        if analysis.find(":") != -1:
+            subAna = analysis.split(':')
+            self.subanalysis = subAna[1]
+            analysis = subAna[0]
+        else:
+            self.subanalysis = None
         self.analysis = analysis
         self.selection = selection
         self.input_tier = input_tier
@@ -142,19 +151,25 @@ class SelectorDriver(object):
         self.regions = {}
 
     def setDatasets(self, datalist):
-        datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier)
+        if self.subanalysis:
+            datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=self.subanalysis)
+        else:
+            datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=self.analysis)
+        
         for dataset in datasets:
             if "@" in dataset:
                 dataset, file_path = [f.strip() for f in dataset.split("@")]
             else:
                 try:
-                    file_path = ConfigureJobs.getInputFilesPath(dataset, 
-                        self.input_tier, self.analysis)
+                    if self.subanalysis:
+                        file_path = ConfigureJobs.getInputFilesPath(dataset, self.input_tier, self.subanalysis)
+                    else:
+                        file_path = ConfigureJobs.getInputFilesPath(dataset, self.input_tier, self.analysis)
                 except ValueError as e:
                     logging.warning(e)
                     continue
+
             self.datasets[dataset] = [file_path]
-        print self.datasets
 
     def applySelector(self):
         for chan in self.channels:
@@ -279,7 +294,7 @@ class SelectorDriver(object):
             filenames.extend(self.getFileNames(entry))
         for i, filename in enumerate(filenames):
             self.processFile(selector, filename, addSumweights, chan, i+1)
-
+                
     def processFile(self, selector, filename, addSumweights, chan, filenum=1):
         rtfile = ROOT.TFile.Open(filename)
         if not rtfile or not rtfile.IsOpen() or rtfile.IsZombie():

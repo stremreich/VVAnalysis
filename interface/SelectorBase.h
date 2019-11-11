@@ -16,8 +16,7 @@
 #include <vector>
 #include "Analysis/VVAnalysis/interface/ScaleFactor.h"
 
-//Dylan's macro, pls ignore
-//#define PAIR(NAME_) {#NAME_, NAME_}
+#define PAIR(NAME_) {#NAME_, NAME_}
 
 class SelectorBase : public TSelector {
  public :
@@ -63,6 +62,7 @@ class SelectorBase : public TSelector {
         Inclusive2Jet,                Inclusive2Jet_Full,
         TightWithLooseVeto,           FourTopPlots,
         FourTopCutBasedEl,            FourTopMVAEl,
+        BEfficiency,                  test,
     };
 
     enum Year {
@@ -184,37 +184,6 @@ class SelectorBase : public TSelector {
     // Derived classes override (and call) this to register new objects
     // With AddObject<Type>(localPtr, ...);
     virtual void SetupNewDirectory();
-    void addSubprocesses(std::vector<std::string> processes);
-    void makeOutputDirs();
-
-
-    template<typename T, typename... Args>
-	void AddObject(T* &ptr, Args... args) {
-	static_assert(std::is_base_of<TNamed, T>::value, "Objects must inheirit from ROOT TNamed to be streamable from PROOF sessions");
-	ptr = new T(args...);
-	ptr->SetDirectory(gROOT);
-	currentHistDir_->Add(ptr);
-	allObjects_.insert((TNamed**) &ptr);
-    };
-    
-    void UpdateDirectory();    
-    ClassDef(SelectorBase,0);
-
- protected:
-    // Maps to the histogram pointers themselves
-    HistMap1D histMap1D_ = {};
-    std::map<std::string, HistMap1D> subprocessHistMaps1D_ = {};
-    //std::vector<HistMap2D> subprocessWeightHistMaps1D_ = {};
-    HistMap2D hists2D_ = {};
-    HistMap2D weighthistMap1D_ = {};
-    HistMap3D weighthistMap2D_ {};
-
-    std::vector<std::string> hists1D_ = {};
-    std::vector<std::string> weighthists1D_ = {};
-    // The histograms for which you also want systematic variations
-    std::vector<std::string> systHists_ = {};
-    std::vector<std::string> systHists2D_ = {};
-
     void    SetBranches();
     void    LoadBranches(Long64_t entry, SystPair variation);
     virtual void    SetBranchesNanoAOD() {
@@ -236,7 +205,38 @@ class SelectorBase : public TSelector {
         throw std::domain_error("Bacon ntuples not supported for selector!");
     }
     virtual void    FillHistograms(Long64_t entry, SystPair variation) { }
+    void addSubprocesses(std::vector<std::string> processes);
+    void makeOutputDirs();
     void setSubprocesses(std::string process);
+
+
+
+    template<typename T, typename... Args>
+	void AddObject(T* &ptr, Args... args) {
+	static_assert(std::is_base_of<TNamed, T>::value, "Objects must inheirit from ROOT TNamed to be streamable from PROOF sessions");
+	ptr = new T(args...);
+	ptr->SetDirectory(gROOT);
+	currentHistDir_->Add(ptr);
+	allObjects_.insert((TNamed**) &ptr);
+    };
+    
+    void UpdateDirectory();    
+    ClassDef(SelectorBase,0);
+
+ protected:
+    // Maps to the histogram pointers themselves
+    HistMap1D histMap1D_ = {};
+    std::map<std::string, HistMap1D> subprocessHistMaps1D_ = {};
+    HistMap2D histMap2D_ = {};
+    HistMap2D weighthistMap1D_ = {};
+    HistMap3D weighthistMap2D_ {};
+
+    std::vector<std::string> hists1D_ = {};
+    std::vector<std::string> hists2D_ = {};
+    std::vector<std::string> weighthists1D_ = {};
+    // The histograms for which you also want systematic variations
+    std::vector<std::string> systHists_ = {};
+    std::vector<std::string> systHists2D_ = {};
 
     // Variables
     std::string name_ = "Unnamed";
@@ -270,11 +270,10 @@ class SelectorBase : public TSelector {
     template<typename T, typename... Args>
 	void HistFullFill(std::map<std::string, T*> container,
 			  std::string histname, std::string var, Args... args) {
-	SafeHistFill(container, getHistName(histname, var), args...);
-	SafeHistFill(container, getHistName(histname, var, "all"), args...);
+        SafeHistFill(container, getHistName(histname, var), args...);
+        SafeHistFill(container, getHistName(histname, var, "all"), args...);
     }
   
-    
 };
 
 #endif

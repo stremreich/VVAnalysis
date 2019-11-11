@@ -6,3 +6,7 @@ Utilities/Selectors/disambiguateFinalStates_*
 *_C*
 *_cc*
 *~
+*#*#
+
+*.dat
+*.out

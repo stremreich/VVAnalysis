@@ -27,7 +27,7 @@ void SelectorBase::Init(TTree *tree)
     TString option = GetOption();
 
     if (GetInputList() != nullptr) {
-        TNamed* ntupleType = (TNamed *) GetInputList()->FindObject("ntupleType");
+	TNamed* ntupleType = (TNamed *) GetInputList()->FindObject("ntupleType");
         TNamed* name = (TNamed *) GetInputList()->FindObject("name");
         TNamed* chan = (TNamed *) GetInputList()->FindObject("channel");
         TNamed* selection = (TNamed *) GetInputList()->FindObject("selection");
@@ -72,9 +72,9 @@ void SelectorBase::Init(TTree *tree)
             selectionName_ = selection->GetTitle();
         }
     }
-
+    
     if (selectionMap_.find(selectionName_) != selectionMap_.end()) {
-        selection_ = selectionMap_[selectionName_];
+	selection_ = selectionMap_[selectionName_];
     }
     else
         throw std::invalid_argument("Invalid selection!");
@@ -97,6 +97,10 @@ void SelectorBase::Init(TTree *tree)
         throw std::invalid_argument(message);
     }
 
+    // only make the directory iff class isn't being run as a slave class /////
+    TNamed* isSlaveClass = (TNamed *) GetInputList()->FindObject("isSlaveClass");
+    if(isSlaveClass != nullptr) return;
+    
     makeOutputDirs();
     SetBranches();
 }
@@ -232,22 +236,22 @@ void SelectorBase::InitializeHistogramsFromConfig() {
     for (auto && entry : *histInfo) {  
         TNamed* currentHistInfo = dynamic_cast<TNamed*>(entry);
         std::string name = currentHistInfo->GetName();
-        std::vector<std::string> histData = ReadHistDataFromConfig(currentHistInfo->GetTitle());
-        
-        std::vector<std::string> channels = {channelName_};
-        if (channel_ == Inclusive) {
-            channels = allChannels_;
-        }
+	std::vector<std::string> histData = ReadHistDataFromConfig(currentHistInfo->GetTitle());
 
-        for (auto& chan : channels) {
-            auto histName = getHistName(name, "", chan); 
-            if (hists2D_.find(histName) != hists2D_.end() || histMap1D_.find(histName) != histMap1D_.end()) { 
-                InitializeHistogramFromConfig(name, chan, histData);
-            }
-            //No need to print warning for every channel
-            else if (chan == channels.front())
-                std::cerr << "Skipping invalid histogram " << name << std::endl;
-        }
+	std::vector<std::string> channels = {channelName_};
+	if (channel_ == Inclusive) {
+	    channels = allChannels_;
+	}
+
+	for (auto& chan : channels) {
+	    auto histName = getHistName(name, "", chan); 
+	    if (histMap2D_.find(histName) != histMap2D_.end() || histMap1D_.find(histName) != histMap1D_.end()) { 
+		InitializeHistogramFromConfig(name, chan, histData);
+	    }
+	    //No need to print warning for every channel
+	    else if (chan == channels.front())
+		std::cerr << "Skipping invalid histogram " << name << std::endl;
+	}
     }
 
     for (auto& subprocess : subprocesses_) {
@@ -285,7 +289,6 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
         if (doSystematics_ && !isNonprompt_ && std::find(systHists_.begin(), systHists_.end(), name) != systHists_.end()) {
             for (auto& syst : systematics_) {
                 std::string syst_histName = getHistName(name, syst.second, channel);
-                std::cout << "Adding syst hist " << syst_histName << std::endl;
                 histMap1D_[syst_histName] = {};
                 AddObject<TH1D>(histMap1D_[syst_histName], syst_histName.c_str(), 
                     histData[0].c_str(),nbins, xmin, xmax);
@@ -309,14 +312,14 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
         int nbinsy = std::stoi(histData[4]);
         float ymin = std::stof(histData[5]);
         float ymax = std::stof(histData[6]);
-        AddObject<TH2D>(hists2D_[histName], histName.c_str(), histData[0].c_str(),nbins, xmin, xmax,
-                nbinsy, ymin, ymax);
+        AddObject<TH2D>(histMap2D_[histName], histName.c_str(), histData[0].c_str(),nbins, xmin, xmax,
+			nbinsy, ymin, ymax);
         if (doSystematics_ && std::find(systHists2D_.begin(), systHists2D_.end(), histName) != systHists2D_.end()) {
             for (auto& syst : systematics_) {
                 std::string syst_hist_name = name+"_"+syst.second + "_" + channel;
-                hists2D_[syst_hist_name] = {};
-                AddObject<TH2D>(hists2D_[syst_hist_name], syst_hist_name.c_str(), 
-                    histData[0].c_str(),nbins, xmin, xmax, nbinsy, ymin, ymax);
+                histMap2D_[syst_hist_name] = {};
+                AddObject<TH2D>(histMap2D_[syst_hist_name], syst_hist_name.c_str(), 
+				histData[0].c_str(),nbins, xmin, xmax, nbinsy, ymin, ymax);
             }
         }
         // 3D weight hists must be subset of 2D hists!

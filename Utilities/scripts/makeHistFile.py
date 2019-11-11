@@ -41,6 +41,9 @@ def getComLineArgs():
         default="", help="Define subregions for dataset, format 'dataset=region1,region2,...;'")
     parser.add_argument("--year", type=str,
         default="default", help="Year of Analysis")
+    parser.add_argument('-db', "--debug_level", type=str,
+        default="INFO", help="Debug for logger (default is info) [INFO, DEBUG, WARNING]")
+    parser.add_argument("--scaleFactor", "-sf", action='store_true', help="Apply Scale Factors")
     parser.add_argument("-c", "--channels", 
                         type=lambda x : [i.strip() for i in x.split(',')],
                         default=["eee","eem","emm","mmm"], help="List of channels"
@@ -78,18 +81,24 @@ def makeHistFile(args):
         eCBTightFakeRate = fScales.Get("eCBTightFakeRate")
 
         muonIsoSF = fScales.Get('muonIsoSF')
-        muonIdSF = fScales.Get('muonTightIdSF')
+        muonIdSF = fScales.Get('muonMediumIdSF')
         electronTightIdSF = fScales.Get('electronTightIdSF')
         electronGsfSF = fScales.Get('electronGsfSF')
         pileupSF = fScales.Get('pileupSF')
-
+        
         #fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_JetHT_Run2016B-H.root')
-        fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_SingleMuon_Run2016B-H.root')
-        prefireEff = fPrefireEfficiency.Get('prefireEfficiencyMap')
+        #fPrefireEfficiency = ROOT.TFile('data/Map_Jet_L1FinOReff_bxm1_looseJet_SingleMuon_Run2016B-H.root')
+        # prefireEff = fPrefireEfficiency.Get('prefireEfficiencyMap')
 
-        fr_inputs = [eCBTightFakeRate, mCBTightFakeRate,]
-        sf_inputs = [electronTightIdSF, electronGsfSF, muonIsoSF, muonIdSF, pileupSF, prefireEff]
+        bScales = ROOT.TFile('data/BEff.root')
+        bScales.SetName("BScales")
+        
+#        fr_inputs = [eCBTightFakeRate, mCBTightFakeRate,]
+        fr_inputs = []
+        sf_inputs = [electronTightIdSF, electronGsfSF, muonIsoSF, muonIdSF, pileupSF, bScales]
         sf_inputs.append(ROOT.TParameter(bool)("applyScaleFacs", True))
+    else:
+        sf_inputs = [ROOT.TParameter(bool)("applyScaleFacs", args['scaleFactor'])]    
 
     if args['input_tier'] == '':
         args['input_tier'] = args['selection']
