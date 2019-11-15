@@ -42,7 +42,8 @@ config_factory = ConfigHistFactory(
 
 plot_groups = ["data", "nonprompt", "ewk", "top", "wmv_jetbinned_nlo", ]
 
-ptbins = [0.0, 13.0, 26.0, 38.0, 50.0, 62.0, 75.0, 100.0]
+#ptbins = [0.0, 13.0, 26.0, 38.0, 50.0, 62.0, 75.0, 100.0]
+ptbins = [0, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100]
 regions = ["pt%ito%i" % (ptbins[i], ptbins[i+1]) for i in range(len(ptbins)-1)]
 plot_groups += ["wmv_jetbinned_nlo_%s" % region for region in regions]
 plot_groups.append("wmv_jetbinned_nlo_pt100")

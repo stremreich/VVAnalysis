@@ -98,7 +98,8 @@ void LowPileupWSelector::FillHistograms(Long64_t entry, SystPair variation) {
     if (subprocessHistMaps1D_.empty())
         return;
 
-    std::vector<int> binning = {0, 13, 26, 38, 50, 62, 75, 100};
+    //std::vector<int> binning = {0, 13, 26, 38, 50, 62, 75, 100};
+    std::vector<int> binning = {0, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100};
     size_t upperIndex = std::distance(binning.begin(), std::upper_bound(binning.begin(), binning.end(), genVPt));
 
     std::string binname = name_+"_GenPtW_"+ (upperIndex == binning.size() ? std::to_string(binning.back()) :
