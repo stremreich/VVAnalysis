@@ -7,8 +7,8 @@ void LowPileupWSelector::Init(TTree *tree)
     //doSystematics_ = false;
     doSystematics_ = true;
     allChannels_ = {{mp, "mp"}, {mn, "mn"}};
-    hists1D_ = {"CutFlow", "mW", "yW", "ptW", "ptl", "etal", "pfMet",};
-    systHists_ = {"ptW", "ptl", "pfMet"};
+    hists1D_ = {"CutFlow", "mW", "mtW", "mtWUncorr", "yW", "ptW", "ptl", "etal", "pfMet",};
+    systHists_ = {"ptW", "ptl", "mtW", "pfMet"};
     systematics_ = {
         {muonEfficiencyMCSubtractUp, "CMS_eff_MCsubt_mUp"},
         {muonEfficiencyMCSubtractDown, "CMS_eff_MCsubt_mDown"},
@@ -42,14 +42,11 @@ void LowPileupWSelector::Init(TTree *tree)
 }
 
 void LowPileupWSelector::SetBranchesBacon() {
-    lep = nullptr;
-    fChain->SetBranchAddress("lep", &lep, &lep_b);
     LowPileupSelector::SetBranchesBacon();
 }
 
 void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) { 
     if (variation.first == Central) {
-        lep_b->GetEntry(entry);
         fReader.SetLocalEntry(entry);
         LowPileupSelector::LoadBranchesBacon(entry, variation);
         if (*charge > 0) {
@@ -77,18 +74,24 @@ void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) {
             weight = wgt < cenwgt ? wgt : cenwgt - std::abs(cenwgt-wgt);
         }
     }
+    int metIndex = (isMC_ && (isW_ || isZ_) && !isNonprompt_);
+    pfMet = metVector.At(metIndex);
+    pfMetPhi = metPhiVector.At(metIndex);
 }
 
 void LowPileupWSelector::SetComposite() {
     pfMetVec = TLorentzVector();
     pfMetVec.SetPtEtaPhiM(pfMet, 0., pfMetPhi, 0.);
     wCand = *lep + pfMetVec;
+    //mtW = std::sqrt(2*lep->Pt()*pfMet*(1-std::cos(lep->Phi()-pfMetVec.Phi())));
 }
 
 void LowPileupWSelector::FillHistograms(Long64_t entry, SystPair variation) { 
     if (lep->Pt() < 25)
         return;
     SafeHistFill(histMap1D_, "mW", channel_, variation.first, wCand.M(), weight);
+    SafeHistFill(histMap1D_, "mtW", channel_, variation.first, *mtW, weight);
+    SafeHistFill(histMap1D_, "mtWUncorr", channel_, variation.first, *mtWuncorr, weight);
     SafeHistFill(histMap1D_, "ptW", channel_, variation.first, wCand.Pt(), weight);
     SafeHistFill(histMap1D_, "yW", channel_, variation.first, wCand.Rapidity(), weight);
     SafeHistFill(histMap1D_, "ptl", channel_, variation.first, lep->Pt(), weight);
@@ -102,17 +105,26 @@ void LowPileupWSelector::FillHistograms(Long64_t entry, SystPair variation) {
     std::vector<int> binning = {0, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100};
     size_t upperIndex = std::distance(binning.begin(), std::upper_bound(binning.begin(), binning.end(), genVPt));
 
-    std::string binname = name_+"_GenPtW_"+ (upperIndex == binning.size() ? std::to_string(binning.back()) :
-            std::to_string(binning.at(upperIndex-1))+"_"+std::to_string(binning.at(upperIndex)));
+    std::string binname = name_;
+    binname.append("_GenPtW_");
+    if (upperIndex == binning.size())
+        binname.append(std::to_string(binning.back()));
+    else {
+        binname.append(std::to_string(binning.at(upperIndex-1)));
+        binname.append("_");
+        binname.append(std::to_string(binning.at(upperIndex)));
+    }
 
-    if (subprocessHistMaps1D_.find(binname) == subprocessHistMaps1D_.end())
+    try {
+        HistMap1D& subprocessMap = subprocessHistMaps1D_.at(binname);
+        SafeHistFill(subprocessMap, "mW", channel_, variation.first, wCand.M(), weight);
+        SafeHistFill(subprocessMap, "ptW", channel_, variation.first, wCand.Pt(), weight);
+        SafeHistFill(subprocessMap, "yW", channel_, variation.first, wCand.Rapidity(), weight);
+        SafeHistFill(subprocessMap, "ptl", channel_, variation.first, lep->Pt(), weight);
+        SafeHistFill(subprocessMap, "etal", channel_, variation.first, lep->Eta(), weight);
+        SafeHistFill(subprocessMap, "pfMet", channel_, variation.first, pfMet, weight);
+    }
+    catch (std::exception& e) {
         throw std::range_error("Could not find bin " + binname + " in subprocessMap!");
-    HistMap1D& subprocessMap = subprocessHistMaps1D_.at(binname);
-
-    SafeHistFill(subprocessMap, "mW", channel_, variation.first, wCand.M(), weight);
-    SafeHistFill(subprocessMap, "ptW", channel_, variation.first, wCand.Pt(), weight);
-    SafeHistFill(subprocessMap, "yW", channel_, variation.first, wCand.Rapidity(), weight);
-    SafeHistFill(subprocessMap, "ptl", channel_, variation.first, lep->Pt(), weight);
-    SafeHistFill(subprocessMap, "etal", channel_, variation.first, lep->Eta(), weight);
-    SafeHistFill(subprocessMap, "pfMet", channel_, variation.first, pfMet, weight);
+    }
 }

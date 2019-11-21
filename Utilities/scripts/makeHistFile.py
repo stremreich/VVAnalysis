@@ -127,9 +127,9 @@ def makeHistFile(args):
     else:
         selector.setFileList(*args['inputs_from_file'])
 
-    if args['regions']:
+    if args['regions'] and args['regions'] != 'none':
         selector.setDatasetRegions(args['regions'])
-    elif args['analysis'] == 'LowPileupW':
+    elif args['regions'] != 'none' and args['analysis'] == 'LowPileupW':
         bins = [0, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100]
         #bins = [0.0, 13.0, 26.0, 38.0, 50.0, 62.0, 75.0, 100.0]
         regions = ["GenPtW_%i_%i" % (bins[i], bins[i+1]) for i in range(len(bins)-1)]

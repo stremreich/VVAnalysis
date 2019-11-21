@@ -5,6 +5,12 @@
 void LowPileupSelector::Init(TTree *tree)
 {
     b.SetTree(tree);
+    if (name_.find("we") != std::string::npos || name_.find("wm") != std::string::npos || name_.find("wm") != std::string::npos){
+        isW_ = true;
+    }
+    else if (name_.find("DYm50") != std::string::npos){
+        isZ_ = true;
+    }
     SelectorBase::Init(tree);
 }
 
@@ -14,9 +20,6 @@ void LowPileupSelector::SetBranchesBacon() {
     b.SetBranch("genVPhi", genVPhi);
     b.SetBranch("genVy", genVy);
     b.SetBranch("genVMass", genVMass);
-    b.SetBranch("met", pfMet);
-    b.SetBranch("met", pfMet);
-    b.SetBranch("metPhi", pfMetPhi);
     b.SetBranch("scale1fb", scale1fb);
 }
 

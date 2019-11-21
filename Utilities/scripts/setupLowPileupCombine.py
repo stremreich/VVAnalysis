@@ -40,7 +40,7 @@ config_factory = ConfigHistFactory(
     "LowPileupW/NanoAOD",
 )
 
-plot_groups = ["data", "nonprompt", "ewk", "top", "wmv_jetbinned_nlo", ]
+plot_groups = ["data", "nonprompt", "vv", "dy", "wtv", "top", "wmv_jetbinned_nlo", ]
 
 #ptbins = [0.0, 13.0, 26.0, 38.0, 50.0, 62.0, 75.0, 100.0]
 ptbins = [0, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100]

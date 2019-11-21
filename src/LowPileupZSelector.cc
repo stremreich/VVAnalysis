@@ -16,6 +16,8 @@ void LowPileupZSelector::SetBranchesBacon() {
     lep1 = nullptr;
     lep2 = nullptr;
     b.SetBranch("category", category);
+    b.SetBranch("met", pfMet);
+    b.SetBranch("metPhi", pfMetPhi);
     fChain->SetBranchAddress("lep1", &lep1, &lep1_b);
     fChain->SetBranchAddress("lep2", &lep2, &lep2_b);
     if (isMC_) {

@@ -27,14 +27,16 @@ class LowPileupWSelector : public LowPileupSelector {
 public :
     // Derived values
     TLorentzVector wCand;
-
-    TLorentzVector* lep;
-
-    TBranch* lep_b;
+    TLorentzVector* met;
 
     // Mixing quite a lot of things here, but it makes it easier
     TTreeReader     fReader;
     TTreeReaderArray<double> evtWeight = {fReader, "evtWeight"};
+    TTreeReaderArray<double> metVector = {fReader, "metVars"};
+    TTreeReaderArray<double> metPhiVector = {fReader, "metVarsPhi"};
+    TTreeReaderValue<TLorentzVector> lep = {fReader, "lep"};
+    TTreeReaderValue<double> mtW = {fReader, "mtCorr"};
+    TTreeReaderValue<float> mtWuncorr = {fReader, "mt"};
     TTreeReaderValue<int> charge = {fReader, "q"};
     TTreeReaderValue<double> lepPfRelIso = {fReader, "relIso"};
 

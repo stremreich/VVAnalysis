@@ -24,6 +24,8 @@ public :
     // Derived values
     float weight;
     TLorentzVector pfMetVec;
+    bool isW_ = false;
+    bool isZ_ = false;
 
     Float_t pfMet;
     Float_t pfMetPhi;
