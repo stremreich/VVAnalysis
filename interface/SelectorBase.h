@@ -44,6 +44,19 @@ enum Systematic {
     muonEfficiencyBackgroundUp, muonEfficiencyBackgroundDown, 
     muonEfficiencyTagPtUp,     muonEfficiencyTagPtDown, 
     muonEfficiencyStatUp,      muonEfficiencyStatDown, 
+    recoilCorrectionEtaShapeUp,   recoilCorrectionEtaShapeDown,  
+    recoilCorrectionRUShapesUp,   recoilCorrectionRUShapesDown,  
+    recoilCorrectionKeysShapeUp,  recoilCorrectionKeysShapeDown, 
+    recoilCorrectionStat0Up,      recoilCorrectionStat0Down,     
+    recoilCorrectionStat1Up,      recoilCorrectionStat1Down,
+    recoilCorrectionStat2Up,      recoilCorrectionStat2Down,     
+    recoilCorrectionStat3Up,      recoilCorrectionStat3Down,     
+    recoilCorrectionStat4Up,      recoilCorrectionStat4Down,     
+    recoilCorrectionStat5Up,      recoilCorrectionStat5Down,     
+    recoilCorrectionStat6Up,      recoilCorrectionStat6Down,     
+    recoilCorrectionStat7Up,      recoilCorrectionStat7Down,     
+    recoilCorrectionStat8Up,      recoilCorrectionStat8Down,     
+    recoilCorrectionStat9Up,      recoilCorrectionStat9Down,     
 }; 
 
     

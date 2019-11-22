@@ -1,5 +1,5 @@
 imax 1  number of channels
-jmax 3  number of processes - 1
+jmax 5  number of processes - 1
 kmax ${nuisances} number of nuisance parameters (sources of systematical uncertainties)
 ------------
 
@@ -15,18 +15,34 @@ bin           m
 observation   ${data} 
 
 ------------
-bin                             m                   m               m               m               m               m                              
-process                         nonprompt           vv              dy              wtv             top             Wmv
-process                         -1                  1               1               1               2               -2
-rate                            ${nonprompt}        ${vv}           ${dy}           ${wtv}          ${top}          ${wmv_jetbinned_nlo}
-------------                                                                                                                                       
-lumi2016_13TeV          lnN     -                   1.017           1.017           1.017           1.017           1.017                          
-CMS_norm_nonprompt      lnN     1.1                 -               -               -               -               -                              
-CMS_eff_MCsubt_m        shape   -                   1               1               1               1               1
-CMS_modeling_fsr        shape   -                   1               1               1               1               1
-CMS_eff_stat_m          shape   -                   1               1               1               1               1
-CMS_eff_background_m    shape   -                   1               1               1               1               1
-CMS_eff_tagPt_m         shape   -                   1               1               1               1               1
-norm_top                lnN     -                   -               -               -               1.1             -
-norm_ewk                lnN     -                   1.1             1.1             1.1             -               -
+bin                                     m                   m               m               m               m               m                              
+process                                 nonprompt           vv              dy              wtv             top             Wmv
+process                                 -1                  1               1               1               2               -2
+rate                                    ${nonprompt}        ${vv}           ${dy}           ${wtv}          ${top}          ${wmv_jetbinned_nlo}
+------------                                                                                                                                               
+lumi2016_13TeV                  lnN     -                   1.017           1.017           1.017           1.017           1.017                          
+CMS_norm_nonprompt              lnN     1.1                 -               -               -               -               -                              
+CMS_eff_MCsubt_m                shape   -                   1               1               1               1               1
+CMS_modeling_fsr                shape   -                   1               1               1               1               1
+CMS_eff_stat_m                  shape   -                   1               1               1               1               1
+CMS_eff_background_m            shape   -                   1               1               1               1               1
+CMS_recoilCorrection_EtaShape   shape   -                   -               1               1               -               1
+CMS_recoilCorrection_RUShape    shape   -                   -               1               1               -               1
+CMS_recoilCorrection_KeysShape  shape   -                   -               1               1               -               1
+CMS_recoilCorrection_StatBin0   shape   -                   -               1               1               -               1
+CMS_recoilCorrection_StatBin1   shape   -                   -               1               1               -               1
+CMS_recoilCorrection_StatBin2   shape   -                   -               1               1               -               1    
+CMS_recoilCorrection_StatBin3   shape   -                   -               1               1               -               1    
+CMS_recoilCorrection_StatBin4   shape   -                   -               1               1               -               1    
+CMS_recoilCorrection_StatBin5   shape   -                   -               1               1               -               1    
+CMS_recoilCorrection_StatBin6   shape   -                   -               1               1               -               1    
+CMS_recoilCorrection_StatBin7   shape   -                   -               1               1               -               1    
+CMS_recoilCorrection_StatBin8   shape   -                   -               1               1               -               1    
+CMS_recoilCorrection_StatBin9   shape   -                   -               1               1               -               1    
+CMS_eff_tagPt_m                 shape   -                   1               1               1               1               1
+norm_vv                         lnN     -                   1.1             -               -               -               -
+norm_dy                         lnN     -                   -               1.05            -               -               -
+norm_wtau                       lnN     -                   -               -               1.1             -               -
+norm_top                        lnN     -                   -               -               -               1.1             -
+                                                                          
                                                                           

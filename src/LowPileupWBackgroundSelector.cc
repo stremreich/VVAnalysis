@@ -10,7 +10,7 @@ void LowPileupWBackgroundSelector::Init(TTree *tree) {
 void LowPileupWBackgroundSelector::FillHistograms(Long64_t entry, SystPair variation) { 
     if (*lepPfRelIso > 0.25 && *lepPfRelIso < 0.35)
         return;
-    weight *= 0.12;
+    weight *= 0.13;
     LowPileupWSelector::FillHistograms(entry, variation);
 }
 
