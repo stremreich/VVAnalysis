@@ -7,6 +7,7 @@ from python import OutputTools
 from python import ConfigureJobs
 from python import HistTools
 import os
+import shutil
 import logging
 import sys
 
@@ -63,7 +64,13 @@ def makeHistFile(args):
         sys.path.insert(0, "/".join([manager_path, 
             "AnalysisDatasetManager", "Utilities/python"]))
 
+    out = args['output_file'].split('/')
     tmpFileName = args['output_file']
+    outFolder = ''
+    # Work with file locally if outputing to eos, to avoid write problems
+    if 'eos' in out:
+        tmpFileName = out[-1]
+        outFolder = '/'.join(out[:-1])
     toCombine = args['with_background'] 
     fOut = ROOT.TFile(tmpFileName if not toCombine else tmpFileName.replace(".root", "sel.root"), "recreate")
     combinedNames = [fOut.GetName()]
@@ -161,6 +168,8 @@ def makeHistFile(args):
             map(os.remove, combinedNames)
     fOut = ROOT.TFile(tmpFileName, "update")
     OutputTools.addMetaInfo(fOut)
+    if outFolder != '':
+        shutil.move(fOut.GetName(), '/'.join([outFolder, fOut.GetName()]))
 
 def main():
     args = getComLineArgs()

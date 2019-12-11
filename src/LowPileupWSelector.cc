@@ -4,9 +4,10 @@
 
 void LowPileupWSelector::Init(TTree *tree)
 {
-    //doSystematics_ = false;
-    doSystematics_ = true;
-    allChannels_ = {{mp, "mp"}, {mn, "mn"}};
+    doSystematics_ = false;
+    //doSystematics_ = true;
+    allChannels_ = {{ep, "ep"}, {en, "en"}, {mp, "mp"}, {mn, "mn"}};
+
     hists1D_ = {"CutFlow", "mW", "mtW", "mtWUncorr", "yW", "ptW", "ptl", "etal", "pfMet",};
     systHists_ = {"ptW", "ptl", "mtW", "pfMet"};
     systematics_ = {
@@ -105,12 +106,25 @@ void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) {
         fReader.SetLocalEntry(entry);
         LowPileupSelector::LoadBranchesBacon(entry, variation);
         if (*charge > 0) {
-            channel_ = mp;
-            channelName_ = "mp";
+            // This is probably not safe at all
+            if (isE_) {
+                channel_ = ep ;
+                channelName_ = "ep";
+            }
+            else {
+                channel_ = mp ;
+                channelName_ = "mp";
+            }
         }
         else {
-            channel_ = mn;
-            channelName_ = "mn";
+            if (isE_) {
+                channel_ = en ;
+                channelName_ = "en";
+            }
+            else {
+                channel_ = mn ;
+                channelName_ = "mn";
+            }
         }
     }
     int metIndex = (isMC_ && (isW_ || isZ_) && !isNonprompt_);
@@ -118,6 +132,7 @@ void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) {
     pfMetPhi = metPhiVector.At(metIndex);
 
     if (isMC_) {
+        std::cout << "Yes it's MC" << std::endl;
         float cenwgt = evtWeight[systematicWeightMap_[Central]];
         float wgt = evtWeight[systematicWeightMap_[variation.first]];
         weight = cenwgt;
@@ -171,6 +186,12 @@ void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) {
             pfMet = tempMet < pfMet ? tempMet : pfMet - (tempMet - pfMet);
             pfMetPhi = tempMet < pfMet ? tempMetPhi : pfMetPhi - (tempMetPhi - pfMetPhi);
         }
+        // The units are different for the e and m ntuples... :'(
+        if (isE_) {
+            std::cout << "THE WEIGHT IS " << weight << std::endl;
+            weight /= 1000000000;
+            std::cout << "NOW THE WEIGHT IS " << weight << std::endl;
+        }
     }
 }
 
@@ -184,6 +205,7 @@ void LowPileupWSelector::SetComposite() {
 void LowPileupWSelector::FillHistograms(Long64_t entry, SystPair variation) { 
     if (lep->Pt() < 25)
         return;
+    std::cout << "Finally! THE WEIGHT IS " << weight << std::endl;
     SafeHistFill(histMap1D_, "mW", channel_, variation.first, wCand.M(), weight);
     SafeHistFill(histMap1D_, "mtW", channel_, variation.first, *mtW, weight);
     SafeHistFill(histMap1D_, "mtWUncorr", channel_, variation.first, *mtWuncorr, weight);

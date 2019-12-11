@@ -36,8 +36,15 @@ void LowPileupSelector::LoadBranchesBacon(Long64_t entry, std::pair<Systematic, 
 
 void LowPileupSelector::SetupNewDirectory() {
     SelectorBase::SetupNewDirectory();
+    if (name_.find("__m") != std::string::npos || name_.find("__tm") != std::string::npos) {
+        allChannels_ = {{mp, "mp"}, {mn, "mn"}};
+        isE_ = false;
+    }
+    else if (name_.find("__e") != std::string::npos || name_.find("__te") != std::string::npos) {
+        allChannels_ = {{ep, "ep"}, {en, "en"}};
+        isE_ = true;
+    }
 
     InitializeHistogramsFromConfig();
 }
-
 
