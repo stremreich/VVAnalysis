@@ -77,7 +77,7 @@ void SelectorBase::Init(TTree *tree)
 	    selection_ = selectionMap_[selectionName_];
     }
     else
-        throw std::invalid_argument(selectionName_ + " is not a valid selection selection!");
+        throw std::invalid_argument(selectionName_ + " is not a valid selection!");
     
     isMC_ = false;
     if (name_.find("data") == std::string::npos){

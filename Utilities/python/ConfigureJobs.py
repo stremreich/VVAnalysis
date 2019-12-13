@@ -256,7 +256,7 @@ def getListOfFilesWithXSec(filelist, manager_path="", selection="ntuples"):
             info.update({file_name : file_info["cross_section"]*kfac})
     return info
 
-def getListOfFilesWithDASPath(filelist, analysis, selection, manager_path=""):
+def getListOfFilesWithPath(filelist, analysis, selection, das=True, manager_path=""):
     if manager_path is "":
         manager_path = getManagerPath()
     data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
@@ -264,10 +264,13 @@ def getListOfFilesWithDASPath(filelist, analysis, selection, manager_path=""):
     selection_info = UserInput.readInfo("/".join([data_path, analysis, selection]))
     info = {}
     for file_name in files:
-        if "DAS" not in selection_info[file_name].keys():
+        if das and "DAS" not in selection_info[file_name].keys():
             print "ERROR: DAS path not defined for file %s in analysis %s/%s" % (file_name, analysis, selection)
             continue
-        info.update({file_name : selection_info[file_name]["DAS"]})
+        elif not das and "file_path" not in selection_info[file_name].keys():
+            print "ERROR: file_path not defined for file %s in analysis %s/%s" % (file_name, analysis, selection)
+            continue
+        info.update({file_name : selection_info[file_name]["DAS" if das else "file_path"]})
     return info
 
 def getPreviousStep(selection, analysis):

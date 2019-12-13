@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-import makeFileListFromDAS as makeDAS
+import makeFileList 
 from python import UserInput
 from python import ConfigureJobs
 import logging
@@ -21,6 +21,8 @@ def getComLineArgs():
                         default=3, help="Number of files per job")
     parser.add_argument("--nosubmit", action='store_true',
                         help="Just make the directory, don't submit")
+    parser.add_argument("--local", action='store_true',
+                        help="Use local files, e.g., file_path")
     parser.add_argument("--input_tier", type=str,
         default="", help="Selection stage of input files")
     parser.add_argument("--force", action='store_true',
@@ -101,7 +103,7 @@ def writeSubmitFile(submit_dir, analysis, selection, input_tier, numfiles, nPerJ
         "input_tier" : input_tier,
         "nPerJob" : nPerJob,
         "nJobs" : int(math.ceil(numfiles/nPerJob)),
-        "extraArgs" : "--test", # TODO: This should be removed soon!
+        "extraArgs" : "--debug", 
     }
 
     template = "Templates/CondorSubmit/submit_template.jdl"
@@ -117,7 +119,7 @@ def writeWrapperFile(submit_dir, tarball_name):
     outfile = "/".join([submit_dir, "wrapRunSelector.sh"])
     ConfigureJobs.fillTemplatedFile(template, outfile, template_dict)
 
-def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tier, numPerJob, force):
+def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tier, numPerJob, force, das):
     makeSubmitDir(submit_dir, force)
     copyLibs()
     copyDatasetManagerFiles(analysis)
@@ -125,7 +127,7 @@ def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tie
     modifyAFSPermissions()
 
     filelist = submit_dir + "/filelist.txt"
-    numfiles = makeDAS.makeFileListFromDAS(filenames, filelist, analysis, input_tier)
+    numfiles = makeFileList.makeFileList(filenames, filelist, analysis, input_tier, das)
     writeSubmitFile(submit_dir, analysis, selection, input_tier, numfiles, numPerJob)
 
     tarball_name = '_'.join([analysis, "AnalysisCode.tgz"])
@@ -135,7 +137,7 @@ def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tie
 def main():
     args = getComLineArgs()
     submitDASFilesToCondor(args['filenames'], args['submit_dir'], args['analysis'], 
-        args['selection'], args['input_tier'], args['files_per_job'], args['force'])
+        args['selection'], args['input_tier'], args['files_per_job'], args['force'], not args['local'])
 
 if __name__ == "__main__":
     main()

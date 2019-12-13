@@ -19,8 +19,6 @@ def getComLineArgs():
         default=-1, help="Max entries to process")
     parser.add_argument("--output_file", "-o", type=str,
         default="test.root", help="Output file name")
-    parser.add_argument("--test", action='store_true',
-        help="Run test job (no background estimate)")
     parser.add_argument("--debug", action='store_true',
         help="Print verbose info")
     ntuple_group = parser.add_mutually_exclusive_group(required=False)

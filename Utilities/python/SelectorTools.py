@@ -321,7 +321,7 @@ class SelectorDriver(object):
     def fillSumweightsHist(self, rtfile, filenum=1):
         if self.ntupleType == "NanoAOD":
             nevents_branch = "genEventCount"
-            sumweights_branch = "genEventSumw"
+            sumweights_branch = "genEventSumw" if "MiNNLO" not in rtfile.GetName() else "genEventSumw_"
             meta_tree_name = "Runs"
         else:
             nevents_branch = ""
