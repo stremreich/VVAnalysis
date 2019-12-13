@@ -8,12 +8,13 @@ def addMetaInfo(fOut):
     metaInfo.cd()
     time = ROOT.TNamed("datetime", str(datetime.datetime.now()))
     command = ROOT.TNamed("command", ' '.join(sys.argv))
-    githash = ROOT.TNamed("githash", subprocess.check_output(['git', 'log', '-1', '--format="%H"']))
-    gitdiff = ROOT.TNamed("gitdiff", subprocess.check_output(['git', 'diff',]))
+    if not subprocess.call(['git', 'status'])
+        githash = ROOT.TNamed("githash", subprocess.check_output(['git', 'log', '-1', '--format="%H"']))
+        gitdiff = ROOT.TNamed("gitdiff", subprocess.check_output(['git', 'diff',]))
+        githash.Write()
+        gitdiff.Write()
     time.Write()
     command.Write()
-    githash.Write()
-    gitdiff.Write()
 
 def writeOutputListItem(item, directory):
     if item.ClassName() == "TList":
