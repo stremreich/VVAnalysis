@@ -29,8 +29,6 @@ void ZGenSelector::Init(TTree *tree)
 
 void ZGenSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) { 
     NanoGenSelectorBase::LoadBranchesNanoAOD(entry, variation);
-    b.SetBranch("Generator_id1", Generator_id1);
-    b.SetBranch("Generator_id2", Generator_id2);
 
     if (leptons.size() < 2) {
         channel_ = Unknown;
@@ -78,42 +76,6 @@ void ZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
 
     if (zCand.mass() < 60. || zCand.mass() > 120.)
         return;
-
-    std::string partonicChan = "other";
-    if ((Generator_id1 == 1 && Generator_id2 == 1) || (Generator_id1 == 2 && Generator_id2 == 2))
-        partonicChan = "uu_dd";
-    else if ((Generator_id1 == 1 && Generator_id2 == -1) || (Generator_id1 == 2 && Generator_id2 == -2))
-        partonicChan = "uubar_ddbar";
-    else if (Generator_id1 == 21 && Generator_id2 == 21)
-        partonicChan = "gg";
-    else if ((Generator_id1 == 1 && Generator_id2 == 21) || (Generator_id1 == 21 && Generator_id2 == 1) || 
-                (Generator_id1 == 2 && Generator_id2 == 21) || (Generator_id1 == 21 && Generator_id2 == 2))
-        partonicChan = "ug_dg";
-    else if ((Generator_id1 == -1 && Generator_id2 == 21) || (Generator_id1 == 21 && Generator_id2 == -1) || 
-                (Generator_id1 == -2 && Generator_id2 == 21) || (Generator_id1 == 21 && Generator_id2 == -2))
-        partonicChan = "ubarg_dbarg";
-
-    SafeHistFill(histMap1D_, (partonicChan+"_ZMass").c_str(), channel_, variation.first, zCand.mass(), weight);
-    SafeHistFill(histMap1D_, (partonicChan+"_yZ").c_str(), channel_, variation.first, zCand.Rapidity(), weight);
-    SafeHistFill(histMap1D_, (partonicChan+"_ptZ").c_str(), channel_, variation.first, zCand.pt(), weight);
-    SafeHistFill(histMap1D_, (partonicChan+"_ptl1").c_str(), channel_, variation.first, lep1.pt(), weight);
-    SafeHistFill(histMap1D_, (partonicChan+"_etal1").c_str(), channel_, variation.first, lep1.eta(), weight);
-    SafeHistFill(histMap1D_, (partonicChan+"_phil1").c_str(), channel_, variation.first, lep1.phi(), weight);
-    SafeHistFill(histMap1D_, (partonicChan+"_ptl2").c_str(), channel_, variation.first, lep2.pt(), weight);
-    SafeHistFill(histMap1D_, (partonicChan+"_etal2").c_str(), channel_, variation.first, lep2.eta(), weight);
-    SafeHistFill(histMap1D_, (partonicChan+"_phil2").c_str(), channel_, variation.first, lep2.phi(), weight);
-    SafeHistFill(histMap1D_, (partonicChan+"_nJets").c_str(), channel_, variation.first, jets.size(), weight);
-    SafeHistFill(histMap1D_, (partonicChan+"_MET").c_str(), channel_, variation.first, genMet.pt(), weight);
-    SafeHistFill(histMap1D_, (partonicChan+"_HT").c_str(), channel_, variation.first, ht, weight);
-    for (size_t i = 1; i <= 3; i++) {
-        if (jets.size() >= i ) {
-            const auto& jet = jets.at(i-1);
-            SafeHistFill(histMap1D_, (partonicChan+"_ptj"+std::to_string(i)).c_str(), channel_, variation.first, jet.pt(), weight);
-            SafeHistFill(histMap1D_, (partonicChan+"_etaj"+std::to_string(i)).c_str(), channel_, variation.first, jet.eta(), weight);
-            SafeHistFill(histMap1D_, (partonicChan+"_phij"+std::to_string(i)).c_str(), channel_, variation.first, jet.phi(), weight);
-        }  
-    }
-
     SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
     SafeHistFill(histMap1D_, "ZMass", channel_, variation.first, zCand.mass(), weight);
     SafeHistFill(histMap1D_, "yZ", channel_, variation.first, zCand.Rapidity(), weight);
@@ -136,8 +98,8 @@ void ZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
         }  
     }
     if (variation.first == Central) {
-        for (size_t i = 0; i < nLHEScaleWeight+nLHEPdfWeight; i++) {
-            float thweight = i < nLHEScaleWeight ? LHEScaleWeight[i] : LHEPdfWeight[i-nLHEScaleWeight];
+        for (size_t i = 0; i < *nLHEScaleWeight+*nLHEPdfWeight; i++) {
+            float thweight = i < *nLHEScaleWeight ? LHEScaleWeight[i] : LHEPdfWeight[i-*nLHEScaleWeight];
             thweight *= weight;
             SafeHistFill(weighthistMap1D_, "ZMass", channel_, variation.first, zCand.mass(), i, thweight);
             SafeHistFill(weighthistMap1D_, "yZ", channel_, variation.first, zCand.Rapidity(), i, thweight);
@@ -151,6 +113,43 @@ void ZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
             SafeHistFill(weighthistMap1D_, "nJets", channel_, variation.first, jets.size(), i, thweight);
             SafeHistFill(weighthistMap1D_, "MET", channel_, variation.first, genMet.pt(), i, thweight);
         }
+    }
+    // No PDFs for now
+    return;
+
+    std::string partonicChan = "other";
+    if ((*Generator_id1 == 1 && *Generator_id2 == 1) || (*Generator_id1 == 2 && *Generator_id2 == 2))
+        partonicChan = "uu_dd";
+    else if ((*Generator_id1 == 1 && *Generator_id2 == -1) || (*Generator_id1 == 2 && *Generator_id2 == -2))
+        partonicChan = "uubar_ddbar";
+    else if (*Generator_id1 == 21 && *Generator_id2 == 21)
+        partonicChan = "gg";
+    else if ((*Generator_id1 == 1 && *Generator_id2 == 21) || (*Generator_id1 == 21 && *Generator_id2 == 1) || 
+                (*Generator_id1 == 2 && *Generator_id2 == 21) || (*Generator_id1 == 21 && *Generator_id2 == 2))
+        partonicChan = "ug_dg";
+    else if ((*Generator_id1 == -1 && *Generator_id2 == 21) || (*Generator_id1 == 21 && *Generator_id2 == -1) || 
+                (*Generator_id1 == -2 && *Generator_id2 == 21) || (*Generator_id1 == 21 && *Generator_id2 == -2))
+        partonicChan = "ubarg_dbarg";
+
+    SafeHistFill(histMap1D_, (partonicChan+"_ZMass").c_str(), channel_, variation.first, zCand.mass(), weight);
+    SafeHistFill(histMap1D_, (partonicChan+"_yZ").c_str(), channel_, variation.first, zCand.Rapidity(), weight);
+    SafeHistFill(histMap1D_, (partonicChan+"_ptZ").c_str(), channel_, variation.first, zCand.pt(), weight);
+    SafeHistFill(histMap1D_, (partonicChan+"_ptl1").c_str(), channel_, variation.first, lep1.pt(), weight);
+    SafeHistFill(histMap1D_, (partonicChan+"_etal1").c_str(), channel_, variation.first, lep1.eta(), weight);
+    SafeHistFill(histMap1D_, (partonicChan+"_phil1").c_str(), channel_, variation.first, lep1.phi(), weight);
+    SafeHistFill(histMap1D_, (partonicChan+"_ptl2").c_str(), channel_, variation.first, lep2.pt(), weight);
+    SafeHistFill(histMap1D_, (partonicChan+"_etal2").c_str(), channel_, variation.first, lep2.eta(), weight);
+    SafeHistFill(histMap1D_, (partonicChan+"_phil2").c_str(), channel_, variation.first, lep2.phi(), weight);
+    SafeHistFill(histMap1D_, (partonicChan+"_nJets").c_str(), channel_, variation.first, jets.size(), weight);
+    SafeHistFill(histMap1D_, (partonicChan+"_MET").c_str(), channel_, variation.first, genMet.pt(), weight);
+    SafeHistFill(histMap1D_, (partonicChan+"_HT").c_str(), channel_, variation.first, ht, weight);
+    for (size_t i = 1; i <= 3; i++) {
+        if (jets.size() >= i ) {
+            const auto& jet = jets.at(i-1);
+            SafeHistFill(histMap1D_, (partonicChan+"_ptj"+std::to_string(i)).c_str(), channel_, variation.first, jet.pt(), weight);
+            SafeHistFill(histMap1D_, (partonicChan+"_etaj"+std::to_string(i)).c_str(), channel_, variation.first, jet.eta(), weight);
+            SafeHistFill(histMap1D_, (partonicChan+"_phij"+std::to_string(i)).c_str(), channel_, variation.first, jet.phi(), weight);
+        }  
     }
 }
 

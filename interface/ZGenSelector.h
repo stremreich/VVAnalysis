@@ -20,8 +20,8 @@ class ZGenSelector : public NanoGenSelectorBase {
 public :
     // Derived values
     LorentzVector zCand;
-    int Generator_id1;
-    int Generator_id2;
+    TTreeReaderValue<Int_t> Generator_id1 = {fReader, "Generator_id1"};
+    TTreeReaderValue<Int_t> Generator_id2 = {fReader, "Generator_id2"};
     
     // Readers to access the data (delete the ones you do not need).
     virtual void    Init(TTree *tree) override;

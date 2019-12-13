@@ -122,16 +122,16 @@ void WGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
     }
 
     if (variation.first == Central) {
-        size_t maxEntry = nLHEScaleWeight+nLHEPdfWeight;
+        size_t maxEntry = *nLHEScaleWeight+*nLHEPdfWeight;
         if (doMC2H_ == true)
             maxEntry += N_MC2HESSIAN_WEIGHTS_;
 
         for (size_t i = 0; i < maxEntry; i++) {
-            float thweight = (i < nLHEScaleWeight) ? LHEScaleWeight[i] : ( i < (nLHEPdfWeight+nLHEScaleWeight) ? LHEPdfWeight[i-nLHEScaleWeight] 
-                    : LHEHessianPdfWeight[i-nLHEScaleWeight-nLHEPdfWeight]);
-            if (i > nLHEScaleWeight && i < nLHEScaleWeight+nLHEPdfWeight)
+            float thweight = (i < *nLHEScaleWeight) ? LHEScaleWeight[i] : ( i < (*nLHEPdfWeight+*nLHEScaleWeight) ? LHEPdfWeight[i-*nLHEScaleWeight] 
+                    : LHEHessianPdfWeight[i-*nLHEScaleWeight-*nLHEPdfWeight]);
+            if (i > *nLHEScaleWeight && i < *nLHEScaleWeight+*nLHEPdfWeight)
                 mcPdfWeights_->Fill(thweight);
-            else if (i > nLHEScaleWeight+nLHEPdfWeight)
+            else if (i > *nLHEScaleWeight+*nLHEPdfWeight)
                 hesPdfWeights_->Fill(thweight);
             else 
                 scaleWeights_->Fill(thweight);

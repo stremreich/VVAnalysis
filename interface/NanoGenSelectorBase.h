@@ -9,6 +9,9 @@
 #include <TH2.h>
 #include <exception>
 #include <iostream>
+#include <TTreeReader.h>
+#include <TTreeReaderValue.h>
+#include <TTreeReaderArray.h>
 
 // Headers needed by this particular selector
 #include <vector>
@@ -24,47 +27,58 @@ public :
     PDFWeightsHelper pdfweightshelper_;
     // Derived values
     reco::GenParticleCollection leptons;
+    reco::GenParticleCollection bareLeptons;
     reco::GenParticleCollection dressedLeptons;
     reco::GenParticleCollection neutrinos;
     std::vector<LorentzVector> jets;
     LorentzVector genMet;
 
     unsigned int nLeptons_ = 1;
-    static const unsigned int N_KEEP_GEN_ = 3000;
-    static const unsigned int N_KEEP_JET_ = 30;
     static const unsigned int N_LHESCALE_WEIGHTS_ = 10;
     static const unsigned int N_LHEPDF_WEIGHTS_ = 100;
     static const unsigned int N_LHEPDFAS_WEIGHTS_ = 102;
     static const unsigned int N_MC2HESSIAN_WEIGHTS_ = 60;
     float weight;
     bool doMC2H_ = false;
+    bool doBareLeptons_ = false;
+    bool doBornLeptons_ = false;
+    bool doNeutrinos_ = false;
 
     TH1D* mcPdfWeights_;
     TH1D* hesPdfWeights_;
     TH1D* scaleWeights_;
     
-    // Values read from file
-    Float_t genWeight;
-    Float_t LHEWeight;
-    UInt_t nLHEScaleWeight;
-    UInt_t nLHEPdfWeight;
-    Float_t LHEScaleWeight[N_LHESCALE_WEIGHTS_];
-    Float_t LHEPdfWeight[N_LHEPDFAS_WEIGHTS_];
     double LHEHessianPdfWeight[N_MC2HESSIAN_WEIGHTS_];
-    UInt_t nGenPart;
-    Float_t GenPart_pt[N_KEEP_GEN_];
-    Float_t GenPart_eta[N_KEEP_GEN_];
-    Float_t GenPart_phi[N_KEEP_GEN_];
-    Float_t GenPart_mass[N_KEEP_GEN_];
-    Int_t GenPart_status[N_KEEP_GEN_];
-    Int_t GenPart_pdgId[N_KEEP_GEN_];
-    UInt_t nGenJet;
-    Float_t GenJet_pt[N_KEEP_GEN_];
-    Float_t GenJet_eta[N_KEEP_GEN_];
-    Float_t GenJet_phi[N_KEEP_GEN_];
-    Float_t GenJet_mass[N_KEEP_GEN_];
-    Float_t GenMET_pt;
-    Float_t GenMET_phi;
+    // Values read from file
+    TTreeReader     fReader;
+    TTreeReaderValue<Float_t> genWeight = {fReader, "genWeight"};
+    TTreeReaderValue<UInt_t> nLHEScaleWeight = {fReader, "nLHEScaleWeight"};
+    TTreeReaderValue<UInt_t> nLHEPdfWeight = {fReader, "nLHEPdfWeight"};
+    TTreeReaderArray<Float_t> LHEScaleWeight = {fReader, "LHEScaleWeight"};
+    TTreeReaderArray<Float_t> LHEPdfWeight = {fReader, "LHEPdfWeight"};
+
+    TTreeReaderValue<UInt_t> nGenDressedLepton = {fReader, "nGenDressedLepton"};
+    TTreeReaderArray<Float_t> GenDressedLepton_pt = {fReader, "GenDressedLepton_pt"};
+    TTreeReaderArray<Float_t> GenDressedLepton_eta = {fReader, "GenDressedLepton_eta"};
+    TTreeReaderArray<Float_t> GenDressedLepton_phi = {fReader, "GenDressedLepton_phi"};
+    TTreeReaderArray<Float_t> GenDressedLepton_mass = {fReader, "GenDressedLepton_mass"};
+    TTreeReaderArray<Int_t> GenDressedLepton_pdgId = {fReader, "GenDressedLepton_pdgId"};
+    TTreeReaderValue<UInt_t> nGenPart = {fReader, "nGenPart"};
+    TTreeReaderArray<Float_t> GenPart_pt = {fReader, "GenPart_pt"};
+    TTreeReaderArray<Float_t> GenPart_eta = {fReader, "GenPart_eta"};
+    TTreeReaderArray<Float_t> GenPart_phi = {fReader, "GenPart_phi"};
+    TTreeReaderArray<Float_t> GenPart_mass = {fReader, "GenPart_mass"};
+    TTreeReaderArray<Int_t> GenPart_pdgId = {fReader, "GenPart_pdgId"};
+    TTreeReaderArray<Int_t> GenPart_status = {fReader, "GenPart_status"};
+    TTreeReaderValue<UInt_t> nGenJet = {fReader, "nGenJet"};
+    TTreeReaderArray<Float_t> GenJet_pt = {fReader, "GenJet_pt"};
+    TTreeReaderArray<Float_t> GenJet_eta = {fReader, "GenJet_eta"};
+    TTreeReaderArray<Float_t> GenJet_phi = {fReader, "GenJet_phi"};
+    TTreeReaderArray<Float_t> GenJet_mass = {fReader, "GenJet_mass"};
+    //TTreeReaderValue<Float_t> GenMET_pt = {fReader, "GenMET_pt"};
+    //TTreeReaderValue<Float_t> GenMET_phi = {fReader, "GenMET_phi"};
+    TTreeReaderValue<Float_t> MET_fiducialGenPt = {fReader, "MET_fiducialGenPt"};
+    TTreeReaderValue<Float_t> MET_fiducialGenPhi = {fReader, "MET_fiducialGenPhi"};
     float ht;
     
     BranchManager b;
