@@ -32,17 +32,17 @@ void ZGenSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std
     b.SetBranch("Generator_id1", Generator_id1);
     b.SetBranch("Generator_id2", Generator_id2);
 
-    if (dressedLeptons.size() < 2) {
+    if (leptons.size() < 2) {
         channel_ = Unknown;
         channelName_ = "Unknown";
         return;
     }
-    if (dressedLeptons.at(0).pdgId() + dressedLeptons.at(1).pdgId() == 0) {
-        if (std::abs(dressedLeptons.at(0).pdgId()) == 11) {
+    if (leptons.at(0).pdgId() + leptons.at(1).pdgId() == 0) {
+        if (std::abs(leptons.at(0).pdgId()) == 11) {
             channel_ = ee;
             channelName_ = "ee";
         }
-        else if (std::abs(dressedLeptons.at(0).pdgId()) == 13) {
+        else if (std::abs(leptons.at(0).pdgId()) == 13) {
             channel_ = mm;
             channelName_ = "mm";
         }
@@ -54,8 +54,8 @@ void ZGenSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std
 }
 
 void ZGenSelector::SetComposite() {
-    if (dressedLeptons.size() >= 2)
-        zCand = dressedLeptons.at(0).polarP4() + dressedLeptons.at(1).polarP4();
+    if (leptons.size() >= 2)
+        zCand = leptons.at(0).polarP4() + leptons.at(1).polarP4();
 }
 
 void ZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
@@ -66,8 +66,8 @@ void ZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
         return;
     SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
 
-    auto lep1 = dressedLeptons.at(0);
-    auto lep2 = dressedLeptons.at(1);
+    auto lep1 = leptons.at(0);
+    auto lep2 = leptons.at(1);
     if (std::abs(lep1.eta()) > 2.5 || std::abs(lep2.eta()) > 2.5)
         return;
     SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
