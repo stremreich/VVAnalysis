@@ -2,17 +2,22 @@ import ROOT
 import datetime
 import subprocess
 import sys
+import logging
 
 def addMetaInfo(fOut):
     metaInfo = fOut.mkdir("MetaInfo")
     metaInfo.cd()
     time = ROOT.TNamed("datetime", str(datetime.datetime.now()))
     command = ROOT.TNamed("command", ' '.join(sys.argv))
-    if not subprocess.call(['git', 'status'])
+    try: 
         githash = ROOT.TNamed("githash", subprocess.check_output(['git', 'log', '-1', '--format="%H"']))
         gitdiff = ROOT.TNamed("gitdiff", subprocess.check_output(['git', 'diff',]))
         githash.Write()
         gitdiff.Write()
+    except subprocess.CalledProcessError:
+        logging.warning("Not a git repo, skipping git hash/diff")
+        pass
+
     time.Write()
     command.Write()
 

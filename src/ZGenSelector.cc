@@ -33,6 +33,7 @@ void ZGenSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std
     if (leptons.size() < 2) {
         channel_ = Unknown;
         channelName_ = "Unknown";
+        std::cout << "Yes that's the case!";
         return;
     }
     if (leptons.at(0).pdgId() + leptons.at(1).pdgId() == 0) {
@@ -66,8 +67,10 @@ void ZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
 
     auto lep1 = leptons.at(0);
     auto lep2 = leptons.at(1);
-    if (std::abs(lep1.eta()) > 2.5 || std::abs(lep2.eta()) > 2.5)
+    if (std::abs(lep1.eta()) > 2.5 || std::abs(lep2.eta()) > 2.5) {
+        std::cout << "lep1 " << lep1.eta() << " lep2 " << lep1.eta() << std::endl;
         return;
+    }
     SafeHistFill(histMap1D_, "CutFlow", channel_, variation.first, step++, weight);
 
     if (lep1.pt() < 25. || lep2.pt() < 25.)
@@ -114,8 +117,7 @@ void ZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
             SafeHistFill(weighthistMap1D_, "MET", channel_, variation.first, genMet.pt(), i, thweight);
         }
     }
-    // No PDFs for now
-    return;
+    // Should check how slow this is
 
     std::string partonicChan = "other";
     if ((*Generator_id1 == 1 && *Generator_id2 == 1) || (*Generator_id1 == 2 && *Generator_id2 == 2))
