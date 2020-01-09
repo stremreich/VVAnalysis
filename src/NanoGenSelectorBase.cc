@@ -36,7 +36,6 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
         vec.SetM(GenDressedLepton_mass.At(i));
         int charge = (GenDressedLepton_pdgId.At(i) < 0) ? -1: 1;
         dressedLeptons.push_back(reco::GenParticle(charge, vec, reco::Particle::Point(), GenDressedLepton_pdgId.At(i), 1, true));
-        std::cout << i << ": Adding pdgId " << GenDressedLepton_pdgId.At(i) << "pt " << GenDressedLepton_pt.At(i) << std::endl;
     } // No need to sort, they're already pt sorted
     
     if (doBareLeptons_ || doBornLeptons_ || doNeutrinos_) {

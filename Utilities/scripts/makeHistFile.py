@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import ROOT
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 import subprocess
 from python import SelectorTools
 from python import UserInput
