@@ -132,7 +132,6 @@ void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) {
     pfMetPhi = metPhiVector.At(metIndex);
 
     if (isMC_) {
-        std::cout << "Yes it's MC" << std::endl;
         float cenwgt = evtWeight[systematicWeightMap_[Central]];
         float wgt = evtWeight[systematicWeightMap_[variation.first]];
         weight = cenwgt;
@@ -186,12 +185,6 @@ void LowPileupWSelector::LoadBranchesBacon(Long64_t entry, SystPair variation) {
             pfMet = tempMet < pfMet ? tempMet : pfMet - (tempMet - pfMet);
             pfMetPhi = tempMet < pfMet ? tempMetPhi : pfMetPhi - (tempMetPhi - pfMetPhi);
         }
-        // The units are different for the e and m ntuples... :'(
-        if (isE_) {
-            std::cout << "THE WEIGHT IS " << weight << std::endl;
-            weight /= 1000000000;
-            std::cout << "NOW THE WEIGHT IS " << weight << std::endl;
-        }
     }
 }
 
@@ -205,7 +198,6 @@ void LowPileupWSelector::SetComposite() {
 void LowPileupWSelector::FillHistograms(Long64_t entry, SystPair variation) { 
     if (lep->Pt() < 25)
         return;
-    std::cout << "Finally! THE WEIGHT IS " << weight << std::endl;
     SafeHistFill(histMap1D_, "mW", channel_, variation.first, wCand.M(), weight);
     SafeHistFill(histMap1D_, "mtW", channel_, variation.first, *mtW, weight);
     SafeHistFill(histMap1D_, "mtWUncorr", channel_, variation.first, *mtWuncorr, weight);
