@@ -124,7 +124,7 @@ def makeHistFile(args):
         logging.debug("Processing channels " % args['channels'])
     elif args['bacon']:
         selector.setNtupeType("Bacon")
-        selector.setAddSumWeights(False)
+        #selector.setAddSumWeights(False)
     else:
         selector.setNtupeType("NanoAOD")
 
