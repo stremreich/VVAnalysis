@@ -356,6 +356,21 @@ void SelectorBase::SetupNewDirectory()
 {
 }
 
+std::string SelectorBase::concatenateNames(const std::string& baseName, std::string& toAppend) {
+    return concatenateNames(baseName.c_str(), toAppend);
+}
+
+std::string SelectorBase::concatenateNames(const char* baseName, std::string& toAppend) {
+    if (toAppend.empty())
+        return baseName;
+    const std::string delimit = "_";
+    std::string name = baseName;
+    name.reserve(name.size()+delimit.size()+toAppend.size());
+    name.append(delimit);
+    name.append(toAppend);
+    return name;
+}
+
 std::string SelectorBase::getHistName(std::string histName, std::string variationName) {
     return getHistName(histName, variationName, channelName_);
 }

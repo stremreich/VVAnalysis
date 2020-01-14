@@ -35,7 +35,7 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
         vec.SetPhi(GenDressedLepton_phi.At(i));
         vec.SetM(GenDressedLepton_mass.At(i));
         int charge = (GenDressedLepton_pdgId.At(i) < 0) ? -1: 1;
-        dressedLeptons.push_back(reco::GenParticle(charge, vec, reco::Particle::Point(), GenDressedLepton_pdgId.At(i), 1, true));
+        dressedLeptons.emplace_back(reco::GenParticle(charge, vec, reco::Particle::Point(), GenDressedLepton_pdgId.At(i), 1, true));
     } // No need to sort, they're already pt sorted
     
     if (doBareLeptons_ || doBornLeptons_ || doNeutrinos_) {
@@ -54,14 +54,15 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
             }
             if (std::abs(GenPart_pdgId.At(i)) == 11 || std::abs(GenPart_pdgId.At(i)) == 13) {
                 int charge = (GenPart_pdgId.At(i) < 0) ? -1: 1;
-                bareLeptons.push_back(reco::GenParticle(charge, vec, reco::Particle::Point(), GenPart_pdgId.At(i), GenPart_status.At(i), true));
+                bareLeptons.emplace_back(reco::GenParticle(charge, vec, reco::Particle::Point(), GenPart_pdgId.At(i), GenPart_status.At(i), true));
             }
             else if (std::abs(GenPart_pdgId.At(i)) == 12 || std::abs(GenPart_pdgId.At(i)) == 14) {
-                neutrinos.push_back(reco::GenParticle(0, vec, reco::Particle::Point(), GenPart_pdgId.At(i), GenPart_status.At(i), true));
+                neutrinos.emplace_back(reco::GenParticle(0, vec, reco::Particle::Point(), GenPart_pdgId.At(i), GenPart_status.At(i), true));
             }
         }
-        std::sort(bareLeptons.begin(), bareLeptons.end(), 
-            [](const reco::GenParticle& a, const reco::GenParticle& b) { return a.pt() > b.pt(); });
+        auto compareByPt = [](const reco::GenParticle& a, const reco::GenParticle& b) { return a.pt() > b.pt(); };
+        std::sort(bareLeptons.begin(), bareLeptons.end(), compareByPt);
+        std::sort(neutrinos.begin(), neutrinos.end(), compareByPt);
     }
 
     leptons = dressedLeptons;
@@ -75,7 +76,7 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
         jet.SetM(GenJet_mass.At(i));
         if (jet.pt() > 30 && !helpers::overlapsCollection(jet, leptons, 0.4, nLeptons_)) {
             ht += jet.pt();
-            jets.push_back(jet);
+            jets.emplace_back(jet);
         }
     } // No need to sort jets, they're already pt sorted
 

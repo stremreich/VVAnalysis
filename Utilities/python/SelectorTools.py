@@ -332,6 +332,7 @@ class SelectorDriver(object):
             sumweights_branch = "genEventSumw" 
             if not rtfile.Get(meta_tree_name).GetBranch(sumweights_branch):
                 sumweights_branch += "_"
+                nevents_branch += "_"
         elif self.ntupleType == "Bacon":
             sumWeightsType = "fromHist"
             weightshist_name = "hGenWeights"

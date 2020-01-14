@@ -27,6 +27,7 @@ public :
     PDFWeightsHelper pdfweightshelper_;
     // Derived values
     reco::GenParticleCollection leptons;
+    //std::unique_ptr<reco::GenParticleCollection> testleptons;
     reco::GenParticleCollection bareLeptons;
     reco::GenParticleCollection dressedLeptons;
     reco::GenParticleCollection neutrinos;
