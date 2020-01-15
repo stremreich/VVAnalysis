@@ -1,6 +1,6 @@
 #include "Analysis/VVAnalysis/interface/NanoGenSelectorBase.h"
 #include "PhysicsTools/HepMCCandAlgos/interface/PDFWeightsHelper.h"
-#include "Analysis/VVAnalysis/interface/helpers.h"
+#include "DataFormats/Math/interface/deltaR.h"
 #include <TStyle.h>
 #include <regex>
 
@@ -38,10 +38,13 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
         dressedLeptons.emplace_back(reco::GenParticle(charge, vec, reco::Particle::Point(), GenDressedLepton_pdgId.At(i), 1, true));
     } // No need to sort, they're already pt sorted
     
-    if (doBareLeptons_ || doBornLeptons_ || doNeutrinos_) {
+    if (doBareLeptons_ || doBornLeptons_ || doNeutrinos_ || doPhotons_) {
         bareLeptons.clear();
         neutrinos.clear();
         std::vector<unsigned int> idsToKeep = {11, 12, 13, 14};
+        if (doPhotons_)
+            idsToKeep.push_back(22);
+
         for (size_t i = 0; i < *nGenPart; i++) {
             if (GenPart_status.At(i) != 1)
                 continue;
@@ -59,10 +62,22 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
             else if (std::abs(GenPart_pdgId.At(i)) == 12 || std::abs(GenPart_pdgId.At(i)) == 14) {
                 neutrinos.emplace_back(reco::GenParticle(0, vec, reco::Particle::Point(), GenPart_pdgId.At(i), GenPart_status.At(i), true));
             }
+            else if (std::abs(GenPart_pdgId.At(i)) == 22) {
+                photons.emplace_back(reco::GenParticle(0, vec, reco::Particle::Point(), GenPart_pdgId.At(i), GenPart_status.At(i), true));
+            }
         }
+        
         auto compareByPt = [](const reco::GenParticle& a, const reco::GenParticle& b) { return a.pt() > b.pt(); };
         std::sort(bareLeptons.begin(), bareLeptons.end(), compareByPt);
-        std::sort(neutrinos.begin(), neutrinos.end(), compareByPt);
+
+        // Warning! Only really works for the W
+        if (bareLeptons.size() > 0 && doPhotons_) {
+            auto& lep = bareLeptons.at(0);
+            photons.erase(std::remove_if(photons.begin(), photons.end(), 
+                    [lep] (const reco::GenParticle& p) { return reco::deltaR(p, lep) > 0.1; }),
+                photons.end()
+            );
+        }
     }
 
     leptons = dressedLeptons;

@@ -2,6 +2,7 @@
 #define helpers_h
 
 #include "DataFormats/Candidate/interface/Particle.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 #include "DataFormats/Math/interface/deltaR.h"
 
@@ -20,8 +21,11 @@ namespace helpers {
     }
     return false;
   }
-}
 
+  //bool compareByPt (const reco::Candidate& a, const reco::Candidate& b) {
+  //    return a.pt() > b.pt();
+  //}
+}
     
 #endif
 

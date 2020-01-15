@@ -27,10 +27,10 @@ public :
     PDFWeightsHelper pdfweightshelper_;
     // Derived values
     reco::GenParticleCollection leptons;
-    //std::unique_ptr<reco::GenParticleCollection> testleptons;
     reco::GenParticleCollection bareLeptons;
     reco::GenParticleCollection dressedLeptons;
     reco::GenParticleCollection neutrinos;
+    reco::GenParticleCollection photons;
     std::vector<LorentzVector> jets;
     LorentzVector genMet;
 
@@ -43,6 +43,7 @@ public :
     bool doMC2H_ = false;
     bool doBareLeptons_ = false;
     bool doBornLeptons_ = false;
+    bool doPhotons_ = false;
     bool doNeutrinos_ = false;
 
     TH1D* mcPdfWeights_;
