@@ -102,7 +102,7 @@ void WGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
     if (leptons.size() < nLeptons_)
         return;
     auto& lep = leptons.at(0);
-    if (lep.pt() < 25 || std::abs(lep.eta()) > 2.5 || photons.size() == 0)
+    if (lep.pt() < 25 || std::abs(lep.eta()) > 2.5)
         return;
     SafeHistFill(histMap1D_, "nGammaAssoc", channel_, variation.first, photons.size(), weight);
 
