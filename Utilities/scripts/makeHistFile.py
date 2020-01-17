@@ -150,6 +150,7 @@ def makeHistFile(args):
         # TODO: Should also have an option to specify input file list for background
         if args['background_input'] and args['filenames']:
             selector.setInputTier(args['background_input'])
+            selector.clearDatasets()
             selector.setDatasets(args['filenames'])
         selector.isBackground()
         selector.setAddSumWeights(False)

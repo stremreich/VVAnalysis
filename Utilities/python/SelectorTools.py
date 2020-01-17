@@ -27,12 +27,9 @@ class SelectorDriver(object):
             "Efficiency" : "Efficiency",
         }
 
+        self.subanalysis = None
         if analysis.find(":") != -1:
-            subAna = analysis.split(':')
-            self.subanalysis = subAna[1]
-            analysis = subAna[0]
-        else:
-            self.subanalysis = None
+            analysis, self.subanalysis = analysis.split(':')
         self.analysis = analysis
         self.selection = selection
         self.input_tier = input_tier
@@ -150,21 +147,21 @@ class SelectorDriver(object):
     def unsetDatasetRegions(self):
         self.regions = {}
 
+    # If you want a completely new set of data, call this. All duplicates will be overwritten,
+    # but if you don't define a new dataset properly, it would be read from the old if not cleared
+    def clearDatasets(self):
+        self.datasets = {}
+
     def setDatasets(self, datalist):
-        if self.subanalysis:
-            datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=self.subanalysis)
-        else:
-            datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=self.analysis)
+        analysis = self.subanalysis if self.subanalysis else self.analysis
+        datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=analysis)
         
         for dataset in datasets:
             if "@" in dataset:
                 dataset, file_path = [f.strip() for f in dataset.split("@")]
             else:
                 try:
-                    if self.subanalysis:
-                        file_path = ConfigureJobs.getInputFilesPath(dataset, self.input_tier, self.subanalysis)
-                    else:
-                        file_path = ConfigureJobs.getInputFilesPath(dataset, self.input_tier, self.analysis)
+                    file_path = ConfigureJobs.getInputFilesPath(dataset, self.input_tier, analysis)
                 except ValueError as e:
                     logging.warning(e)
                     continue
