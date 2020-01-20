@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import ROOT
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 import subprocess
 from python import SelectorTools
 from python import UserInput
@@ -123,7 +124,7 @@ def makeHistFile(args):
         logging.debug("Processing channels " % args['channels'])
     elif args['bacon']:
         selector.setNtupeType("Bacon")
-        selector.setAddSumWeights(False)
+        #selector.setAddSumWeights(False)
     else:
         selector.setNtupeType("NanoAOD")
 
@@ -149,6 +150,7 @@ def makeHistFile(args):
         # TODO: Should also have an option to specify input file list for background
         if args['background_input'] and args['filenames']:
             selector.setInputTier(args['background_input'])
+            selector.clearDatasets()
             selector.setDatasets(args['filenames'])
         selector.isBackground()
         selector.setAddSumWeights(False)

@@ -214,9 +214,10 @@ def getListOfFiles(filelist, selection, manager_path="", analysis=""):
         elif name in group_names:
             names += group_names[name]['Members']
         else:
-            if name not in valid_names:
-                print "%s is not a valid name" % name
-                print "Valid names must be defined in AnalysisDatasetManager/FileInfo/(data/montecarlo)*"
+            if name not in valid_names and name.split("__")[0] not in valid_names:
+                logging.warning("%s is not a valid name" % name)
+                logging.warning("Valid names must be defined in AnalysisDatasetManager/FileInfo/(data/montecarlo)*")
+                logging.debug("Vaid names are %s" % valid_names)
                 continue
             names += [name]
     return [str(i) for i in names]

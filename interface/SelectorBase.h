@@ -299,12 +299,20 @@ class SelectorBase : public TSelector {
     void InitializeHistogramFromConfig(std::string name, ChannelPair channel, std::vector<std::string>& histData);
     void InitializeHistogramsFromConfig();
     std::vector<std::string> ReadHistDataFromConfig(std::string histDataString);
+    std::string concatenateNames(const char* baseName, std::string& toAppend);
+    std::string concatenateNames(const std::string& baseName, std::string& toAppend);
     std::string getHistName(std::string histName, std::string variationName);
     std::string getHistName(std::string histName, std::string variationName, std::string channel);
     template<typename T>
     void InitializeHistMap(std::vector<std::string>& labels, std::unordered_map<HistLabel, T*>& histMap);
 
     // Filling Functions
+    template<typename T, typename... Args>
+	void SafeHistFill(std::unordered_map<HistLabel, T*>& container, 
+		std::string name, Channel chan, Systematic var, Args... args) {
+        SafeHistFill(container, name.c_str(), chan, var, args...);
+    }
+
     template<typename T, typename... Args>
 	void SafeHistFill(std::unordered_map<HistLabel, T*>& container, 
 		const char* name, Channel chan, Systematic var, Args... args) {

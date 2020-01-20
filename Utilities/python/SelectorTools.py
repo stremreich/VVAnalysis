@@ -27,12 +27,9 @@ class SelectorDriver(object):
             "Efficiency" : "Efficiency",
         }
 
+        self.subanalysis = None
         if analysis.find(":") != -1:
-            subAna = analysis.split(':')
-            self.subanalysis = subAna[1]
-            analysis = subAna[0]
-        else:
-            self.subanalysis = None
+            analysis, self.subanalysis = analysis.split(':')
         self.analysis = analysis
         self.selection = selection
         self.input_tier = input_tier
@@ -150,21 +147,21 @@ class SelectorDriver(object):
     def unsetDatasetRegions(self):
         self.regions = {}
 
+    # If you want a completely new set of data, call this. All duplicates will be overwritten,
+    # but if you don't define a new dataset properly, it would be read from the old if not cleared
+    def clearDatasets(self):
+        self.datasets = {}
+
     def setDatasets(self, datalist):
-        if self.subanalysis:
-            datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=self.subanalysis)
-        else:
-            datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=self.analysis)
+        analysis = self.subanalysis if self.subanalysis else self.analysis
+        datasets = ConfigureJobs.getListOfFiles(datalist, self.input_tier, analysis=analysis)
         
         for dataset in datasets:
             if "@" in dataset:
                 dataset, file_path = [f.strip() for f in dataset.split("@")]
             else:
                 try:
-                    if self.subanalysis:
-                        file_path = ConfigureJobs.getInputFilesPath(dataset, self.input_tier, self.subanalysis)
-                    else:
-                        file_path = ConfigureJobs.getInputFilesPath(dataset, self.input_tier, self.analysis)
+                    file_path = ConfigureJobs.getInputFilesPath(dataset, self.input_tier, analysis)
                 except ValueError as e:
                     logging.warning(e)
                     continue
@@ -221,6 +218,9 @@ class SelectorDriver(object):
         return True
 
     def writeOutput(self, output_list, chan, processes, dataset, addSumweights):
+        sumweights_hist = ROOT.gROOT.FindObject("sumweights")
+
+        # The file closing messes up the sumweights when its taken directly from the file
         if self.numCores > 1:
             self.outfile.Close()
             chanNum = self.channels.index(chan)
@@ -237,7 +237,9 @@ class SelectorDriver(object):
                     logging.warning('Skipping process %s for dataset %s' % (process, dataset))
                     return False
             if addSumweights:
-                dataset_list.Add(ROOT.gROOT.FindObject("sumweights"))
+                if not sumweights_hist:
+                    logging.warning("Failed to find sumweights for dataset %s" % dataset)
+                dataset_list.Add(sumweights_hist)
             OutputTools.writeOutputListItem(dataset_list, self.current_file)
         dataset_list.Delete()
         output_list.Delete()
@@ -319,23 +321,43 @@ class SelectorDriver(object):
 
     # You can use filenum to index the files and sum separately, but it's not necessary
     def fillSumweightsHist(self, rtfile, filenum=1):
+        sumWeightsType = "fromTree"
+
         if self.ntupleType == "NanoAOD":
             nevents_branch = "genEventCount"
-            sumweights_branch = "genEventSumw" if "MiNNLO" not in rtfile.GetName() else "genEventSumw_"
             meta_tree_name = "Runs"
+            sumweights_branch = "genEventSumw" 
+            if not rtfile.Get(meta_tree_name).GetBranch(sumweights_branch):
+                sumweights_branch += "_"
+                nevents_branch += "_"
+        elif self.ntupleType == "Bacon":
+            sumWeightsType = "fromHist"
+            weightshist_name = "hGenWeights"
         else:
             nevents_branch = ""
             sumweights_branch = "summedWeights"
             meta_tree_name = "metaInfo/metaInfo"
-        meta_tree = rtfile.Get(meta_tree_name)
-        ROOT.gROOT.cd()
-        sumweights_hist = ROOT.gROOT.FindObject("sumweights")
-        tmplabel = sumweights_hist.GetName()+"_i"
-        tmpweights_hist = sumweights_hist.Clone(tmplabel)
-        draw_weight = sumweights_branch 
-        if self.maxEntries and self.maxEntries > 0:
-            logging.warning("maxEntries is a subset of all the events in the file." \
-                " The sumweights hist will be scaled to reflect this, but this is NOT exact!")
-            draw_weight += "*%i/%s" % (self.maxEntries, nevents_branch)
-        meta_tree.Draw("%i>>%s" % (filenum, tmplabel), draw_weight)
-        sumweights_hist.Add(tmpweights_hist)
+
+        if sumWeightsType == "fromTree":
+            meta_tree = rtfile.Get(meta_tree_name)
+            ROOT.gROOT.cd()
+            sumweights_hist = ROOT.gROOT.FindObject("sumweights")
+            tmplabel = sumweights_hist.GetName()+"_i"
+            tmpweights_hist = sumweights_hist.Clone(tmplabel)
+            draw_weight = sumweights_branch 
+            if self.maxEntries and self.maxEntries > 0:
+                logging.warning("maxEntries is a subset of all the events in the file." \
+                    " The sumweights hist will be scaled to reflect this, but this is NOT exact!")
+                draw_weight += "*%i/%s" % (self.maxEntries, nevents_branch)
+            meta_tree.Draw("%i>>%s" % (filenum, tmplabel), draw_weight)
+            sumweights_hist.Add(tmpweights_hist)
+        elif sumWeightsType == "fromHist":
+            ROOT.gROOT.cd()
+            sumweights_hist = ROOT.gROOT.FindObject("sumweights")
+            if sumweights_hist:
+                sumweights_hist.Delete()
+            sumweights_hist = rtfile.Get("hGenWeights")
+            if sumweights_hist:
+                sumweights_hist = sumweights_hist.Clone("sumweights")
+                sumweights_hist.SetDirectory(ROOT.gROOT)
+                ROOT.SetOwnership(sumweights_hist, False)
