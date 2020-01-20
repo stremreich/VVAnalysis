@@ -8,9 +8,11 @@ void LowPileupWBackgroundSelector::Init(TTree *tree) {
 }
 
 void LowPileupWBackgroundSelector::FillHistograms(Long64_t entry, SystPair variation) { 
-    if (*lepPfRelIso > 0.25 && *lepPfRelIso < 0.35)
+    bool isMu = channel_ == mn || channel_ == mp;
+    if ((isMu && *lepRelIso > 0.25 && *lepRelIso < 0.35) ||
+            (isMu && *lepRelIso > 0.3 && *lepRelIso < 0.45))
         return;
-    weight *= 0.13;
+    weight *= (isMu ? 0.13 : 1);
     LowPileupWSelector::FillHistograms(entry, variation);
 }
 

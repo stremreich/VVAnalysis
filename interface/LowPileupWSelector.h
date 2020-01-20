@@ -38,7 +38,7 @@ public :
     TTreeReaderValue<double> mtW = {fReader, "mtCorr"};
     TTreeReaderValue<float> mtWuncorr = {fReader, "mt"};
     TTreeReaderValue<int> charge = {fReader, "q"};
-    TTreeReaderValue<double> lepPfRelIso = {fReader, "relIso"};
+    TTreeReaderValue<double> lepRelIso = {fReader, "relIso"};
 
     std::unordered_map<Systematic, size_t> systematicWeightMap_;
     std::unordered_map<Systematic, size_t> metCorrWeightMap_;
