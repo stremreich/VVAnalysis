@@ -107,6 +107,8 @@ void SelectorBase::Init(TTree *tree)
 
 void SelectorBase::addSubprocesses(std::vector<std::string> processes) {
     subprocesses_ = processes;
+    for (auto& proc : subprocesses_)
+        std::cout << "Subproces " << proc << std::endl;
 }
 
 void SelectorBase::setSubprocesses(std::string process) {
@@ -114,6 +116,7 @@ void SelectorBase::setSubprocesses(std::string process) {
     if (currentHistDir_ == nullptr) {
         currentHistDir_ = new TList();
         currentHistDir_->SetName(process.c_str());
+        std::cout << "Setting output dir name to " << process << std::endl;
         fOutput->Add(currentHistDir_);
     }
         //throw std::invalid_argument(process + " is not a valid subprocess for selector!");

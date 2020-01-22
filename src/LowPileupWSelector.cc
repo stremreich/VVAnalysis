@@ -196,7 +196,7 @@ void LowPileupWSelector::SetComposite() {
 }
 
 void LowPileupWSelector::FillHistograms(Long64_t entry, SystPair variation) { 
-    if (lep->Pt() < 25)
+    if (lep->Pt() < 25 || *mtW < 40)
         return;
     SafeHistFill(histMap1D_, "mW", channel_, variation.first, wCand.M(), weight);
     SafeHistFill(histMap1D_, "mtW", channel_, variation.first, *mtW, weight);
@@ -207,14 +207,15 @@ void LowPileupWSelector::FillHistograms(Long64_t entry, SystPair variation) {
     SafeHistFill(histMap1D_, "etal", channel_, variation.first, lep->Eta(), weight);
     SafeHistFill(histMap1D_, "pfMet", channel_, variation.first, pfMet, weight);
 
-    if (subprocessHistMaps1D_.empty())
+    if (subprocessHistMaps1D_.empty()) {
         return;
+    }
 
     //std::vector<int> binning = {0, 13, 26, 38, 50, 62, 75, 100};
     std::vector<int> binning = {0, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100};
     size_t upperIndex = std::distance(binning.begin(), std::upper_bound(binning.begin(), binning.end(), genVPt));
 
-    std::string binname = name_;
+    std::string binname = name_.substr(0, name_.size()-3);
     binname.append("_GenPtW_");
     if (upperIndex == binning.size())
         binname.append(std::to_string(binning.back()));
@@ -223,6 +224,7 @@ void LowPileupWSelector::FillHistograms(Long64_t entry, SystPair variation) {
         binname.append("_");
         binname.append(std::to_string(binning.at(upperIndex)));
     }
+    binname.append(isE_ ? "__e" : "__m");
 
     try {
         HistMap1D& subprocessMap = subprocessHistMaps1D_.at(binname);

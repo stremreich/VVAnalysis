@@ -140,9 +140,10 @@ def makeHistFile(args):
         #bins = [0.0, 13.0, 26.0, 38.0, 50.0, 62.0, 75.0, 100.0]
         regions = ["GenPtW_%i_%i" % (bins[i], bins[i+1]) for i in range(len(bins)-1)]
         regions += ["GenPtW_100"]
-        selector.setDatasetRegions("wmv_0j_nlo=" + ','.join(regions))
-        selector.setDatasetRegions("wmv_1j_nlo=" + ','.join(regions))
-        selector.setDatasetRegions("wmv_2j_nlo=" + ','.join(regions))
+        for c in ["e", "m"]:
+            selector.setDatasetRegions("wlnu_0j_nlo__%s=" % c + ','.join(regions))
+            selector.setDatasetRegions("wlnu_1j_nlo__%s=" % c + ','.join(regions))
+            selector.setDatasetRegions("wlnu_2j_nlo__%s=" % c + ','.join(regions))
 
     mc = selector.applySelector()
 

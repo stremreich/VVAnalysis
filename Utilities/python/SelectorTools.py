@@ -142,7 +142,11 @@ class SelectorDriver(object):
         regionSets = [i.strip() for i in regions.split(";")]
         for region in regionSets:
             process, regions = [i.strip() for i in region.split("=")]
-            self.regions[process] = ["_".join([process, i.strip()]) for i in regions.split(",")]
+            label = process
+            if "__" in label:
+                label, tag = process.split("__")
+                tag = "__" + tag
+            self.regions[process] = ["_".join([label, i.strip()+tag]) for i in regions.split(",")]
     
     def unsetDatasetRegions(self):
         self.regions = {}
@@ -204,6 +208,7 @@ class SelectorDriver(object):
             if not self.outfile:
                 self.outfile = ROOT.TFile.Open(self.outfile_name)
             sumweights_hist = self.outfile.Get("%s/sumweights" % dataset)
+            
             if not sumweights_hist:
                 sumweights_hist = ROOT.TH1D("sumweights", "sumweights", 100, 0, 100)
             sumweights_hist.SetDirectory(ROOT.gROOT)
@@ -241,8 +246,8 @@ class SelectorDriver(object):
                     logging.warning("Failed to find sumweights for dataset %s" % dataset)
                 dataset_list.Add(sumweights_hist)
             OutputTools.writeOutputListItem(dataset_list, self.current_file)
-        dataset_list.Delete()
-        output_list.Delete()
+            del dataset_list
+        del output_list
 
     def getFileNames(self, file_path):
         xrootd = "/store" in file_path.split("/hdfs/")[0][:7]
@@ -354,10 +359,8 @@ class SelectorDriver(object):
         elif sumWeightsType == "fromHist":
             ROOT.gROOT.cd()
             sumweights_hist = ROOT.gROOT.FindObject("sumweights")
-            if sumweights_hist:
-                sumweights_hist.Delete()
-            sumweights_hist = rtfile.Get("hGenWeights")
-            if sumweights_hist:
-                sumweights_hist = sumweights_hist.Clone("sumweights")
+            new_sumweights_hist = rtfile.Get("hGenWeights")
+            if sumweights_hist and new_sumweights_hist:
+                sumweights_hist.Add(new_sumweights_hist)
                 sumweights_hist.SetDirectory(ROOT.gROOT)
                 ROOT.SetOwnership(sumweights_hist, False)
