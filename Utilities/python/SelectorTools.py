@@ -252,7 +252,7 @@ class SelectorDriver(object):
     def getFileNames(self, file_path):
         xrootd = "/store" in file_path.split("/hdfs/")[0][:7]
         xrootd_user = "/store/user" in file_path.split("/hdfs/")[0][:12]
-        if not (xrootd or os.path.isfile(file_path) or os.path.isdir(file_path.rsplit("/", 1)[0].rstrip("/*"))):
+        if not (xrootd or os.path.isfile(file_path) or len(glob.glob(file_path.rsplit("/", 1)[0]))):
             raise ValueError("Invalid path! Skipping dataset. Path was %s" 
                 % file_path)
 

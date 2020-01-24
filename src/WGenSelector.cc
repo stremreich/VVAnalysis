@@ -42,7 +42,7 @@ void WGenSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std
     NanoGenSelectorBase::LoadBranchesNanoAOD(entry, variation);
 
     if (leptons.size() > 0 && std::abs(leptons.at(0).pdgId()) == 11) {
-        if (leptons.at(0).pdgId() < 0) {
+        if (leptons.at(0).pdgId() > 0) {
             channel_ = en;
             channelName_ = "en";
         }
@@ -52,7 +52,7 @@ void WGenSelector::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std
         }
     }
     else if (leptons.size() > 0 && std::abs(leptons.at(0).pdgId()) == 13) {
-        if (leptons.at(0).pdgId() < 0) {
+        if (leptons.at(0).pdgId() > 0) {
             channel_ = mn;
             channelName_ = "mn";
         }
