@@ -82,7 +82,8 @@ def copyDatasetManagerFiles(analysis):
 
 def copyGridCertificate():
     # TODO: Check that it's valid for enough time
-    shutil.copy("/tmp/x509up_u%s" % os.getuid(), "userproxy")
+    #shutil.copy("/tmp/x509up_u%s" % os.getuid(), "userproxy")
+    shutil.copy("~/private/proxy/myproxy", "userproxy")
 
 def tarAnalysisInfo(condor_dir, tarball_name):
     tarname = condor_dir+"/"+tarball_name

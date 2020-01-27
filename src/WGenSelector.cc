@@ -138,7 +138,7 @@ void WGenSelector::FillHistogramsByName(Long64_t entry, std::string& toAppend, s
     SafeHistFill(histMap1D_, concatenateNames("CutFlow", toAppend), channel_, variation.first, step++, weight);
 
     auto& lep = leptons.at(0);
-    if (std::abs(lep.eta() > 2.5))
+    if (std::abs(lep.eta()) > 2.5)
         return;
     SafeHistFill(histMap1D_, concatenateNames("CutFlow", toAppend), channel_, variation.first, step++, weight);
 
@@ -171,7 +171,7 @@ void WGenSelector::FillHistogramsByName(Long64_t entry, std::string& toAppend, s
         }  
     }
 
-    if (variation.first == Central) {
+    if (variation.first == Central && doTheoryVars_) {
         size_t maxEntry = *nLHEScaleWeight+*nLHEPdfWeight;
         if (doMC2H_ == true)
             maxEntry += N_MC2HESSIAN_WEIGHTS_;

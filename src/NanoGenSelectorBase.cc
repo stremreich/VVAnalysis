@@ -13,6 +13,11 @@ void NanoGenSelectorBase::Init(TTree *tree)
     std::cout << "INFO: Convert MC to Hessian is " << doMC2H_ << std::endl;
     if (doMC2H_)
         pdfweightshelper_.Init(N_LHEPDF_WEIGHTS_, N_MC2HESSIAN_WEIGHTS_, mc2hessianCSV);
+    // NNLOPSLike is just a config name for one MiNNLO sample
+    if (name_.find("nnlops") != std::string::npos && name_.find("nnlopslike") == std::string::npos) {
+        nnlops_ = true;
+        std::cout << "INFO: NNLOPS sample will be weighted by NNLO weight\n";
+    }
     fReader.SetTree(tree);
 }
 
@@ -30,11 +35,14 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
 
     for (size_t i = 0; i < *nGenDressedLepton; i++) {
         LorentzVector vec;
+        if (GenDressedLepton_hasTauAnc.At(i)) {
+            continue;
+        }
         vec.SetPt(GenDressedLepton_pt.At(i));
         vec.SetEta(GenDressedLepton_eta.At(i));
         vec.SetPhi(GenDressedLepton_phi.At(i));
         vec.SetM(GenDressedLepton_mass.At(i));
-        int charge = (GenDressedLepton_pdgId.At(i) < 0) ? -1: 1;
+        int charge = (GenDressedLepton_pdgId.At(i) < 0) ? 1: -1;
         dressedLeptons.emplace_back(reco::GenParticle(charge, vec, reco::Particle::Point(), GenDressedLepton_pdgId.At(i), 1, true));
     } // No need to sort, they're already pt sorted
     
@@ -56,7 +64,7 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
                 vec.SetM(GenPart_mass.At(i));
             }
             if (std::abs(GenPart_pdgId.At(i)) == 11 || std::abs(GenPart_pdgId.At(i)) == 13) {
-                int charge = (GenPart_pdgId.At(i) < 0) ? -1: 1;
+                int charge = (GenPart_pdgId.At(i) < 0) ? 1: -1;
                 bareLeptons.emplace_back(reco::GenParticle(charge, vec, reco::Particle::Point(), GenPart_pdgId.At(i), GenPart_status.At(i), true));
             }
             else if (std::abs(GenPart_pdgId.At(i)) == 12 || std::abs(GenPart_pdgId.At(i)) == 14) {
@@ -101,6 +109,10 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
     genMet.SetEta(0.);
 
     weight = *genWeight;
+
+    if (nnlops_) {
+        weight *= LHEScaleWeight.At(9);
+    }
     if (doMC2H_)
         buildHessian2MCSet();
 

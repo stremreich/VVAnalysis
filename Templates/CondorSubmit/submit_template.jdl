@@ -22,7 +22,7 @@ NPerJob = ${nPerJob}
 NProcesses = ${nJobs}
 
 # lxplus specific
-+JobQueue = 'longlunch'
++JobFlavour = "longlunch"
 
 # Recommend randomizing file list so that one job does not
 # end up processing a bunch of the same files that take longer

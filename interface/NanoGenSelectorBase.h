@@ -40,6 +40,8 @@ public :
     static const unsigned int N_LHEPDFAS_WEIGHTS_ = 102;
     static const unsigned int N_MC2HESSIAN_WEIGHTS_ = 60;
     float weight;
+    bool nnlops_ = false;
+    bool doTheoryVars_ = false;
     bool doMC2H_ = false;
     bool doBareLeptons_ = false;
     bool doBornLeptons_ = false;
@@ -60,6 +62,7 @@ public :
     TTreeReaderArray<Float_t> LHEPdfWeight = {fReader, "LHEPdfWeight"};
 
     TTreeReaderValue<UInt_t> nGenDressedLepton = {fReader, "nGenDressedLepton"};
+    TTreeReaderArray<Bool_t> GenDressedLepton_hasTauAnc = {fReader, "GenDressedLepton_hasTauAnc"};
     TTreeReaderArray<Float_t> GenDressedLepton_pt = {fReader, "GenDressedLepton_pt"};
     TTreeReaderArray<Float_t> GenDressedLepton_eta = {fReader, "GenDressedLepton_eta"};
     TTreeReaderArray<Float_t> GenDressedLepton_phi = {fReader, "GenDressedLepton_phi"};
