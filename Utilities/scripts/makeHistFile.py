@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import ROOT
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 import subprocess
 from python import SelectorTools
 from python import UserInput
@@ -7,6 +8,7 @@ from python import OutputTools
 from python import ConfigureJobs
 from python import HistTools
 import os
+import shutil
 import logging
 import sys
 
@@ -18,8 +20,6 @@ def getComLineArgs():
         default=-1, help="Max entries to process")
     parser.add_argument("--output_file", "-o", type=str,
         default="test.root", help="Output file name")
-    parser.add_argument("--test", action='store_true',
-        help="Run test job (no background estimate)")
     parser.add_argument("--debug", action='store_true',
         help="Print verbose info")
     ntuple_group = parser.add_mutually_exclusive_group(required=False)
@@ -63,7 +63,13 @@ def makeHistFile(args):
         sys.path.insert(0, "/".join([manager_path, 
             "AnalysisDatasetManager", "Utilities/python"]))
 
+    out = args['output_file'].split('/')
     tmpFileName = args['output_file']
+    outFolder = ''
+    # Work with file locally if outputing to eos, to avoid write problems
+    if 'eos' in out:
+        tmpFileName = out[-1]
+        outFolder = '/'.join(out[:-1])
     toCombine = args['with_background'] 
     fOut = ROOT.TFile(tmpFileName if not toCombine else tmpFileName.replace(".root", "sel.root"), "recreate")
     combinedNames = [fOut.GetName()]
@@ -118,7 +124,7 @@ def makeHistFile(args):
         logging.debug("Processing channels " % args['channels'])
     elif args['bacon']:
         selector.setNtupeType("Bacon")
-        selector.setAddSumWeights(False)
+        #selector.setAddSumWeights(False)
     else:
         selector.setNtupeType("NanoAOD")
 
@@ -127,15 +133,17 @@ def makeHistFile(args):
     else:
         selector.setFileList(*args['inputs_from_file'])
 
-    if args['regions']:
+    if args['regions'] and args['regions'] != 'none':
         selector.setDatasetRegions(args['regions'])
-    elif args['analysis'] == 'LowPileupW':
-        bins = [0.0, 13.0, 26.0, 38.0, 50.0, 62.0, 75.0, 100.0]
+    elif args['regions'] != 'none' and args['analysis'] == 'LowPileupW':
+        bins = [0, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100]
+        #bins = [0.0, 13.0, 26.0, 38.0, 50.0, 62.0, 75.0, 100.0]
         regions = ["GenPtW_%i_%i" % (bins[i], bins[i+1]) for i in range(len(bins)-1)]
         regions += ["GenPtW_100"]
-        selector.setDatasetRegions("wmv_0j_nlo=" + ','.join(regions))
-        selector.setDatasetRegions("wmv_1j_nlo=" + ','.join(regions))
-        selector.setDatasetRegions("wmv_2j_nlo=" + ','.join(regions))
+        for c in ["e", "m"]:
+            selector.setDatasetRegions("wlnu_0j_nlo__%s=" % c + ','.join(regions))
+            selector.setDatasetRegions("wlnu_1j_nlo__%s=" % c + ','.join(regions))
+            selector.setDatasetRegions("wlnu_2j_nlo__%s=" % c + ','.join(regions))
 
     mc = selector.applySelector()
 
@@ -143,6 +151,7 @@ def makeHistFile(args):
         # TODO: Should also have an option to specify input file list for background
         if args['background_input'] and args['filenames']:
             selector.setInputTier(args['background_input'])
+            selector.clearDatasets()
             selector.setDatasets(args['filenames'])
         selector.isBackground()
         selector.setAddSumWeights(False)
@@ -160,6 +169,8 @@ def makeHistFile(args):
             map(os.remove, combinedNames)
     fOut = ROOT.TFile(tmpFileName, "update")
     OutputTools.addMetaInfo(fOut)
+    if outFolder != '':
+        shutil.move(fOut.GetName(), '/'.join([outFolder, fOut.GetName()]))
 
 def main():
     args = getComLineArgs()

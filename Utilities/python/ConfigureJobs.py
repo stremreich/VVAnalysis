@@ -1,6 +1,6 @@
 import datetime
 import UserInput
-import fnmatch
+import fnmatch 
 import glob
 import subprocess
 import os
@@ -8,6 +8,7 @@ import json
 import array
 import string
 import socket
+import logging
 import logging
 #try:
 import configparser
@@ -209,16 +210,25 @@ def getListOfFiles(filelist, selection, manager_path="", analysis=""):
                 names += [x for x in allnames if "data" in x]
             else:
                 names += allnames
-        elif "*" in name:
-            names += fnmatch.filter(valid_names, name)
         elif name in group_names:
             names += group_names[name]['Members']
+        elif "*" in name:
+            anti = "NOT" in name[:3]
+            name = name.replace("NOT", "")
+            matching = fnmatch.filter(valid_names, name)
+            if anti:
+                names += filter(lambda x: x not in matching, valid_names)       
+            else:
+                names += matching
+        elif name not in valid_names and name.split("__")[0] not in valid_names:
+            logging.warning("%s is not a valid name" % name)
+            logging.warning("Valid names must be defined in AnalysisDatasetManager/FileInfo/(data/montecarlo)*")
+            logging.debug("Vaid names are %s" % valid_names)
+            continue
         else:
-            if name.split("__")[0] not in valid_names:
-                print "%s is not a valid name" % name
-                print "Valid names must be defined in AnalysisDatasetManager/FileInfo/(data/montecarlo)*"
-                continue
             names += [name]
+    if not names or len(filter(lambda x: x != '', names)) == 0:
+        raise RuntimeError("No processes found matching pattern '%s'" % filelist)
     return [str(i) for i in names]
 
 def getXrdRedirector():
@@ -256,7 +266,7 @@ def getListOfFilesWithXSec(filelist, manager_path="", selection="ntuples"):
             info.update({file_name : file_info["cross_section"]*kfac})
     return info
 
-def getListOfFilesWithDASPath(filelist, analysis, selection, manager_path=""):
+def getListOfFilesWithPath(filelist, analysis, selection, das=True, manager_path=""):
     if manager_path is "":
         manager_path = getManagerPath()
     data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
@@ -264,10 +274,13 @@ def getListOfFilesWithDASPath(filelist, analysis, selection, manager_path=""):
     selection_info = UserInput.readInfo("/".join([data_path, analysis, selection]))
     info = {}
     for file_name in files:
-        if "DAS" not in selection_info[file_name].keys():
-            print "ERROR: DAS path not defined for file %s in analysis %s/%s" % (file_name, analysis, selection)
+        if das and "DAS" not in selection_info[file_name].keys():
+            logging.error("DAS path not defined for file %s in analysis %s/%s" % (file_name, analysis, selection))
             continue
-        info.update({file_name : selection_info[file_name]["DAS"]})
+        elif not das and "file_path" not in selection_info[file_name].keys():
+            logging.error("File_path not defined for file %s in analysis %s/%s" % (file_name, analysis, selection))
+            continue
+        info.update({file_name : selection_info[file_name]["DAS" if das else "file_path"]})
     return info
 
 def getPreviousStep(selection, analysis):
@@ -319,7 +332,7 @@ def getInputFilesPath(sample_name, selection, analysis, manager_path=""):
     if manager_path is "":
         manager_path = getManagerPath()
     if ".root" in sample_name:
-        print "INFO: using simple file %s" % sample_name
+        logging.info("Using simple file %s" % sample_name)
         return sample_name
     data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
     input_file_base_name = "/".join([data_path, analysis, selection])

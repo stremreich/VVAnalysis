@@ -8,9 +8,10 @@ void LowPileupWBackgroundSelector::Init(TTree *tree) {
 }
 
 void LowPileupWBackgroundSelector::FillHistograms(Long64_t entry, SystPair variation) { 
-    if (*lepPfRelIso > 0.25 && *lepPfRelIso < 0.35)
+    if ((!isE_ && *lepRelIso > 0.25 && *lepRelIso < 0.35) ||
+            (isE_ && *lepRelIso > 0.3 && *lepRelIso < 0.45))
         return;
-    weight *= 0.13;
+    //weight *= (isE_ ? 2. : 0.13);
     LowPileupWSelector::FillHistograms(entry, variation);
 }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-import makeFileListFromDAS as makeDAS
+import makeFileList 
 from python import UserInput
 from python import ConfigureJobs
 import logging
@@ -21,8 +21,12 @@ def getComLineArgs():
                         default=3, help="Number of files per job")
     parser.add_argument("--nosubmit", action='store_true',
                         help="Just make the directory, don't submit")
+    parser.add_argument("--local", action='store_true',
+                        help="Use local files, e.g., file_path")
     parser.add_argument("--input_tier", type=str,
         default="", help="Selection stage of input files")
+    parser.add_argument("-q", "--queue", type=str,
+        default="longlunch", help="lxplus queue, or 'uw' for wisconsin settings")
     parser.add_argument("--force", action='store_true',
         help="Force overwrite of existing directories")
     return vars(parser.parse_args())
@@ -80,7 +84,10 @@ def copyDatasetManagerFiles(analysis):
 
 def copyGridCertificate():
     # TODO: Check that it's valid for enough time
-    shutil.copy("/tmp/x509up_u%s" % os.getuid(), "userproxy")
+    proxypath = "/tmp/x509up_u%s" % os.getuid() if not \
+                ("X509_USER_PROXY" in os.environ and os.path.isfile(os.environ["X509_USER_PROXY"])) \
+            else os.environ["X509_USER_PROXY"] 
+    shutil.copy(proxypath, "userproxy")
 
 def tarAnalysisInfo(condor_dir, tarball_name):
     tarname = condor_dir+"/"+tarball_name
@@ -94,14 +101,24 @@ def tarAnalysisInfo(condor_dir, tarball_name):
     shutil.rmtree("AnalysisDatasetManager")
     os.remove("userproxy")
 
-def writeSubmitFile(submit_dir, analysis, selection, input_tier, numfiles, nPerJob):
+def getUWCondorSettings():
+    return """# (wisconsin-specific) tell glideins to run job with access to cvmfs (via parrot)
+        +RequiresCVMFS       = True
+        +RequiresSharedFS    = True
+        +IsFastQueueJob      = True
+        Requirements         = TARGET.Arch == "X86_64" && IsSlowSlot=!=true && (MY.RequiresSharedFS=!=true || TARGET.HasAFS_OSG) && (TARGET.HasParrotCVMFS=?=true || (TARGET.UWCMS_CVMFS_Exists  && TARGET.CMS_CVMFS_Exists))
+    """
+
+def writeSubmitFile(submit_dir, analysis, selection, input_tier, queue, filelist, numfiles, nPerJob):
     template_dict = {
         "analysis" : analysis,
         "selection" : selection,
         "input_tier" : input_tier,
+        "queue" : ('+JobFlavour = "%s"' % queue) if queue != 'uw' else getUWCondorSettings(),
+        "filelist" : filelist.split(".txt")[0],
         "nPerJob" : nPerJob,
         "nJobs" : int(math.ceil(numfiles/nPerJob)),
-        "extraArgs" : "--test", # TODO: This should be removed soon!
+        "extraArgs" : "--debug", 
     }
 
     template = "Templates/CondorSubmit/submit_template.jdl"
@@ -117,16 +134,17 @@ def writeWrapperFile(submit_dir, tarball_name):
     outfile = "/".join([submit_dir, "wrapRunSelector.sh"])
     ConfigureJobs.fillTemplatedFile(template, outfile, template_dict)
 
-def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tier, numPerJob, force):
+def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tier, queue, numPerJob, force, das):
     makeSubmitDir(submit_dir, force)
     copyLibs()
     copyDatasetManagerFiles(analysis)
     copyGridCertificate()
     modifyAFSPermissions()
 
-    filelist = submit_dir + "/filelist.txt"
-    numfiles = makeDAS.makeFileListFromDAS(filenames, filelist, analysis, input_tier)
-    writeSubmitFile(submit_dir, analysis, selection, input_tier, numfiles, numPerJob)
+    filelist_name = '_'.join(filenames[:max(len(filenames), 4)])
+    filelist = '/'.join([submit_dir, filelist_name+'_filelist.txt'])
+    numfiles = makeFileList.makeFileList(filenames, filelist, analysis, input_tier, das)
+    writeSubmitFile(submit_dir, analysis, selection, input_tier, queue, filelist_name, numfiles, numPerJob)
 
     tarball_name = '_'.join([analysis, "AnalysisCode.tgz"])
     writeWrapperFile(submit_dir, tarball_name)
@@ -135,7 +153,7 @@ def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tie
 def main():
     args = getComLineArgs()
     submitDASFilesToCondor(args['filenames'], args['submit_dir'], args['analysis'], 
-        args['selection'], args['input_tier'], args['files_per_job'], args['force'])
+        args['selection'], args['input_tier'], args['queue'], args['files_per_job'], args['force'], not args['local'])
 
 if __name__ == "__main__":
     main()

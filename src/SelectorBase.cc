@@ -74,10 +74,10 @@ void SelectorBase::Init(TTree *tree)
     }
     
     if (selectionMap_.find(selectionName_) != selectionMap_.end()) {
-	selection_ = selectionMap_[selectionName_];
+	    selection_ = selectionMap_[selectionName_];
     }
     else
-        throw std::invalid_argument("Invalid selection!");
+        throw std::invalid_argument(selectionName_ + " is not a valid selection!");
     
     isMC_ = false;
     if (name_.find("data") == std::string::npos){
@@ -107,6 +107,8 @@ void SelectorBase::Init(TTree *tree)
 
 void SelectorBase::addSubprocesses(std::vector<std::string> processes) {
     subprocesses_ = processes;
+    for (auto& proc : subprocesses_)
+        std::cout << "Subproces " << proc << std::endl;
 }
 
 void SelectorBase::setSubprocesses(std::string process) {
@@ -114,6 +116,7 @@ void SelectorBase::setSubprocesses(std::string process) {
     if (currentHistDir_ == nullptr) {
         currentHistDir_ = new TList();
         currentHistDir_->SetName(process.c_str());
+        std::cout << "Setting output dir name to " << process << std::endl;
         fOutput->Add(currentHistDir_);
     }
         //throw std::invalid_argument(process + " is not a valid subprocess for selector!");
@@ -354,6 +357,21 @@ std::vector<std::string> SelectorBase::ReadHistDataFromConfig(std::string histDa
 
 void SelectorBase::SetupNewDirectory()
 {
+}
+
+std::string SelectorBase::concatenateNames(const std::string& baseName, std::string& toAppend) {
+    return concatenateNames(baseName.c_str(), toAppend);
+}
+
+std::string SelectorBase::concatenateNames(const char* baseName, std::string& toAppend) {
+    if (toAppend.empty())
+        return baseName;
+    const std::string delimit = "_";
+    std::string name = baseName;
+    name.reserve(name.size()+delimit.size()+toAppend.size());
+    name.append(delimit);
+    name.append(toAppend);
+    return name;
 }
 
 std::string SelectorBase::getHistName(std::string histName, std::string variationName) {

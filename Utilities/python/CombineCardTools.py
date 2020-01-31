@@ -154,7 +154,7 @@ class CombineCardTools(object):
                     chan_hist = group.FindObject(name + "_" + chan)
                     hist.Add(chan_hist)
                 if var == "":
-                    self.yields[label][processName] = hist.Integral()
+                    self.yields[label][processName] = round(hist.Integral(), 3)
 
     def listOfHistsByProcess(self, processName):
         if self.fitVariable == "":
@@ -188,7 +188,7 @@ class CombineCardTools(object):
                 HistTools.removeZeros(hist)
             HistTools.addOverflow(hist)
             processedHists.append(histName)
-            self.yields[chan].update({processName : round(hist.Integral(), 4) if hist.Integral() > 0 else 0.0001})
+            self.yields[chan].update({processName : round(hist.Integral(), 3) if hist.Integral() > 0 else 0.0001})
 
             if chan == self.channels[0]:
                 self.yields["all"][processName] = self.yields[chan][processName]

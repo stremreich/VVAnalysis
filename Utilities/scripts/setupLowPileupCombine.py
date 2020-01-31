@@ -40,12 +40,14 @@ config_factory = ConfigHistFactory(
     "LowPileupW/NanoAOD",
 )
 
-plot_groups = ["data", "nonprompt", "ewk", "top", "wmv_jetbinned_nlo", ]
+plot_groups = ["data", "nonprompt", "vv", "dy", "wtv", "top", "wmv_jetbinned_nlo", ]
 
-ptbins = [0.0, 13.0, 26.0, 38.0, 50.0, 62.0, 75.0, 100.0]
-regions = ["pt%ito%i" % (ptbins[i], ptbins[i+1]) for i in range(len(ptbins)-1)]
-plot_groups += ["wmv_jetbinned_nlo_%s" % region for region in regions]
-plot_groups.append("wmv_jetbinned_nlo_pt100")
+#ptbins = [0.0, 13.0, 26.0, 38.0, 50.0, 62.0, 75.0, 100.0]
+if not args.unbinnedSignal:
+    ptbins = [0, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100]
+    regions = ["pt%ito%i" % (ptbins[i], ptbins[i+1]) for i in range(len(ptbins)-1)]
+    plot_groups += ["wmv_jetbinned_nlo_%s" % region for region in regions]
+    plot_groups.append("wmv_jetbinned_nlo_pt100")
 
 plotGroupsMap = {name : config_factory.getPlotGroupMembers(name) for name in plot_groups}
 
@@ -58,9 +60,23 @@ if args.rebin:
 cardtool.setProcesses(plotGroupsMap)
 cardtool.setChannels(channels)
 cardtool.setCrosSectionMap(xsecs)
-cardtool.setVariations(["CMS_eff_MCsubt_m", "CMS_modeling_fsr", "CMS_eff_stat_m", 
-        "CMS_eff_background_m", "CMS_eff_tagPt_m",],
-                exclude=["nonprompt", "data"])
+variations = ["CMS_eff_MCsubt_m", "CMS_modeling_fsr", "CMS_eff_stat_m", 
+        "CMS_eff_background_m", "CMS_eff_tagPt_m",
+        "CMS_recoilCorrection_EtaShape",
+        "CMS_recoilCorrection_RUShape", 
+        "CMS_recoilCorrection_KeysShape",
+        "CMS_recoilCorrection_StatBin0",    
+        "CMS_recoilCorrection_StatBin1",    
+        "CMS_recoilCorrection_StatBin2",        
+        "CMS_recoilCorrection_StatBin3",        
+        "CMS_recoilCorrection_StatBin4",        
+        "CMS_recoilCorrection_StatBin5",        
+        "CMS_recoilCorrection_StatBin6",        
+        "CMS_recoilCorrection_StatBin7",        
+        "CMS_recoilCorrection_StatBin8",        
+        "CMS_recoilCorrection_StatBin9",        
+]
+cardtool.setVariations(variations, exclude=["nonprompt", "data"])
 folder_name = "_".join(args.fitvars + ([args.append] if args.append != "" else []))
 cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/LowPileup/%s" % folder_name)
 
@@ -88,7 +104,7 @@ for fitvar in args.fitvars:
         cardtool.writeProcessHistsToOutput(process)
     cardtool.writeMetaInfo()
 
-    nuissance_map = {"e" : 9, "m" : 9}
+    nuissance_map = {"e" : len(variations)+6, "m" : len(variations)+6}
     template_name = "W" if args.unbinnedSignal else "WPtBinned"
     for chan in ["m"]:
         cardname = "%s_template_{channel}.txt" % template_name

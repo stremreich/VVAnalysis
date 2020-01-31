@@ -7,27 +7,36 @@ from python import ConfigureJobs
 import logging
 import os
 import random
+import glob
 
 def getComLineArgs():
     parser = UserInput.getDefaultParser(False)
     parser.add_argument("-o", "--output_file", type=str,
                         required=True, help="Name of output text file")
+    parser.add_argument("--das", action='store_true',
+                        help="Read files from DAS (default local, e.g., from file_path")
     return vars(parser.parse_args())
 
-def getDASFilesWithName(name, das_path):
-    files = subprocess.check_output(["dasgoclient", "--query=file dataset=%s" % das_path])
+def getFilesWithName(name, path, das=True):
+    if das:
+        files = subprocess.check_output(["dasgoclient", "--query=file dataset=%s" % path])
+        if files:
+            files = files.split("\n")
+            files = filter(lambda x: "/store" in x[:7], files)
+    else:
+        files = glob.glob(path)
+
     if files:
-        files = filter(lambda x: "/store" in x[:7], files.split("\n"))
         files = ["@".join([name, f.strip()+'\n']) for f in files]
     return files
 
-def makeFileListFromDAS(filenames, output_file, analysis, selection):
-    name_path_map = ConfigureJobs.getListOfFilesWithDASPath(filenames, analysis, selection)
+def makeFileList(filenames, output_file, analysis, selection, das):
+    name_path_map = ConfigureJobs.getListOfFilesWithPath(filenames, analysis, selection, das)
 
     files = []
     for name, path in name_path_map.iteritems():
         try:
-            files.extend(getDASFilesWithName(name, path))
+            files.extend(getFilesWithName(name, path, das))
         except subprocess.CalledProcessError:
             logging.warning("Failed to find files for dataset %s with DAS path %s. Skipping!" % (name, path))
     
@@ -40,7 +49,7 @@ def makeFileListFromDAS(filenames, output_file, analysis, selection):
 
 def main():
     args = getComLineArgs()
-    makeFileListFromDAS(args['filenames'], args['output_file'], args['analysis'], args['selection'])
+    makeFileListFromDAS(args['filenames'], args['output_file'], args['analysis'], args['selection'], args['das'])
 
 if __name__ == "__main__":
     main()
