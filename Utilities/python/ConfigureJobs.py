@@ -1,6 +1,6 @@
 import datetime
 import UserInput
-import re
+import fnmatch 
 import glob
 import subprocess
 import os
@@ -212,17 +212,23 @@ def getListOfFiles(filelist, selection, manager_path="", analysis=""):
                 names += allnames
         elif name in group_names:
             names += group_names[name]['Members']
+        elif "*" in name:
+            anti = "NOT" in name[:3]
+            name = name.replace("NOT", "")
+            matching = fnmatch.filter(valid_names, name)
+            if anti:
+                names += filter(lambda x: x not in matching, valid_names)       
+            else:
+                names += matching
+        elif name not in valid_names and name.split("__")[0] not in valid_names:
+            logging.warning("%s is not a valid name" % name)
+            logging.warning("Valid names must be defined in AnalysisDatasetManager/FileInfo/(data/montecarlo)*")
+            logging.debug("Vaid names are %s" % valid_names)
+            continue
         else:
-            vals = filter(lambda x: re.search(name, x), valid_names)
-            if vals:
-                names += vals
-            elif name not in valid_names and name.split("__")[0] not in valid_names:
-                logging.warning("%s is not a valid name" % name)
-                logging.warning("Valid names must be defined in AnalysisDatasetManager/FileInfo/(data/montecarlo)*")
-                logging.debug("Vaid names are %s" % valid_names)
-                continue
+            names += [name]
     if not names or len(filter(lambda x: x != '', names)) == 0:
-        raise RuntimeError("No processes found matching mattern '%'" % filelist)
+        raise RuntimeError("No processes found matching pattern '%s'" % filelist)
     return [str(i) for i in names]
 
 def getXrdRedirector():
