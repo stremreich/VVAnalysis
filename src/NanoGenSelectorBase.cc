@@ -16,8 +16,8 @@ void NanoGenSelectorBase::Init(TTree *tree)
     // NNLOPSLike is just a config name for one MiNNLO sample
     if (name_.find("nnlops") != std::string::npos && name_.find("nnlopslike") == std::string::npos) {
         nnlops_ = true;
-        //std::cout << "INFO: NNLOPS sample will be weighted by NNLO weight\n";
-        std::cout << "INFO: Found NNLOPS sample but not applying weight\n";
+        std::cout << "INFO: NNLOPS sample will be weighted by NNLO weight\n";
+        //std::cout << "INFO: Found NNLOPS sample but not applying weight\n";
     }
     fReader.SetTree(tree);
 }
@@ -112,7 +112,7 @@ void NanoGenSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systemat
     weight = *genWeight;
 
     if (nnlops_) {
-        //weight *= LHEScaleWeight.At(9);
+        weight *= LHEScaleWeight.At(9);
     }
     if (doMC2H_)
         buildHessian2MCSet();

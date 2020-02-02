@@ -2,8 +2,9 @@
 
 import argparse
 import makeFileList 
-from python import UserInput
+from python import UserInput,OutputTools
 from python import ConfigureJobs
+import datetime
 import logging
 import os
 import shutil
@@ -134,6 +135,13 @@ def writeWrapperFile(submit_dir, tarball_name):
     outfile = "/".join([submit_dir, "wrapRunSelector.sh"])
     ConfigureJobs.fillTemplatedFile(template, outfile, template_dict)
 
+def writeMetaInfo(submit_dir, filename):
+    with open("/".join([submit_dir, filename]), "w") as metafile:
+        metafile.write(OutputTools.getScriptCall()+"\n\n")
+        metafile.write("Script called at %s \n" % datetime.datetime.now())
+        metafile.write("git hash: " + OutputTools.gitHash()+"\n")
+        metafile.write("git diff: " + OutputTools.gitDiff()+"\n")
+
 def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tier, queue, numPerJob, force, das):
     makeSubmitDir(submit_dir, force)
     copyLibs()
@@ -149,6 +157,7 @@ def submitDASFilesToCondor(filenames, submit_dir, analysis, selection, input_tie
     tarball_name = '_'.join([analysis, "AnalysisCode.tgz"])
     writeWrapperFile(submit_dir, tarball_name)
     tarAnalysisInfo(submit_dir, tarball_name)
+    writeMetaInfo(submit_dir, "metaInfo.txt")
 
 def main():
     args = getComLineArgs()
