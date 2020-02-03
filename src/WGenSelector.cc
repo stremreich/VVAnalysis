@@ -79,13 +79,16 @@ void WGenSelector::SetComposite() {
         return;
     }
     auto lepP4 = leptons.at(0).polarP4();
-    auto nuP4 = neutrinos.size() > 0 ? neutrinos.at(0).polarP4() : LorentzVector();
+    auto compareByPt = [](const reco::GenParticle& a, const reco::GenParticle& b) { return a.pt() > b.pt(); };
+
+    auto nup = std::max_element(neutrinos.begin(), neutrinos.end(), compareByPt);
+    nu = neutrinos.size() > 0 ? nup->polarP4() : LorentzVector();
     wCandMet = lepP4 + genMet;
-    wCand = neutrinos.size() > 0 ? lepP4 + nuP4 : LorentzVector();
+    wCand = neutrinos.size() > 0 ? lepP4 + nu : LorentzVector();
     auto mt = [] (LorentzVector& l, LorentzVector& v) {
         return std::sqrt(2*l.pt()*v.pt()*(1 - cos(l.phi() - v.phi())));
     };
-    mTtrue = mt(lepP4, nuP4);
+    mTtrue = mt(lepP4, nu);
     mTmet = mt(lepP4, genMet);
 }
 
@@ -101,16 +104,17 @@ void WGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::str
         return;
     if (leptons.size() < nLeptons_)
         return;
+    
+    // Presorted
     auto& lep = leptons.at(0);
     if (lep.pt() < 25 || std::abs(lep.eta()) > 2.5)
         return;
     SafeHistFill(histMap1D_, "nGammaAssoc", channel_, variation.first, photons.size(), weight);
 
+    auto compareByPt = [](const reco::GenParticle& a, const reco::GenParticle& b) { return a.pt() > b.pt(); };
     auto compareByDRLead = [lep] (const reco::GenParticle& a, const reco::GenParticle& b) {
         return reco::deltaR(a, lep) > reco::deltaR(b, lep);
     };
-    // Would be better to get this working in helpers
-    auto compareByPt = [](const reco::GenParticle& a, const reco::GenParticle& b) { return a.pt() > b.pt(); };
 
     auto gclose = std::min_element(photons.begin(), photons.end(), compareByDRLead);
     auto maxPtg = std::max_element(photons.begin(), photons.end(), compareByPt);
@@ -158,9 +162,9 @@ void WGenSelector::FillHistogramsByName(Long64_t entry, std::string& toAppend, s
     SafeHistFill(histMap1D_, concatenateNames("ptl", toAppend), channel_, variation.first, lep.pt(), weight);
     SafeHistFill(histMap1D_, concatenateNames("etal", toAppend), channel_, variation.first, lep.eta(), weight);
     SafeHistFill(histMap1D_, concatenateNames("phil", toAppend), channel_, variation.first, lep.phi(), weight);
-    SafeHistFill(histMap1D_, concatenateNames("ptnu", toAppend), channel_, variation.first, lep.pt(), weight);
-    SafeHistFill(histMap1D_, concatenateNames("etanu", toAppend), channel_, variation.first, lep.eta(), weight);
-    SafeHistFill(histMap1D_, concatenateNames("phinu", toAppend), channel_, variation.first, lep.phi(), weight);
+    SafeHistFill(histMap1D_, concatenateNames("ptnu", toAppend), channel_, variation.first, nu.pt(), weight);
+    SafeHistFill(histMap1D_, concatenateNames("etanu", toAppend), channel_, variation.first, nu.eta(), weight);
+    SafeHistFill(histMap1D_, concatenateNames("phinu", toAppend), channel_, variation.first, nu.phi(), weight);
     SafeHistFill(histMap1D_, concatenateNames("nJets", toAppend), channel_, variation.first, jets.size(), weight);
     for (size_t i = 1; i <= 3; i++) {
         if (jets.size() >= i ) {

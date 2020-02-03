@@ -82,7 +82,6 @@ cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/LowPileup/%s" % fold
 
 cardtool.setFitVariableAppend("nonprompt", "Fakes")
 
-#cardtool.setLumi(35.9)
 cardtool.setLumi(0.199)
 cardtool.setInputFile(args.input_file)
 for fitvar in args.fitvars:

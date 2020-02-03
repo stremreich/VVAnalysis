@@ -81,19 +81,20 @@ class CombineCardTools(object):
         if not os.path.isdir(outputFolder):
             os.makedirs(outputFolder)
 
-    def addTheoryVar(self, processName, varName, entries, central=0, exclude=[]):
+    def addTheoryVar(self, processName, varName, entries, central=0, exclude=[], specName=""):
         if "scale" not in varName.lower() and "pdf" not in varName.lower():
             raise ValueError("Invalid theory uncertainty %s. Must be type 'scale' or 'pdf'" % varName)
-        name = "scale" if "scale" in varName.lower() else "pdf"
+        name = "scale" if "scale" in varName.lower() else ("pdf"+specName)
 
         if not processName in self.theoryVariations:
             self.theoryVariations[processName] = {}
 
         self.theoryVariations[processName].update({ name : {
+                "name" : specName,
                 "entries" : entries,
                 "central" : central,
                 "exclude" : exclude,
-                "combine" : "envelope" if name == "scale" else ("hessian" if "hessian" in varName else "mc"),
+                "combine" : "envelope" if name == "scale" else varName.replace("pdf_", ""),
             }
         })
 
@@ -204,18 +205,33 @@ class CombineCardTools(object):
                 scaleHists = HistTools.getScaleHists(weightHist, processName, self.rebin, 
                     entries=theoryVars['scale']['entries'], 
                     central=(theoryVars['scale']['central'] if 'scale' in theoryVars else -1))
-                pdfFunction = getattr(HistTools, "get%sPDFVariationHists" % ("Hessian" if "hessian" in theoryVars['pdf']['combine'] else "SymmMC"))
-                pdfHists = pdfFunction(weightHist, theoryVars['pdf']['entries'], processName, 
-                        self.rebin, central=(theoryVars['pdf']['central'] if 'pdf' in theoryVars else -1))
                 if expandedTheory:
                     expandedScaleHists = HistTools.getExpandedScaleHists(weightHist, processName, self.rebin, 
                         entries=theoryVars['scale']['entries'], 
-                        central=(theoryVars['scale']['central'] if 'scale' in theoryVars else -1))
+                        central=(theoryVars['scale']['central'] if 'scale' in theoryVars else -1),
+                        )
                     scaleHists.extend(expandedScaleHists)
-                    if "hessian" in theoryVars['pdf']['combine']:
-                        allPdfHists = HistTools.getAllSymmetricHessianVariationHists(weightHist, theoryVars['pdf']['entries'], processName, 
-                            self.rebin, central=(theoryVars['pdf']['central'] if 'pdf' in theoryVars else -1))
+
+                pdfHists = []
+                pdfVars = filter(lambda x: 'pdf' in x, theoryVars.keys())
+                for var in pdfVars: 
+                    pdfVar = theoryVars[var]
+                    
+                    pdfType = "SymmMC"
+                    if "hessian" in pdfVar['combine']:
+                        pdfType = "Hessian" if "assym" not in pdfVar['combine'] else "AssymHessian"
+
+                    pdfFunction = "get%sPDFVariationHists" % pdfType
+                    pdfHists += getattr(HistTools, pdfFunction)(weightHist, pdfVar['entries'], processName, 
+                            self.rebin, central=pdfVar['central'],
+                            pdfName=pdfVar['name'])
+                    if expandedTheory and "hessian" in pdfVar['combine']:
+                        allPdfHists = HistTools.getAllSymmetricHessianVariationHists(weightHist, pdfVar['entries'], processName, 
+                            self.rebin, central=pdfVar['central'])
                         pdfHists.extend(allPdfHists)
+                        cenHist, _ = HistTools.getLHEWeightHists(weightHist, pdfVar['entries'][:1], processName, "pdf", self.rebin)
+                        if len(cenHist) and cenHist[0]:
+                            pdfHists.append(cenHist[0].Clone())
                 group.extend(scaleHists+pdfHists)
 
                 if chan == self.channels[0]:

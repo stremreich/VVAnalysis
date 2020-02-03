@@ -15,9 +15,9 @@ void NanoGenSelectorBase::Init(TTree *tree)
         pdfweightshelper_.Init(N_LHEPDF_WEIGHTS_, N_MC2HESSIAN_WEIGHTS_, mc2hessianCSV);
     // NNLOPSLike is just a config name for one MiNNLO sample
     if (name_.find("nnlops") != std::string::npos && name_.find("nnlopslike") == std::string::npos) {
-        nnlops_ = true;
-        std::cout << "INFO: NNLOPS sample will be weighted by NNLO weight\n";
-        //std::cout << "INFO: Found NNLOPS sample but not applying weight\n";
+        std::cout << "INFO: Found NNLOPS sample but not applying weight\n";
+        //nnlops_ = true;
+        //std::cout << "INFO: NNLOPS sample will be weighted by NNLO weight\n";
     }
     fReader.SetTree(tree);
 }

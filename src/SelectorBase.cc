@@ -311,7 +311,7 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, ChannelPair c
         if (isMC_ && !isNonprompt_ && (weighthistMap1D_.find(centralLabel) != weighthistMap1D_.end())) { 
             AddObject<TH2D>(weighthistMap1D_[centralLabel], 
                 (name+"_lheWeights_"+channel.second).c_str(), histData[0].c_str(),
-                nbins, xmin, xmax, 1000, 0, 1000);
+                nbins, xmin, xmax, 2000, 0, 2000);
         }
     }
     else {
@@ -333,7 +333,7 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, ChannelPair c
         if (isMC_ && (weighthistMap2D_.find(centralLabel) != weighthistMap2D_.end())) { 
             AddObject<TH3D>(weighthistMap2D_[centralLabel], 
                 (name+"_lheWeights_"+channel.second).c_str(), histData[0].c_str(),
-                nbins, xmin, xmax, nbinsy, ymin, ymax, 1000, 0, 1000);
+                nbins, xmin, xmax, nbinsy, ymin, ymax, 2000, 0, 2000);
         }
     }
 }

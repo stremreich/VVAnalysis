@@ -4,9 +4,33 @@ import sys
 import ROOT
 import logging
 import array
+import argparse
 
 ROOT.gROOT.SetBatch(True)
-logging.basicConfig(level=logging.DEBUG)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--debug", action='store_true',
+    help="Print debug info")
+parser.add_argument("-a", "--append", type=str, default="",
+    help="Append to output folder name")
+parser.add_argument("-f", "--input_file", type=str, required=True,
+    help="Input hist file")
+parser.add_argument("-b", "--fitvar", 
+    type=str, default="ptZ",
+    help="Variable to use in the fit")
+parser.add_argument("-r", "--rebin", 
+                    type=str, default=None, help="Rebin array: "
+                    "values (bin edges) separated by commas.")
+args = parser.parse_args()
+
+if args.rebin and ":" in args.rebin:
+    args.rebin = range(*[int(x) for x in args.rebin.split(":")])
+elif args.rebin and "," in args.rebin:
+    args.rebin = [float(i.strip) for i in args.rebin.split(",")]
+
+logging.basicConfig(level=(logging.DEBUG if args.debug else logging.INFO))
+
+cardtool = CombineCardTools.CombineCardTools()
 
 cardtool = CombineCardTools.CombineCardTools()
 
@@ -20,7 +44,7 @@ config_factory = ConfigHistFactory(
     "ZGen/NanoAOD",
 )
 
-plot_groups = ["dy_minnlo", "dy_nlo", "dy_minnlo_default"]
+plot_groups = ["dy_minnlo_photos", "dy_nlo", ]
 #plot_groups = ["dy_htbinned_cp5", "dy_lo_cp5", "dy_nlo_cp5", "dy_lo", "dy_nlo", "dy_nlo_jetbinned", "dy_nlo_jetbinned_cp5"]
 plotGroupsMap = {name : config_factory.getPlotGroupMembers(name) for name in plot_groups}
 
@@ -28,24 +52,40 @@ xsecs  = ConfigureJobs.getListOfFilesWithXSec([f for files in plotGroupsMap.valu
 
 #channels = ["ee", "mm"]
 channels = ["mm"]
-fitvar = "ptZ"
-#rebin = array.array('d', [0.0,50.0,100.0,150.0,200.0,250.0,300.0,350.0,400.0])
-rebin = array.array('d', range(0,102,2))
-#rebin = array.array('d', range(0,255,5))
-cardtool.setFitVariable(fitvar)
-cardtool.setRebin(rebin)
+rebin = array.array('d', args.rebin) if args.rebin else None
+cardtool.setFitVariable(args.fitvar)
+if rebin:
+    cardtool.setRebin(rebin)
 cardtool.setProcesses(plotGroupsMap)
 cardtool.setChannels(channels)
 cardtool.setCrosSectionMap(xsecs)
 cardtool.setVariations([])
-cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZGen/%s" % fitvar)
+cardtool.setOutputFolder("/eos/user/k/kelong/CombineStudies/ZGen/%s_%s" % (args.fitvar, args.append))
 
 cardtool.setLumi(35.9)
-cardtool.setInputFile("/eos/user/k/kelong/HistFiles/ZGen/Z_combined.root")
+cardtool.setInputFile(args.input_file)
 cardtool.setOutputFile("ZGenCombineInput.root")
 for process in plot_groups:
     #Turn this back on when the theory uncertainties are added
-    if process not in ["nonprompt", "data"]: #and False
+    if "dy_minnlo" in process:
+        cardtool.addTheoryVar(process, 'scale', range(1, 10), exclude=[6, 8], central=0)
+        # NNPDF3.1
+        cardtool.addTheoryVar(process, 'pdf_hessian', range(10, 111), central=0, specName="NNPDF31")
+        # NNPDF31_nnlo_as_0118_CMSW1_hessian_100; LHAPDFID = 325700
+        cardtool.addTheoryVar(process, 'pdf_hessian', range(121, 222), central=0, specName="CMSW1")
+        # NNPDF31_nnlo_as_0118_CMSW2_hessian_100; LHAPDFID = 325900
+        cardtool.addTheoryVar(process, 'pdf_hessian', range(222, 323), central=0, specName="CMSW2")
+        # NNPDF31_nnlo_as_0118_CMSW3_hessian_100; LHAPDFID = 326100
+        cardtool.addTheoryVar(process, 'pdf_hessian', range(323, 424), central=0, specName="CMSW3")
+        # NNPDF31_nnlo_as_0118_CMSW3_hessian_100; LHAPDFID = 326300
+        cardtool.addTheoryVar(process, 'pdf_hessian', range(424, 525), central=0, specName="CMSW4")
+        # CT14
+        cardtool.addTheoryVar(process, 'pdf_assymhessian', range(525, 582), central=0, specName="CT14")
+        # MMHT
+        cardtool.addTheoryVar(process, 'pdf_assymhessian', range(584, 635), central=0, specName="MMHT")
+        # HERA20_EIG
+        cardtool.addTheoryVar(process, 'pdf_assymhessian', range(668, 711), central=0, specName="HERA2")
+    elif process not in ["nonprompt", "data"]: #and False
         cardtool.addTheoryVar(process, 'scale', range(1, 10), exclude=[6, 7], central=4)
         pdf_entries = [4] + (range(10, 40) if "cp5" in process else range(10, 110))
         #cardtool.addTheoryVar(process, 'pdf_mc' if "cp5" in process else "pdf_hessian", pdf_entries, central=0)

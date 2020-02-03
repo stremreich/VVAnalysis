@@ -148,8 +148,8 @@ def getMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
     )
 
 # Calculate standard deviation per bin
-def getSymmMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
-    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdfMC", rebin)
+def getSymmMCPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0, pdfName=""):
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf%sMC" % pdfName, rebin)
     upaction = lambda x: numpy.mean(x[1:]) + numpy.std(x[1:], ddof=1)
     downaction = lambda x: numpy.mean(x[1:]) - numpy.std(x[1:], ddof=1)
 
@@ -169,14 +169,24 @@ def getAllSymmetricHessianVariationHists(init2D_hist, entries, name, rebin=None,
             hist_name.replace("pdf_%s" % name, "pdf%i" %i), upaction, downaction, central))
     return variationSet
 
-def getHessianPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0):
-    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdfHes", rebin)
+def getHessianPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0, pdfName=""):
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf%sHes" % pdfName, rebin)
     #centralIndex = central if central != -1 else int(len(entries)/2)
     sumsq = lambda x: math.sqrt(sum([0 if y < 0.01 else ((x[central] - y)**2) for y in x]))
     upaction = lambda x: x[central] + sumsq(x) 
     downaction = lambda x: x[central] - sumsq(x) 
     return getVariationHists(hists, name, hist_name, 
-            upaction, downaction, central, 
+            upaction, downaction, central, True
+    )
+
+def getAssymHessianPDFVariationHists(init2D_hist, entries, name, rebin=None, central=0, pdfName=""):
+    hists, hist_name = getLHEWeightHists(init2D_hist, entries, name, "pdf%sHes" % pdfName, rebin)
+    #centralIndex = central if central != -1 else int(len(entries)/2)
+    sumsq = lambda x: math.sqrt(sum([(0.5*(i - j))**2 for i,j in zip(x[1:-2:2], x[2:-1:2])]))
+    upaction = lambda x: x[central] + sumsq(x) 
+    downaction = lambda x: x[central] - sumsq(x) 
+    return getVariationHists(hists, name, hist_name, 
+            upaction, downaction, central, True
     )
 
 def getPDFPercentVariation(values):
@@ -204,11 +214,11 @@ def getExpandedScaleHists(scale_hist2D, name, rebin=None, entries=[i for i in ra
         variationSet.extend(varhists)
     return variationSet
 
-def getVariationHists(hists, process_name, histUp_name, up_action, down_action, central=0):
+def getVariationHists(hists, process_name, histUp_name, up_action, down_action, central=0, returnCen=False):
     histUp = hists[0].Clone(histUp_name)
     histDown = histUp.Clone(histUp_name.replace("Up", "Down"))
     
-    histCentral = hists.pop(central) if central != -1 else None
+    histCentral = hists.pop(central).Clone() if central != -1 else None
     for i in range(0, histUp.GetNbinsX()+2):
         vals = []
         for hist in hists:
@@ -226,7 +236,7 @@ def getVariationHists(hists, process_name, histUp_name, up_action, down_action, 
             (process_name, histUp_name, histCentral.Integral() if histCentral else 0, histDown.Integral(), histUp.Integral()))
     if histCentral and False: # Off for now, it can happen that groups have some hists with no weights which screws this up
         isValidVariation(process_name, histCentral, histUp, histDown)
-    return [histUp, histDown]
+    return [histUp, histDown] 
 
 def isValidVariation(process_name, histCentral, histUp, histDown):
     for i in range(0, histCentral.GetNbinsX()+2):

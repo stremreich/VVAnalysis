@@ -19,6 +19,7 @@
 class WGenSelector : public NanoGenSelectorBase {
 public :
     // Derived values
+    LorentzVector nu;
     LorentzVector wCand;
     LorentzVector wCandMet;
     float mTtrue;
