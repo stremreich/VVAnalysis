@@ -51,7 +51,7 @@ void WZSelector::Init(TTree *tree)
         //"Pt",
         //"nJets",
         //"nJetCSVv2T",
-        //"jetPt[0]",
+        "jetPt[0]",
         //"jetPt[1]",
         //"jetPt[2]",
         //"jetEta12",
@@ -131,6 +131,7 @@ void WZSelector::SetBranchesUWVV() {
     fChain->SetBranchAddress("Eta", &Eta, &b_Eta);
     fChain->SetBranchAddress("Pt", &Pt, &b_Pt);
     fChain->SetBranchAddress("nvtx", &nvtx, &b_nvtx);
+    //fChain->SetBranchAddress("nJet", &nJet, &b_nJet);
     fChain->SetBranchAddress("mjj", &mjj, &b_mjj);
 
     if (channel_ == eee) {
@@ -641,8 +642,14 @@ void WZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("Wlep_Phi", variation.second), l3Phi, weight);
     SafeHistFill(histMap1D_, getHistName("MET", variation.second), MET, weight);
     // Just doing what works for now
+    // CHANGED to add nJets
+    //return;
+    //std::cerr << "Adding some non-safe branches!\n";
+    //std::cerr << "histname: " << getHistName("nJets", variation.second) << std::endl;
+    //std::cerr << "nJets: " << nJet << std::endl;
+    //std::cerr << "weight: " << weight << std::endl;
+    SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jets.size(), weight);
     return;
-    SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jetPt->size(), weight);
     SafeHistFill(histMap1D_, getHistName("m_l1l3", variation.second), Zlep1_Wlep_Mass, weight);
     SafeHistFill(histMap1D_, getHistName("m_l2l3", variation.second), Zlep2_Wlep_Mass, weight);
     SafeHistFill(histMap1D_, getHistName("ZPhi", variation.second), ZPhi, weight);

@@ -53,9 +53,17 @@ public :
     Float_t l3Mass;
 
     //NanoAOD variables
-    static const unsigned int N_KEEP_MU_E_ = 20;
+    static const unsigned int N_KEEP_MU_E_ = 200;
+    static const unsigned int N_KEEP_JET_ = 200;
     UInt_t nElectron;
     UInt_t nMuon;
+    //CHANGE
+    UInt_t nJet;
+    Float_t Jet_pt[N_KEEP_JET_];
+    Float_t Jet_eta[N_KEEP_JET_];
+    Float_t Jet_phi[N_KEEP_JET_];
+    Float_t Jet_mass[N_KEEP_JET_];
+    //CHANGE
     Float_t Electron_pt[N_KEEP_MU_E_];
     Float_t Electron_eta[N_KEEP_MU_E_];
     Float_t Electron_phi[N_KEEP_MU_E_];
@@ -150,6 +158,7 @@ protected:
     void ApplyScaleFactors();
     void SetLeptonVarsNano();
     void SetMasses();
+    void SetJets();
     void SetGoodLeptonsFromNano();
     void SetChannelAndIndicesNano();
 };
