@@ -49,7 +49,6 @@ void WZSelector::Init(TTree *tree)
         //"M3lMET",
         //"Mass",
         //"Pt",
-        //"nJets",
         //"nJetCSVv2T",
         "jetPt[0]",
         //"jetPt[1]",
@@ -58,15 +57,17 @@ void WZSelector::Init(TTree *tree)
         //"jetEta[0]",
         //"jetEta[1]",
         //"jetEta[2]",
-        //"mjj",
+        "mjj",
         //"MtW",
-        //"dEtajj",
-        //"dRjj",
+        "dEtajj",
+        "dRjj",
         //"zep3l",
         //"zepj3",
         //"Eta",
         //"m_l1l3",
     };
+
+    hists2D_ = {"mjj_etajj_2D"};
 
     WZSelectorBase::Init(tree);
 }
@@ -626,6 +627,20 @@ void WZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     if (isVBS_ && !passesVBS)
         return;
     //FillVBSHistograms(weight, noBlind, variation);
+
+    //calculate mjj, detajj, drjj
+    for(unsigned int i = 0; i < jets.size(); i++) {
+      for(unsigned int j = i; j < jets.size(); j++) {
+	if(i != j) {
+	  mjj = jets[i].M() + jets[j].M();
+	  dEtajj = abs(jets[i].Eta() - jets[j].Eta());
+
+	  SafeHistFill(histMap1D_, getHistName("mjj", variation.second), mjj, weight*(isMC_ || (mjj < 500) || noBlind));
+	  SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight*(isMC_ || (dEtajj < 2.5) || noBlind));
+	  SafeHistFill(histMap2D_, getHistName("mjj_etajj_2D", variation.second), mjj, dEtajj, weight*(isMC_ || noBlind || mjj < 500 || dEtajj < 2.5));
+	}
+      }
+    }
 
     SafeHistFill(histMap1D_, getHistName("yield", variation.second), 1, weight);
     SafeHistFill(histMap1D_, getHistName("Mass", variation.second), Mass, 
