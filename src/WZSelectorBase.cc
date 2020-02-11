@@ -262,6 +262,14 @@ void WZSelectorBase::SetBranchesNanoAOD() {
     //b.SetBranch("Flag_goodVerticesPass", Flag_goodVerticesPass);
     //b.SetBranch("Flag_eeBadScFilterPass", Flag_eeBadScFilterPass);
     //b.SetBranch("Flag_globalTightHalo2016FilterPass", Flag_globalTightHalo2016FilterPass);
+
+    //CHANGE
+    b.SetBranch("nJet", nJet);
+    b.SetBranch("Jet_pt", Jet_pt);
+    b.SetBranch("Jet_eta", Jet_eta);
+    b.SetBranch("Jet_phi", Jet_phi);
+    b.SetBranch("Jet_mass", Jet_mass);
+    //CHANGE
 }
 
 void WZSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, std::string> variation) { 
@@ -276,6 +284,15 @@ void WZSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, s
         message += " Muons\n  --> Max read number was ";
         message += std::to_string(N_KEEP_MU_E_);
         message += "\nExiting because this can cause problems. Increase N_KEEP_MU_E_ to avoid this error.\n";
+        throw std::domain_error(message);
+    }
+
+    if (nJet > N_KEEP_JET_) {
+        std::string message = "Found more jets than max read number.\n    Found ";
+        message += std::to_string(nJet);
+        message += " particles\n  --> Max read number was ";
+        message += std::to_string(N_KEEP_JET_);
+        message += "\nExiting because this can cause problems. Increase N_KEEP_JET_ to avoid this error.\n";
         throw std::domain_error(message);
     }
 
@@ -303,6 +320,7 @@ void WZSelectorBase::LoadBranchesNanoAOD(Long64_t entry, std::pair<Systematic, s
     SetGoodLeptonsFromNano();
     SetLeptonVarsNano();
     SetMasses();
+    SetJets();
 
     if (isMC_) {
         ApplyScaleFactors();
@@ -549,7 +567,26 @@ void WZSelectorBase::SetMasses() {
     }
 
     ZMass = (leptons.at(0)+leptons.at(1)).M();
-    Mass = (leptons.at(0)+leptons.at(1)+leptons.at(2)).M();
+    Mass = (leptons.at(0)+leptons.at(1)+leptons.at(2)).M(); 
+}
+
+void WZSelectorBase::SetJets() {
+  leptons.clear();
+  jets.clear();
+  
+  leptons.push_back(LorentzVector(l1Pt, l1Eta, l1Phi, l1Mass));
+  leptons.push_back(LorentzVector(l2Pt, l2Eta, l2Phi, l2Mass));
+  leptons.push_back(LorentzVector(l3Pt, l3Eta, l3Phi, l3Mass));
+
+  for (size_t i = 0; i < nJet; i++) {
+    LorentzVector jet;
+    jet.SetPt(Jet_pt[i]);
+    jet.SetEta(Jet_eta[i]);
+    jet.SetPhi(Jet_phi[i]);
+    jet.SetM(Jet_mass[i]);
+    if (jet.pt() > 30 && !helpers::overlapsCollection(jet, leptons, 0.4, leptons.size()))
+      jets.push_back(jet);
+  } 
 }
 
 // Meant to be a wrapper for the tight ID just in case it changes

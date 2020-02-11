@@ -1,0 +1,9 @@
+[Setup]
+user = strembat
+analysis = WZ
+dataset_manager_path = /afs/cern.ch/user/s/strembat/strembat/WZ 
+#combine_path = %(dataset_manager_path)s/HiggsCombine/CMSSW_8_1_0/src/HiggsAnalysis/CombinedLimit
+output_path = /nfs_scratch/%(user)s/%(analysis)sAnalysisData
+fakeRate_output = %(output_path)s/FakesRates
+hist_output = %(output_path)s/HistFiles
+combine_output = %(output_path)s/CombineData

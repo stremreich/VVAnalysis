@@ -49,24 +49,25 @@ void WZSelector::Init(TTree *tree)
         //"M3lMET",
         //"Mass",
         //"Pt",
-        //"nJets",
         //"nJetCSVv2T",
-        //"jetPt[0]",
+        "jetPt[0]",
         //"jetPt[1]",
         //"jetPt[2]",
         //"jetEta12",
         //"jetEta[0]",
         //"jetEta[1]",
         //"jetEta[2]",
-        //"mjj",
+        "mjj",
         //"MtW",
-        //"dEtajj",
-        //"dRjj",
+        "dEtajj",
+        "dRjj",
         //"zep3l",
         //"zepj3",
         //"Eta",
         //"m_l1l3",
     };
+
+    hists2D_ = {"mjj_etajj_2D"};
 
     WZSelectorBase::Init(tree);
 }
@@ -131,6 +132,7 @@ void WZSelector::SetBranchesUWVV() {
     fChain->SetBranchAddress("Eta", &Eta, &b_Eta);
     fChain->SetBranchAddress("Pt", &Pt, &b_Pt);
     fChain->SetBranchAddress("nvtx", &nvtx, &b_nvtx);
+    //fChain->SetBranchAddress("nJet", &nJet, &b_nJet);
     fChain->SetBranchAddress("mjj", &mjj, &b_mjj);
 
     if (channel_ == eee) {
@@ -625,9 +627,22 @@ void WZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     if (isVBS_ && !passesVBS)
         return;
     //FillVBSHistograms(weight, noBlind, variation);
+    //calculate mjj, detajj, drjj
+    for(unsigned int i = 0; i < jets.size(); i++) {
+      for(unsigned int j = i; j < jets.size(); j++) {
+	if(i != j) {
+	  mjj = jets[i].M() + jets[j].M();
+	  dEtajj = abs(jets[i].Eta() - jets[j].Eta());
 
-    SafeHistFill(histMap1D_, "yield", channel_, variation.first, 1, weight);
-    SafeHistFill(histMap1D_, "Mass", channel_, variation.first, Mass, 
+	  SafeHistFill(histMap1D_, getHistName("mjj", variation.second), mjj, weight*(isMC_ || (mjj < 500) || noBlind));
+	  SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight*(isMC_ || (dEtajj < 2.5) || noBlind));
+	  SafeHistFill(histMap2D_, getHistName("mjj_etajj_2D", variation.second), mjj, dEtajj, weight*(isMC_ || noBlind || mjj < 500 || dEtajj < 2.5));
+	}
+      }
+    }
+
+    SafeHistFill(histMap1D_, getHistName("yield", variation.second), 1, weight);
+    SafeHistFill(histMap1D_, getHistName("Mass", variation.second), Mass, 
         weight*(isMC_ || Mass < 400 || noBlind));
     SafeHistFill(histMap1D_, "ZMass", channel_, variation.first, ZMass, weight);
     SafeHistFill(histMap1D_, "Zlep1_Pt", channel_, variation.first, l1Pt, weight);
@@ -641,16 +656,34 @@ void WZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, "Wlep_Phi", channel_, variation.first, l3Phi, weight);
     SafeHistFill(histMap1D_, "MET", channel_, variation.first, MET, weight);
     // Just doing what works for now
+    // CHANGED to add nJets
+    //return;
+    //std::cerr << "Adding some non-safe branches!\n";
+    //std::cerr << "histname: " << getHistName("nJets", variation.second) << std::endl;
+    //std::cerr << "nJets: " << nJet << std::endl;
+    //std::cerr << "weight: " << weight << std::endl;
+    SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jets.size(), weight);
     return;
-    SafeHistFill(histMap1D_, "nJets", channel_, variation.first, jetPt->size(), weight);
-    SafeHistFill(histMap1D_, "m_l1l3", channel_, variation.first, Zlep1_Wlep_Mass, weight);
-    SafeHistFill(histMap1D_, "m_l2l3", channel_, variation.first, Zlep2_Wlep_Mass, weight);
-    SafeHistFill(histMap1D_, "ZPhi", channel_, variation.first, ZPhi, weight);
-    SafeHistFill(histMap1D_, "ZEta", channel_, variation.first, ZEta, weight);
-    SafeHistFill(histMap1D_, "MtW", channel_, variation.first, l3MtToMET, weight);
-    SafeHistFill(histMap1D_, "Eta", channel_, variation.first, Eta, weight);
+    
+	  // possible syntax changes need to be made here
+    //SafeHistFill(histMap1D_, "nJets", channel_, variation.first, jetPt->size(), weight);
+    //SafeHistFill(histMap1D_, "m_l1l3", channel_, variation.first, Zlep1_Wlep_Mass, weight);
+    //SafeHistFill(histMap1D_, "m_l2l3", channel_, variation.first, Zlep2_Wlep_Mass, weight);
+    //SafeHistFill(histMap1D_, "ZPhi", channel_, variation.first, ZPhi, weight);
+    //SafeHistFill(histMap1D_, "ZEta", channel_, variation.first, ZEta, weight);
+    //SafeHistFill(histMap1D_, "MtW", channel_, variation.first, l3MtToMET, weight);
+    //SafeHistFill(histMap1D_, "Eta", channel_, variation.first, Eta, weight);
 
-    if (histMap1D_[{"dR_lW_Z", channel_, variation.first}] != nullptr) {
+    //if (histMap1D_[{"dR_lW_Z", channel_, variation.first}] != nullptr) {
+    
+    SafeHistFill(histMap1D_, getHistName("m_l1l3", variation.second), Zlep1_Wlep_Mass, weight);
+    SafeHistFill(histMap1D_, getHistName("m_l2l3", variation.second), Zlep2_Wlep_Mass, weight);
+    SafeHistFill(histMap1D_, getHistName("ZPhi", variation.second), ZPhi, weight);
+    SafeHistFill(histMap1D_, getHistName("ZEta", variation.second), ZEta, weight);
+    SafeHistFill(histMap1D_, getHistName("MtW", variation.second), l3MtToMET, weight);
+    SafeHistFill(histMap1D_, getHistName("Eta", variation.second), Eta, weight);
+
+    if (histMap1D_[getHistName("dR_lW_Z", variation.second)] != nullptr) {
         float dPhi_lW_Z = ZPhi - l3Phi;
         float dEta_lW_Z = ZEta - l3Eta;
         float dR_lW_Z = std::sqrt(dPhi_lW_Z*dPhi_lW_Z + dEta_lW_Z*dEta_lW_Z);
