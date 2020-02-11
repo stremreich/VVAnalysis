@@ -121,6 +121,10 @@ public :
 	{"eemm", eemm},
 	{"mmee", mmee},
 	{"mmmm", mmmm},
+	{"eeeeGen", eeee},
+	{"eemmGen", eemm},
+	{"mmeeGen", mmee},
+	{"mmmmGen", mmmm},
 	{"Inclusive", Inclusive},
     };
 
