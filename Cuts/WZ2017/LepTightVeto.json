@@ -1,0 +1,21 @@
+{
+    "Object" : {
+        "e" : [ 
+        ],
+        "m" : [
+        ]
+    },
+    "State" : {
+        "eee" : [
+        ],
+        "mmm" : [
+        ],
+        "eem" : [
+        ],
+        "emm" : [
+        ]
+    },
+    "Event" : [
+        "abs(nWZMediumMuon + nCBVIDHLTSafeElec - 3) < 0.5"
+    ]
+}

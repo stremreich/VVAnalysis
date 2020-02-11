@@ -1,0 +1,32 @@
+{
+    "Object" : {
+        "e" : [ 
+            "{object_name}Pt > 10",
+            "abs({object_name}Eta) <  2.5",
+            "{object_name}IsCBVIDTight > 0.5",
+            "({object_name}IsEB ? abs({object_name}PVDXY) < 0.05 : abs({object_name}PVDXY) < 0.1)",
+            "({object_name}IsEB ? abs({object_name}PVDZ) < 0.1 : abs({object_name}PVDZ) < 0.2)"
+        ],
+        "m" : [
+            "{object_name}Pt > 10",
+            "abs({object_name}Eta) < 2.4",
+            "{object_name}IsWZTight > 0.5",
+            "abs({object_name}PVDXY) < 0.02",
+            "abs({object_name}PVDZ) < 0.1"
+        ]
+    },
+    "State" : {
+        "eee" : [
+        ],
+        "mmm" : [
+        ],
+        "eem" : [
+        ],
+        "emm" : [
+        ]
+    },
+    "Event" : [
+    ]
+}
+
+

@@ -1,0 +1,29 @@
+{
+    "Object" : {
+        "e" : [ 
+            "{object_name}Pt > 10",
+            "abs({object_name}Eta) <  2.5",
+            "{object_name}IsCBVIDMedium > 0.5",
+            "{object_name}IsWWLoose > 0.5"
+        ],
+        "m" : [
+            "{object_name}Pt > 10",
+            "abs({object_name}Eta) < 2.4",
+            "{object_name}IsWZMediumMuon > 0.5",
+            "{object_name}RelPFIsoDBR04 < 0.15"
+        ]
+    },
+    "State" : {
+        "eee" : [
+        ],
+        "mmm" : [
+        ],
+        "eem" : [
+        ],
+        "emm" : [
+        ]
+    },
+    "Event" : [
+        "abs(nWZMediumMuon + nCBVIDTightElec - 3) < 0.5"
+    ]
+}

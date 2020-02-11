@@ -18,20 +18,15 @@ Analysis code for WZ/ZZ analyses. Some scripts using selections to skim Ntuples 
 
 # Setup
 -----------
-CMSSW version: CMSSW_10_4_0 # or CMSSW_9_2_14
+CMSSW version: CMSSW_X_Y_Z
+
 ```bash
-X_Y_Z="10_4_0" # or 9_2_14
-username="kdlong" # or your username
+X_Y_Z="10_6_0" # or 9_2_14
+username="stremreich" # or your username
 ```
 
 To checkout and compile:
-
-```console
-cmsrel CMSSW_version
-cd CMSSW_X_Y_Z/src
-mkdir Analysis
-cd Analysis
-git clone git@github.com:<username>/VVAnalysis.git
+git clone https://github.com/stremreich/VVAnalysis.git 
 scram b -j 8
 ```
 

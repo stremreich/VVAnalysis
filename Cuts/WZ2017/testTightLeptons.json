@@ -1,0 +1,23 @@
+{
+    "Object" : {
+        "e" : [ 
+            "{object_name}IsCBVIDtight"
+        ],
+        "m" : [
+            "{object_name}IsWZMediumMuon"
+        ]
+    },
+    "State" : {
+        "eee" : [
+        ],
+        "mmm" : [
+        ],
+        "eem" : [
+        ],
+        "emm" : [
+        ]
+    },
+    "Event" : [
+    ]
+}
+

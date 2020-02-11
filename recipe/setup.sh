@@ -1,11 +1,13 @@
 #!/bin/bash
 
 dataset_manager=$(./Utilities/scripts/getConfigValue.py dataset_manager_path)/AnalysisDatasetManager
-pushd $CMSSW_BASE/src/Analysis/VVAnalysis/Cuts
+pushd $CMSSW_BASE/src/Analysis/WZAnalysis/Cuts
 
 echo "INFO: Linking alias files"
 for folder in $(ls -d */); do
     analysis_name=${folder/\//}
+    echo "Analyses:"
+    echo ${analysis_name}
     alias_file=${dataset_manager}/Aliases/${analysis_name}.json 
     if [ -f $alias_file ]; then
         pushd $analysis_name

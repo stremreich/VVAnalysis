@@ -1,0 +1,31 @@
+{
+    "Object" : {
+        "e" : [ 
+        ],
+        "m" : [
+        ]
+    },
+    "State" : {
+        "eee" : [
+            "e1_e3_Mass > 4 && e2_e3_Mass > 4"
+        ],
+        "mmm" : [
+            "m1_m3_Mass > 4 && m2_m3_Mass > 4"
+        ],
+        "eem" : [
+            "e1_m_Mass > 4 && e2_m_Mass > 4"
+        ],
+        "emm" : [
+            "e_m1_Mass > 4 && e_m2_Mass > 4"
+        ]
+    },
+    "Event" : [
+        "(ZMass < 86.1876 || ZMass > 96.1876)",
+        "ZMass > 20",
+        "Zlep1_Pt > 25.",
+        "Zlep2_Pt > 15.",
+        "Wlep_Pt > 20",
+        "Max$(jetCSVv2) > 0.9535",
+        "type1_pfMETEt > 30"
+    ]
+}
